@@ -23,6 +23,7 @@
     <VsManProjectFile Include="$(RepositoryRootDirectory)src\VsixV3\Microsoft.VisualStudio.Templates.CSharp.NetCore.vsmanproj" />
     <VsManProjectFile Include="$(RepositoryRootDirectory)src\VsixV3\Microsoft.VisualStudio.Templates.CSharp.NetStandard.vsmanproj" />
     <VsManProjectFile Include="$(RepositoryRootDirectory)src\VsixV3\Microsoft.VisualStudio.Templates.VisualBasic.NetStandard.vsmanproj" />
+    <VsManProjectFile Include="$(RepositoryRootDirectory)src\VsixV3\PreEmptive.Solutions.Dotfuscator.CE.vsmanproj" />
 
     <ProjectToDotnetRestore Include="$(RepositoryRootDirectory)src\Dependencies\**\*.csproj" />
 
@@ -177,8 +178,8 @@
 
   </Target>
 
-  <Target Name="BuildWithoutTesting" DependsOnTargets="RestorePackages;BuildSolution;SignPackages;BuildNuGetPackages;DeployMSBuildSdks" />
-  <Target Name="RebuildWithoutTesting" DependsOnTargets="RestorePackages;RebuildSolution;SignPackages;RebuildNuGetPackages;DeployMSBuildSdks" />
+  <Target Name="BuildWithoutTesting" DependsOnTargets="RestorePackages;BuildSolution;SignPackages;BuildNuGetPackages;BuildModernVsixPackages;DeployMSBuildSdks" />
+  <Target Name="RebuildWithoutTesting" DependsOnTargets="RestorePackages;RebuildSolution;SignPackages;RebuildNuGetPackages;RebuildModernVsixPackages;DeployMSBuildSdks" />
 
   <Target Name="Build" DependsOnTargets="BuildWithoutTesting;Test" />
   <Target Name="Rebuild" DependsOnTargets="RebuildWithoutTesting;Test" />
