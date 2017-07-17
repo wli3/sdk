@@ -43,12 +43,20 @@ namespace Microsoft.NET.Build.Tests
         }
 
         [Fact]
-        public void It_should_produce_same_SatelliteAssemblie_FileVersions_as_main()
+        public void It_should_produce_same_SatelliteAssemblie_FileVersionInfo_as_main()
         {
             var mainAssembliyFileVersioninfo = FileVersionInfo.GetVersionInfo(_mainAssembliyPath);
             var satelliteAssembliyFileVersioninfo = FileVersionInfo.GetVersionInfo(_satelliteAssembliyPath);
 
             satelliteAssembliyFileVersioninfo.FileVersion.Should().Be(mainAssembliyFileVersioninfo.FileVersion);
+
+            satelliteAssembliyFileVersioninfo.CompanyName.Should().Be(mainAssembliyFileVersioninfo.CompanyName);
+            satelliteAssembliyFileVersioninfo.LegalCopyright.Should().Be(mainAssembliyFileVersioninfo.LegalCopyright);
+            satelliteAssembliyFileVersioninfo.Comments.Should().Be(mainAssembliyFileVersioninfo.Comments);
+            satelliteAssembliyFileVersioninfo.FileVersion.Should().Be(mainAssembliyFileVersioninfo.FileVersion);
+            satelliteAssembliyFileVersioninfo.ProductVersion.Should().Be(mainAssembliyFileVersioninfo.ProductVersion);
+            satelliteAssembliyFileVersioninfo.ProductName.Should().Be(mainAssembliyFileVersioninfo.ProductName);
+            satelliteAssembliyFileVersioninfo.FileDescription.Should().Be(mainAssembliyFileVersioninfo.FileDescription);
         }
 
         [Fact]
