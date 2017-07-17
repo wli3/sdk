@@ -48,8 +48,6 @@ namespace Microsoft.NET.Build.Tests
             var mainAssembliyFileVersioninfo = FileVersionInfo.GetVersionInfo(_mainAssembliyPath);
             var satelliteAssembliyFileVersioninfo = FileVersionInfo.GetVersionInfo(_satelliteAssembliyPath);
 
-            satelliteAssembliyFileVersioninfo.FileVersion.Should().Be(mainAssembliyFileVersioninfo.FileVersion);
-
             satelliteAssembliyFileVersioninfo.CompanyName.Should().Be(mainAssembliyFileVersioninfo.CompanyName);
             satelliteAssembliyFileVersioninfo.LegalCopyright.Should().Be(mainAssembliyFileVersioninfo.LegalCopyright);
             satelliteAssembliyFileVersioninfo.Comments.Should().Be(mainAssembliyFileVersioninfo.Comments);

@@ -403,7 +403,7 @@ Copyright (c) .NET Foundation. All rights reserved.
   <UsingTask TaskName="GetAssemblyInfo" AssemblyFile="$(MicrosoftNETBuildExtensionsTasksAssembly)" />
 
   <Target Name="CoreGenerateSatelliteAssemblies"
-          DependsOnTargets="ResolveAssemblyReferences;GenerateAssemblyInfo;"
+          DependsOnTargets="ResolveAssemblyReferences"
           Inputs="$(MSBuildAllProjects);@(_SatelliteAssemblyResourceInputs);$(IntermediateOutputPath)$(TargetName)$(TargetExt)"
           Outputs="$(IntermediateOutputPath)%(Culture)\$(TargetName).resources.dll"
           Condition="'@(_SatelliteAssemblyResourceInputs)' != ''  and '$(GenerateSatelliteAssembliesForCore)' == 'true' ">
@@ -417,25 +417,40 @@ Copyright (c) .NET Foundation. All rights reserved.
     </PropertyGroup>
 
     <GetAssemblyInfo RelativeFilePath="$(_CoreGenerateSatelliteAssembliesTemplateFile)" >
-      <Output TaskParameter="FileVersion"
-            PropertyName="FileVersionFromTemplateFile" />
-      <Output TaskParameter="AssemblyVersion"
-            PropertyName="AssemblyVersionFromTemplateFile" />
+      <Output TaskParameter="CompanyName" PropertyName="_CompanyNameFromTemplateFile" />
+      <Output TaskParameter="LegalCopyright" PropertyName="_LegalCopyrightFromTemplateFile" />
+      <Output TaskParameter="Comments" PropertyName="_CommentsFromTemplateFile" />
+      <Output TaskParameter="FileVersion" PropertyName="_FileVersionFromTemplateFile" />
+      <Output TaskParameter="ProductVersion" PropertyName="_ProductVersionFromTemplateFile" />
+      <Output TaskParameter="ProductName" PropertyName="_ProductNameFromTemplateFile" />
+      <Output TaskParameter="FileDescription" PropertyName="_FileDescriptionFromTemplateFile" />
+      <Output TaskParameter="AssemblyVersion" PropertyName="_AssemblyVersionFromTemplateFile" />
     </GetAssemblyInfo>
 
     <ItemGroup>
-      <SatelliteAssemblyAttribute Include="@(AssemblyAttribute)" />
-
+      <SatelliteAssemblyAttribute Include="System.Reflection.AssemblyCompanyAttribute">
+        <_Parameter1>$(_CompanyNameFromTemplateFile)</_Parameter1>
+      </SatelliteAssemblyAttribute>
+      <SatelliteAssemblyAttribute Include="System.Reflection.AssemblyCopyrightAttribute">
+        <_Parameter1>$(_LegalCopyrightFromTemplateFile)</_Parameter1>
+      </SatelliteAssemblyAttribute>
+      <SatelliteAssemblyAttribute Include="System.Reflection.AssemblyDescriptionAttribute">
+        <_Parameter1>$(_CommentsFromTemplateFile)</_Parameter1>
+      </SatelliteAssemblyAttribute>
       <SatelliteAssemblyAttribute Include="System.Reflection.AssemblyFileVersionAttribute">
-        <_Parameter1>$(FileVersionFromTemplateFile)</_Parameter1>
+        <_Parameter1>$(_FileVersionFromTemplateFile)</_Parameter1>
       </SatelliteAssemblyAttribute>
-
+      <SatelliteAssemblyAttribute Include="System.Reflection.AssemblyInformationalVersionAttribute">
+        <_Parameter1>$(_ProductVersionFromTemplateFile)</_Parameter1>
+      </SatelliteAssemblyAttribute>
+      <SatelliteAssemblyAttribute Include="System.Reflection.AssemblyProductAttribute">
+        <_Parameter1>$(_ProductNameFromTemplateFile)</_Parameter1>
+      </SatelliteAssemblyAttribute>
+      <SatelliteAssemblyAttribute Include="System.Reflection.AssemblyTitleAttribute">
+        <_Parameter1>$(_FileDescriptionFromTemplateFile)</_Parameter1>
+      </SatelliteAssemblyAttribute>
       <SatelliteAssemblyAttribute Include="System.Reflection.AssemblyVersionAttribute">
-        <_Parameter1>$(AssemblyVersionFromTemplateFile)</_Parameter1>
-      </SatelliteAssemblyAttribute>
-
-      <SatelliteAssemblyAttribute Include="System.Reflection.AssemblyCultureAttribute" Condition="'%(_SatelliteAssemblyResourceInputs.Culture)' != ''">
-        <_Parameter1>%(_SatelliteAssemblyResourceInputs.Culture)</_Parameter1>
+        <_Parameter1>$(_AssemblyVersionFromTemplateFile)</_Parameter1>
       </SatelliteAssemblyAttribute>
     </ItemGroup>
 
