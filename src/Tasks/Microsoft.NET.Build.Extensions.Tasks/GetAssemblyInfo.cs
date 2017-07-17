@@ -2,18 +2,14 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Microsoft.Build.Framework;
-using Microsoft.NET.Build.Tasks.ConflictResolution;
-using System;
-using System.Diagnostics;
 using System.IO;
-using System.Security;
 
 namespace Microsoft.NET.Build.Tasks
 {
     public class GetAssemblyInfo : TaskBase
     {
         [Required]
-        public string FilePath { get; set; }
+        public string RelativeFilePath { get; set; }
 
         [Output]
         public string FileVersion { get; set; }
@@ -24,7 +20,7 @@ namespace Microsoft.NET.Build.Tasks
 
         protected override void ExecuteCore()
         {
-            GetAssemblyInfoFrom(FilePath);
+            GetAssemblyInfoFrom(Path.GetFullPath(RelativeFilePath));
         }
 
         private void GetAssemblyInfoFrom(string FilePath)
