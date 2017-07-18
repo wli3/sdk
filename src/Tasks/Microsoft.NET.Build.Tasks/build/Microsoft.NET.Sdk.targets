@@ -428,29 +428,32 @@ Copyright (c) .NET Foundation. All rights reserved.
     </GetAssemblyInfo>
 
     <ItemGroup>
-      <SatelliteAssemblyAttribute Include="System.Reflection.AssemblyCompanyAttribute">
+      <SatelliteAssemblyAttribute Include="System.Reflection.AssemblyCompanyAttribute" Condition="'$(_CompanyNameFromTemplateFile)' != ''">
         <_Parameter1>$(_CompanyNameFromTemplateFile)</_Parameter1>
       </SatelliteAssemblyAttribute>
-      <SatelliteAssemblyAttribute Include="System.Reflection.AssemblyCopyrightAttribute">
+      <SatelliteAssemblyAttribute Include="System.Reflection.AssemblyCopyrightAttribute" Condition="'$(_LegalCopyrightFromTemplateFile)' != ''">
         <_Parameter1>$(_LegalCopyrightFromTemplateFile)</_Parameter1>
       </SatelliteAssemblyAttribute>
-      <SatelliteAssemblyAttribute Include="System.Reflection.AssemblyDescriptionAttribute">
+      <SatelliteAssemblyAttribute Include="System.Reflection.AssemblyDescriptionAttribute" Condition="'$(_CommentsFromTemplateFile)' != ''">
         <_Parameter1>$(_CommentsFromTemplateFile)</_Parameter1>
       </SatelliteAssemblyAttribute>
-      <SatelliteAssemblyAttribute Include="System.Reflection.AssemblyFileVersionAttribute">
+      <SatelliteAssemblyAttribute Include="System.Reflection.AssemblyFileVersionAttribute" Condition="'$(_FileVersionFromTemplateFile)' != ''">
         <_Parameter1>$(_FileVersionFromTemplateFile)</_Parameter1>
       </SatelliteAssemblyAttribute>
-      <SatelliteAssemblyAttribute Include="System.Reflection.AssemblyInformationalVersionAttribute">
+      <SatelliteAssemblyAttribute Include="System.Reflection.AssemblyInformationalVersionAttribute" Condition="'$(_ProductVersionFromTemplateFile)' != ''">
         <_Parameter1>$(_ProductVersionFromTemplateFile)</_Parameter1>
       </SatelliteAssemblyAttribute>
-      <SatelliteAssemblyAttribute Include="System.Reflection.AssemblyProductAttribute">
+      <SatelliteAssemblyAttribute Include="System.Reflection.AssemblyProductAttribute" Condition="'$(_ProductNameFromTemplateFile)' != ''">
         <_Parameter1>$(_ProductNameFromTemplateFile)</_Parameter1>
       </SatelliteAssemblyAttribute>
-      <SatelliteAssemblyAttribute Include="System.Reflection.AssemblyTitleAttribute">
+      <SatelliteAssemblyAttribute Include="System.Reflection.AssemblyTitleAttribute" Condition="'$(_FileDescriptionFromTemplateFile)' != ''">
         <_Parameter1>$(_FileDescriptionFromTemplateFile)</_Parameter1>
       </SatelliteAssemblyAttribute>
-      <SatelliteAssemblyAttribute Include="System.Reflection.AssemblyVersionAttribute">
+      <SatelliteAssemblyAttribute Include="System.Reflection.AssemblyVersionAttribute" Condition="'$(_AssemblyVersionFromTemplateFile)' != ''">
         <_Parameter1>$(_AssemblyVersionFromTemplateFile)</_Parameter1>
+      </SatelliteAssemblyAttribute>
+      <SatelliteAssemblyAttribute Include="System.Reflection.AssemblyCultureAttribute" Condition="'%(_SatelliteAssemblyResourceInputs.Culture)' != ''">
+        <_Parameter1>%(_SatelliteAssemblyResourceInputs.Culture)</_Parameter1>
       </SatelliteAssemblyAttribute>
     </ItemGroup>
 
