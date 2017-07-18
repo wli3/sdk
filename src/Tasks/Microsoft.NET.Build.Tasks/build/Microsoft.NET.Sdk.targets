@@ -403,7 +403,7 @@ Copyright (c) .NET Foundation. All rights reserved.
   <UsingTask TaskName="GetAssemblyInfo" AssemblyFile="$(MicrosoftNETBuildExtensionsTasksAssembly)" />
 
   <Target Name="CoreGenerateSatelliteAssemblies"
-          DependsOnTargets="ResolveAssemblyReferences"
+          DependsOnTargets="ResolveAssemblyReferences;_GetAssemblyInfoFromTemplateFile"
           Inputs="$(MSBuildAllProjects);@(_SatelliteAssemblyResourceInputs);$(IntermediateOutputPath)$(TargetName)$(TargetExt)"
           Outputs="$(IntermediateOutputPath)%(Culture)\$(TargetName).resources.dll"
           Condition="'@(_SatelliteAssemblyResourceInputs)' != ''  and '$(GenerateSatelliteAssembliesForCore)' == 'true' ">
@@ -413,6 +413,42 @@ Copyright (c) .NET Foundation. All rights reserved.
     <PropertyGroup>
       <_AssemblyInfoFile>$(IntermediateOutputPath)%(_SatelliteAssemblyResourceInputs.Culture)\$(TargetName).resources.cs</_AssemblyInfoFile>
       <_OutputAssembly>$(IntermediateOutputPath)%(_SatelliteAssemblyResourceInputs.Culture)\$(TargetName).resources.dll</_OutputAssembly>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <SatelliteAssemblyAttribute Include="System.Reflection.AssemblyCultureAttribute" Condition="'%(_SatelliteAssemblyResourceInputs.Culture)' != ''">
+        <_Parameter1>%(_SatelliteAssemblyResourceInputs.Culture)</_Parameter1>
+      </SatelliteAssemblyAttribute>
+    </ItemGroup>
+
+    <WriteCodeFragment AssemblyAttributes="@(SatelliteAssemblyAttribute)" Language="$(Language)" OutputFile="$(_AssemblyInfoFile)">
+      <Output TaskParameter="OutputFile" ItemName="FileWrites" />
+    </WriteCodeFragment>
+
+    <Csc Resources="@(_SatelliteAssemblyResourceInputs)"
+         Sources="$(_AssemblyInfoFile)"
+         OutputAssembly="$(_OutputAssembly)"
+         References="@(ReferencePath)"
+         KeyContainer="$(KeyContainerName)"
+         KeyFile="$(KeyOriginatorFile)"
+         PublicSign="$(PublicSign)"
+         DelaySign="$(DelaySign)"
+         Deterministic="$(Deterministic)"
+         DisabledWarnings="$(DisabledWarnings)"
+         WarningLevel="$(WarningLevel)"
+         WarningsAsErrors="$(WarningsAsErrors)"
+         WarningsNotAsErrors="$(WarningsNotAsErrors)"
+         TargetType="Library"
+         ToolExe="$(CscToolExe)"
+         ToolPath="$(CscToolPath)">
+
+      <Output TaskParameter="OutputAssembly" ItemName="FileWrites"/>
+    </Csc>
+  </Target>
+
+  <Target Name="_GetAssemblyInfoFromTemplateFile">
+
+    <PropertyGroup>
       <_CoreGenerateSatelliteAssembliesTemplateFile>$(IntermediateOutputPath)$(TargetName)$(TargetExt)</_CoreGenerateSatelliteAssembliesTemplateFile>
     </PropertyGroup>
 
@@ -452,36 +488,9 @@ Copyright (c) .NET Foundation. All rights reserved.
       <SatelliteAssemblyAttribute Include="System.Reflection.AssemblyVersionAttribute" Condition="'$(_AssemblyVersionFromTemplateFile)' != ''">
         <_Parameter1>$(_AssemblyVersionFromTemplateFile)</_Parameter1>
       </SatelliteAssemblyAttribute>
-      <SatelliteAssemblyAttribute Include="System.Reflection.AssemblyCultureAttribute" Condition="'%(_SatelliteAssemblyResourceInputs.Culture)' != ''">
-        <_Parameter1>%(_SatelliteAssemblyResourceInputs.Culture)</_Parameter1>
-      </SatelliteAssemblyAttribute>
     </ItemGroup>
 
-    <WriteCodeFragment AssemblyAttributes="@(SatelliteAssemblyAttribute)" Language="$(Language)" OutputFile="$(_AssemblyInfoFile)">
-      <Output TaskParameter="OutputFile" ItemName="FileWrites" />
-    </WriteCodeFragment>
-
-    <Csc Resources="@(_SatelliteAssemblyResourceInputs)"
-         Sources="$(_AssemblyInfoFile)"
-         OutputAssembly="$(_OutputAssembly)"
-         References="@(ReferencePath)"
-         KeyContainer="$(KeyContainerName)"
-         KeyFile="$(KeyOriginatorFile)"
-         PublicSign="$(PublicSign)"
-         DelaySign="$(DelaySign)"
-         Deterministic="$(Deterministic)"
-         DisabledWarnings="$(DisabledWarnings)"
-         WarningLevel="$(WarningLevel)"
-         WarningsAsErrors="$(WarningsAsErrors)"
-         WarningsNotAsErrors="$(WarningsNotAsErrors)"
-         TargetType="Library"
-         ToolExe="$(CscToolExe)"
-         ToolPath="$(CscToolPath)">
-
-      <Output TaskParameter="OutputAssembly" ItemName="FileWrites"/>
-    </Csc>
   </Target>
-
 
   <!--
   ============================================================
