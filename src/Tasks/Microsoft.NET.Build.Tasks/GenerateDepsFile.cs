@@ -195,21 +195,27 @@ namespace Microsoft.NET.Build.Tasks
         {
             foreach (var runtimeLibrary in runtimeLibraries)
             {
-                HashSet<string> filesToSkip;
-                if (runtimeFilesToSkip.TryGetValue(runtimeLibrary.Name, out filesToSkip))
+                if (runtimeFilesToSkip.TryGetValue(runtimeLibrary.Name, out HashSet<string> filesToSkip))
                 {
+                    var runtimeAssemblyGroups = TrimAssetGroups(runtimeLibrary.RuntimeAssemblyGroups, filesToSkip).ToArray();
+                    var nativeLibraryGroups = TrimAssetGroups(runtimeLibrary.NativeLibraryGroups, filesToSkip).ToArray();
+                    var resourceAssemblies = TrimResourceAssemblies(runtimeLibrary.ResourceAssemblies, filesToSkip);
+                    if (!runtimeAssemblyGroups.Any() && !nativeLibraryGroups.Any() && !resourceAssemblies.Any())
+                    {
+                        continue;
+                    }
                     yield return new RuntimeLibrary(runtimeLibrary.Type,
                                               runtimeLibrary.Name,
                                               runtimeLibrary.Version,
                                               runtimeLibrary.Hash,
-                                              TrimAssetGroups(runtimeLibrary.RuntimeAssemblyGroups, filesToSkip).ToArray(),
-                                              TrimAssetGroups(runtimeLibrary.NativeLibraryGroups, filesToSkip).ToArray(),
-                                              TrimResourceAssemblies(runtimeLibrary.ResourceAssemblies, filesToSkip),
-                                              runtimeLibrary.Dependencies,
-                                              runtimeLibrary.Serviceable,
-                                              runtimeLibrary.Path,
-                                              runtimeLibrary.HashPath,
-                                              runtimeLibrary.RuntimeStoreManifestName);
+                                              runtimeAssemblyGroups: runtimeAssemblyGroups,
+                                              nativeLibraryGroups: nativeLibraryGroups,
+                                              resourceAssemblies: resourceAssemblies,
+                                              dependencies: runtimeLibrary.Dependencies,
+                                              serviceable: runtimeLibrary.Serviceable,
+                                              path: runtimeLibrary.Path,
+                                              hashPath: runtimeLibrary.HashPath,
+                                              runtimeStoreManifestName: runtimeLibrary.RuntimeStoreManifestName);
                 }
                 else
                 {
