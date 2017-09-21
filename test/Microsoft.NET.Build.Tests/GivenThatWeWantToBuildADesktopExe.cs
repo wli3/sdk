@@ -523,5 +523,26 @@ namespace DefaultReferences
             outputDirectory.Should().NotHaveFile("FluentValidation.resources.dll");
             outputDirectory.Should().HaveFile(@"fr\FluentValidation.resources.dll");
         }
+
+        [WindowsOnlyFact]
+        public void It_places_package_pdb_file_correctly()
+        {
+            var testAsset = _testAssetsManager
+              .CopyTestAsset(
+                  "DesktopUsingPackageWithPdb")
+              .WithSource();
+
+            testAsset.Restore(Log);
+
+            var buildCommand = new BuildCommand(Log, testAsset.TestRoot);
+            buildCommand
+                .Execute()
+                .Should()
+                .Pass();
+
+            var outputDirectory = buildCommand.GetOutputDirectory("net46");
+            outputDirectory.Should().HaveFile("NServiceBus.Core.dll"); //TODO REMOVE THIS LINE LATER
+            outputDirectory.Should().HaveFile("NServiceBus.Core.pdb");
+        }
     }
 }
