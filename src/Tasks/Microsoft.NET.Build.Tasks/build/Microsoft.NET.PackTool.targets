@@ -14,6 +14,7 @@ Copyright (c) .NET Foundation. All rights reserved.
 
   <Target Name="PackTool" DependsOnTargets="Publish" Condition=" '$(PackAsTool)' == 'true' ">
     <ItemGroup>
+      <!--TODO do not glob-->
       <TfmSpecificPackageFiles Include="$(PublishDir)/**/*.*"/>
     </ItemGroup>
     <!--All published file in different tools/tfm-->
