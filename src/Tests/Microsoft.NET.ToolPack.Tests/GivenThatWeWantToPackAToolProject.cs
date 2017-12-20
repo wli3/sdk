@@ -64,6 +64,11 @@ namespace Microsoft.NET.ToolPack.Tests
         {
         }
 
+        [Fact(Skip = "Pending")]
+        public void And_explicit_commandName_it_finds_commandName_and_put_in_setting_file()
+        {
+        }
+
         [Fact]
         public void It_contains_runtimeconfigfor_each_tfm()
         {
