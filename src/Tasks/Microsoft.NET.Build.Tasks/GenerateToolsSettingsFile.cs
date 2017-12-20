@@ -31,23 +31,14 @@ namespace Microsoft.NET.Build.Tasks
 
         internal static XDocument GenerateDocument(string entryPointRelativePath, string commandName)
         {
-            var x = new XDocument(
-                new XDeclaration(version: "1.0", encoding: "UTF-8", standalone: null),
+            return new XDocument(
+                new XDeclaration(version: "1.0", encoding: null, standalone: null),
                 new XElement("DotNetCliTool",
                       new XElement("Commands",
                           new XElement("Command",
                           new XAttribute("Name", commandName),
-                          new XAttribute("EntryPoint", "aa"),
-                          new XAttribute("Runner", "dotnet")
-                          ))));
-
-            using (StringWriter writer = new StringWriter())
-            {
-                x.Save(writer);
-                throw new Exception(writer.ToString());
-            }
-            
-             //return x;
+                          new XAttribute("EntryPoint", entryPointRelativePath),
+                          new XAttribute("Runner", "dotnet")))));
         }
 
     }
