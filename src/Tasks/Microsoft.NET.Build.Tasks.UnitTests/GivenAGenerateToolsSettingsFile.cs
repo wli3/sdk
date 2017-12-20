@@ -25,6 +25,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
 
             }
         }
+
         [Fact]
         public void It_puts_command_name_in_correct_place_of_the_file()
         {
@@ -42,7 +43,6 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
         {
             _dotNetCliTool.Commands.Single().Runner.Should().Be("dotnet");
         }
-
 
         [XmlRoot(Namespace = "", IsNullable = false)]
         public class DotNetCliTool

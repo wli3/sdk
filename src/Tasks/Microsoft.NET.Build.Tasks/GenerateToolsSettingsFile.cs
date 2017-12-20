@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿// Copyright (c) .NET Foundation and contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using Microsoft.Build.Framework;
-using Microsoft.Build.Utilities;
-using System.Linq;
 using System.Xml.Linq;
-using System.Xml;
 using System.IO;
 
 namespace Microsoft.NET.Build.Tasks
@@ -18,21 +15,21 @@ namespace Microsoft.NET.Build.Tasks
         [Required]
         public string CommandName { get; set; }
 
-        [Output]
-        public ITaskItem FileWritten
-        {
-            get; private set;
-        }
+        [Required]
+        public string ToolsSettingsFilePath { get; set; }
 
         protected override void ExecuteCore()
         {
-
+            using (StringWriter writer = new StringWriter())
+            {
+                GenerateDocument(EntryPointRelativePath, CommandName).Save(ToolsSettingsFilePath);
+            }
         }
 
         internal static XDocument GenerateDocument(string entryPointRelativePath, string commandName)
         {
             return new XDocument(
-                new XDeclaration(version: "1.0", encoding: null, standalone: null),
+                new XDeclaration(version: null, encoding: null, standalone: null),
                 new XElement("DotNetCliTool",
                       new XElement("Commands",
                           new XElement("Command",
