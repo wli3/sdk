@@ -13,6 +13,7 @@ Copyright (c) .NET Foundation. All rights reserved.
 
   <PropertyGroup>
     <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);PackTool</TargetsForTfmSpecificContentInPackage>
+
   </PropertyGroup>
 
 </Project>

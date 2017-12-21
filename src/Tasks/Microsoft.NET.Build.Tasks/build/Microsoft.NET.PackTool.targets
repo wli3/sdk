@@ -14,7 +14,7 @@ Copyright (c) .NET Foundation. All rights reserved.
   <UsingTask TaskName="Microsoft.NET.Build.Tasks.GenerateToolsSettingsFile"
               AssemblyFile="$(MicrosoftNETBuildTasksAssembly)" />
 
-  <Target Name="PackTool" DependsOnTargets="GenerateToolsSettingsFileFromBuildProperty;Publish" Condition=" '$(PackAsTool)' == 'true' ">
+  <Target Name="PackTool" DependsOnTargets="AddToolsSettingsFilePathToPackContent;Publish" Condition=" '$(PackAsTool)' == 'true' ">
     <ItemGroup>
       <!--TODO wul do not glob-->
       <TfmSpecificPackageFiles Include="$(PublishDir)/**/*.*"/>
@@ -27,21 +27,28 @@ Copyright (c) .NET Foundation. All rights reserved.
     </ItemGroup>
   </Target>
   
-  <Target Name="GenerateToolsSettingsFileFromBuildProperty" Condition=" '$(PackAsTool)' == 'true' " BeforeTargets="Pack" >
+  <Target Name="AddToolsSettingsFilePathToPackContent" DependsOnTargets="GenerateToolsSettingsFileFromBuildProperty" Condition="'$(_ToolSettingsFileIncluded)' == '' " >    
+    <ItemGroup>
+      <TfmSpecificPackageFile Include="$(ToolsSettingsFilePath)">
+        <PackagePath>tools/DotnetToolSettings.xml</PackagePath>
+        <BuildAction>none</BuildAction>
+      </TfmSpecificPackageFile>
+    </ItemGroup>
+    
+    <PropertyGroup>
+      <!--Only need to include Settings file once for all TFMs-->
+      <_ToolSettingsFileIncluded>true</_ToolSettingsFileIncluded>
+    </PropertyGroup>
+  </Target>
+  
+  <Target Name="GenerateToolsSettingsFileFromBuildProperty" >
     <PropertyGroup>
       <ToolsSettingsFilePath>$(BaseIntermediateOutputPath)$(Configuration)/DotnetToolSettings.xml</ToolsSettingsFilePath>
     </PropertyGroup>
-
+       
     <GenerateToolsSettingsFile
        EntryPointRelativePath="$(TargetFileName)"
        CommandName="$(TargetName)"
        ToolsSettingsFilePath="$(ToolsSettingsFilePath)" />
-
-    <ItemGroup>
-      <None Include="$(ToolsSettingsFilePath)">
-        <PackagePath>tools</PackagePath>
-        <Pack>true</Pack>
-      </None>
-    </ItemGroup>
-  </Target> 
+  </Target>
 </Project>
