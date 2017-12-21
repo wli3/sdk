@@ -89,12 +89,13 @@ namespace Microsoft.NET.ToolPack.Tests
 
                 foreach (NuGet.Frameworks.NuGetFramework framework in supportedFrameworks)
                 {
-                    nupkgReader
-                    .GetToolItems()
-                    .Should().Contain(
-                        f => f.Items.
-                            Contains($"tools/{framework.GetShortFolderName()}/any/consoledemo.runtimeconfig.json"));
+                    if (framework.GetShortFolderName() == "any")
+                    {
+                        continue;
+                    }
 
+                    var allItems = nupkgReader.GetToolItems().SelectMany(i => i.Items).ToList();
+                    allItems.Should().Contain($"tools/{framework.GetShortFolderName()}/any/consoledemo.runtimeconfig.json");
                 }
             }
         }
