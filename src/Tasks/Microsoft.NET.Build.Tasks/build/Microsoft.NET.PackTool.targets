@@ -11,10 +11,22 @@ Copyright (c) .NET Foundation. All rights reserved.
 -->
 
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <UsingTask TaskName="Microsoft.NET.Build.Tasks.GenerateToolsSettingsFile"
+              AssemblyFile="$(MicrosoftNETBuildTasksAssembly)" />
 
   <Target Name="PackTool" DependsOnTargets="Publish" Condition=" '$(PackAsTool)' == 'true' ">
+
+    <PropertyGroup>
+      <ToolsSettingsFilePath>$(BaseIntermediateOutputPath)/DotnetToolSettings.xml</ToolsSettingsFilePath>
+    </PropertyGroup>
+
+    <GenerateToolsSettingsFile
+       EntryPointRelativePath="$(TargetFileName)"
+       CommandName="$(TargetName)"
+       ToolsSettingsFilePath="$(ToolsSettingsFilePath)" />
+
     <ItemGroup>
-      <!--TODO do not glob-->
+      <!--TODO wul do not glob-->
       <TfmSpecificPackageFiles Include="$(PublishDir)/**/*.*"/>
     </ItemGroup>
     <!--All published file in different tools/tfm-->
@@ -24,11 +36,12 @@ Copyright (c) .NET Foundation. All rights reserved.
       </TfmSpecificPackageFile>
     </ItemGroup>
   </Target>
+
   <!--settings file-->
-  <!--<ItemGroup>
-    <_PackageFiles Include="DotnetToolSettings.xml">
+  <ItemGroup>
+    <_PackageFiles Include="$(ToolsSettingsFilePath)">
       <PackagePath>tools/DotnetToolSettings.xml</PackagePath>
       <BuildAction>none</BuildAction>
     </_PackageFiles>
-  </ItemGroup>-->
+  </ItemGroup>
 </Project>
