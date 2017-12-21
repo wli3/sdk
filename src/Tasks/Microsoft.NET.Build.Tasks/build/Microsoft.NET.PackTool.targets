@@ -38,10 +38,10 @@ Copyright (c) .NET Foundation. All rights reserved.
        ToolsSettingsFilePath="$(ToolsSettingsFilePath)" />
 
     <ItemGroup>
-      <_PackageFiles Include="$(ToolsSettingsFilePath)">
-        <PackagePath>tools/DotnetToolSettings.xml</PackagePath>
-        <BuildAction>none</BuildAction>
-      </_PackageFiles>
+      <None Include="$(ToolsSettingsFilePath)">
+        <PackagePath>tools</PackagePath>
+        <Pack>true</Pack>
+      </None>
     </ItemGroup>
   </Target> 
 </Project>
