@@ -100,6 +100,15 @@ namespace Microsoft.NET.ToolPack.Tests
         }
 
         [Fact]
+        public void It_does_not_contain_lib()
+        {
+            using (var nupkgReader = new PackageArchiveReader(_nugetPackage))
+            {
+                nupkgReader.GetLibItems().Should().BeEmpty();                       
+            }
+        }
+
+        [Fact]
         public void It_contains_folder_structure_tfm_any()
         {
             using (var nupkgReader = new PackageArchiveReader(_nugetPackage))
