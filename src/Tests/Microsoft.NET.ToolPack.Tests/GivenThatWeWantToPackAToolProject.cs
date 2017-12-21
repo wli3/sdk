@@ -24,7 +24,7 @@ namespace Microsoft.NET.ToolPack.Tests
         public GivenThatWeWantToPackAToolProject(ITestOutputHelper log) : base(log)
         {
             TestAsset helloWorldAsset = _testAssetsManager
-                .CopyTestAsset("PortableTool", "PackPortableTool")
+                .CopyTestAsset("PortableTool", "PackPortableTool" + Path.GetRandomFileName()) // TODO no check in remove random file name
                 .WithSource()
                 .Restore(Log);
 

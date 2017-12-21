@@ -14,17 +14,7 @@ Copyright (c) .NET Foundation. All rights reserved.
   <UsingTask TaskName="Microsoft.NET.Build.Tasks.GenerateToolsSettingsFile"
               AssemblyFile="$(MicrosoftNETBuildTasksAssembly)" />
 
-  <Target Name="PackTool" DependsOnTargets="Publish" Condition=" '$(PackAsTool)' == 'true' ">
-
-    <PropertyGroup>
-      <ToolsSettingsFilePath>$(BaseIntermediateOutputPath)/DotnetToolSettings.xml</ToolsSettingsFilePath>
-    </PropertyGroup>
-
-    <GenerateToolsSettingsFile
-       EntryPointRelativePath="$(TargetFileName)"
-       CommandName="$(TargetName)"
-       ToolsSettingsFilePath="$(ToolsSettingsFilePath)" />
-
+  <Target Name="PackTool" DependsOnTargets="GenerateToolsSettingsFileFromBuildProperty;Publish" Condition=" '$(PackAsTool)' == 'true' ">
     <ItemGroup>
       <!--TODO wul do not glob-->
       <TfmSpecificPackageFiles Include="$(PublishDir)/**/*.*"/>
@@ -36,12 +26,22 @@ Copyright (c) .NET Foundation. All rights reserved.
       </TfmSpecificPackageFile>
     </ItemGroup>
   </Target>
+  
+  <Target Name="GenerateToolsSettingsFileFromBuildProperty" Condition=" '$(PackAsTool)' == 'true' " BeforeTargets="Pack" >
+    <PropertyGroup>
+      <ToolsSettingsFilePath>$(BaseIntermediateOutputPath)$(Configuration)/DotnetToolSettings.xml</ToolsSettingsFilePath>
+    </PropertyGroup>
 
-  <!--settings file-->
-  <ItemGroup>
-    <_PackageFiles Include="$(ToolsSettingsFilePath)">
-      <PackagePath>tools/DotnetToolSettings.xml</PackagePath>
-      <BuildAction>none</BuildAction>
-    </_PackageFiles>
-  </ItemGroup>
+    <GenerateToolsSettingsFile
+       EntryPointRelativePath="$(TargetFileName)"
+       CommandName="$(TargetName)"
+       ToolsSettingsFilePath="$(ToolsSettingsFilePath)" />
+
+    <ItemGroup>
+      <_PackageFiles Include="$(ToolsSettingsFilePath)">
+        <PackagePath>tools/DotnetToolSettings.xml</PackagePath>
+        <BuildAction>none</BuildAction>
+      </_PackageFiles>
+    </ItemGroup>
+  </Target> 
 </Project>
