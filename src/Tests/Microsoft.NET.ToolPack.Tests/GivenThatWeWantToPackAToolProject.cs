@@ -30,10 +30,7 @@ namespace Microsoft.NET.ToolPack.Tests
 
             var packCommand = new PackCommand(Log, helloWorldAsset.TestRoot);
 
-            packCommand
-                .Execute()
-                .Should()
-                .Pass();
+            packCommand.Execute();
 
             _nugetPackage = packCommand.GetNuGetPackage();
         }
@@ -49,9 +46,22 @@ namespace Microsoft.NET.ToolPack.Tests
             }
         }
 
-        [Fact(Skip = "Pending")]
-        public void It_finds_the_entry_point_dll_and_put_in_setting_file()
+        [Fact]
+        public void It_finds_the_entry_point_dll_and_commmand_name_and_put_in_setting_file()
         {
+            using (var nupkgReader = new PackageArchiveReader(_nugetPackage))
+            {
+                IEnumerable<NuGet.Frameworks.NuGetFramework> supportedFrameworks = nupkgReader.GetSupportedFrameworks();
+                supportedFrameworks.Should().NotBeEmpty();
+
+                var tmpfilePath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+                string copiedFile = nupkgReader.ExtractFile($"tools/DotnetToolSettings.xml", tmpfilePath, null);
+                File.ReadAllText(copiedFile)
+                    .Should()
+                    .Contain("consoledemo.dll", "it should contain entry point dll that is same as the msbuild well known properties $(TargetFileName)")
+                    .And
+                    .Contain("consoledemo", "it should contain command name that is same as the msbuild well known properties $(TargetName)");
+            }
         }
 
         [Fact(Skip = "Pending")]
@@ -108,10 +118,6 @@ namespace Microsoft.NET.ToolPack.Tests
 
         [Fact(Skip = "Pending")]
         public void It_contains_dependencies_dll()
-        { }
-
-        [Fact(Skip = "Pending")]
-        public void It_can_use_filename_contain_main_and_put_in_setting_file_as_commandname()
         { }
     }
 }
