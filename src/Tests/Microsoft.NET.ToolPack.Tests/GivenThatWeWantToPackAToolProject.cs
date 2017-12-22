@@ -126,8 +126,25 @@ namespace Microsoft.NET.ToolPack.Tests
         public void It_contains_packagetype_dotnettool()
         { }
 
-        [Fact(Skip = "Pending")]
+        [Fact]
         public void It_contains_dependencies_dll()
-        { }
+        {
+            using (var nupkgReader = new PackageArchiveReader(_nugetPackage))
+            {
+                IEnumerable<NuGet.Frameworks.NuGetFramework> supportedFrameworks = nupkgReader.GetSupportedFrameworks();
+                supportedFrameworks.Should().NotBeEmpty();
+
+                foreach (NuGet.Frameworks.NuGetFramework framework in supportedFrameworks)
+                {
+                    if (framework.GetShortFolderName() == "any")
+                    {
+                        continue;
+                    }
+
+                    var allItems = nupkgReader.GetToolItems().SelectMany(i => i.Items).ToList();
+                    allItems.Should().Contain($"tools/{framework.GetShortFolderName()}/any/Newtonsoft.Json.dll");
+                }
+            }
+        }
     }
 }
