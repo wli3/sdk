@@ -65,17 +65,7 @@ namespace Microsoft.NET.ToolPack.Tests
         }
 
         [Fact(Skip = "Pending")]
-        public void And_explicit_entry_point_name_it_finds_the_entry_point_dll_and_put_in_setting_file()
-        {
-        }
-
-        [Fact(Skip = "Pending")]
         public void It_adds_platform_project_file_to_dependency()
-        {
-        }
-
-        [Fact(Skip = "Pending")]
-        public void And_explicit_commandName_it_finds_commandName_and_put_in_setting_file()
         {
         }
 

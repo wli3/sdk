@@ -30,7 +30,7 @@ namespace Microsoft.NET.ToolPack.Tests
         {
             const string explicitEntryPoint = "explicit_entry_point.dll";
             TestAsset helloWorldAsset = _testAssetsManager
-            .CopyTestAsset("PortableTool", "PackPortableTool" + Path.GetRandomFileName())
+            .CopyTestAsset("PortableTool", "PackPortableToolToolEntryPoint")
             .WithSource()
             .WithProjectChanges(project =>
             {
@@ -60,7 +60,7 @@ namespace Microsoft.NET.ToolPack.Tests
         {
             const string explicitCommandName = "explicit_command_name";
             TestAsset helloWorldAsset = _testAssetsManager
-            .CopyTestAsset("PortableTool", "PackPortableTool" + Path.GetRandomFileName())
+            .CopyTestAsset("PortableTool", "PackPortableToolToolCommandName")
             .WithSource()
             .WithProjectChanges(project =>
             {
