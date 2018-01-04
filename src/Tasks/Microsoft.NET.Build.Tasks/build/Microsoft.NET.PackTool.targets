@@ -26,14 +26,15 @@ Copyright (c) .NET Foundation. All rights reserved.
       </TfmSpecificPackageFile>
     </ItemGroup>
   </Target>
-  
+
   <PropertyGroup>
-    <ToolCommandName Condition=" '$(ToolCommandName)' == '' ">$(TargetFileName)</ToolCommandName>  
+    <ToolCommandName Condition=" '$(ToolCommandName)' == '' ">$(TargetName)</ToolCommandName>
+    <ToolEntryPoint Condition=" '$(ToolEntryPoint)' == '' ">$(TargetFileName)</ToolEntryPoint>
   </PropertyGroup>
 
   <Target Name="GenerateToolsSettingsFileFromBuildProperty" >
     <GenerateToolsSettingsFile
-       EntryPointRelativePath="$(TargetFileName)"
+       EntryPointRelativePath="$(ToolEntryPoint)"
        CommandName="$(ToolCommandName)"
        ToolsSettingsFilePath="$(_ToolsSettingsFilePath)" />
   </Target>
