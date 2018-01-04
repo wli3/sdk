@@ -69,6 +69,11 @@ namespace Microsoft.NET.ToolPack.Tests
         {
         }
 
+        [Fact(Skip = "Pending")]
+        public void It_has_runtime_config_pointing_using_implicit_runtime_version_instead_of_current_runtime_version()
+        {
+        }
+
         [Fact]
         public void It_contains_runtimeconfigfor_each_tfm()
         {
