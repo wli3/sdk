@@ -81,8 +81,6 @@ namespace Microsoft.NET.ToolPack.Tests
             //{
             //    nupkgReader.GetPackageDependencies().Should()contain only one
             //}
-          
-
         }
 
         [Fact(Skip = "Pending")]

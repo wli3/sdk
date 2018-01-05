@@ -17,17 +17,19 @@ Copyright (c) .NET Foundation. All rights reserved.
   <Target Name="PackTool" DependsOnTargets="GenerateToolsSettingsFileFromBuildProperty;Publish" Condition=" '$(PackAsTool)' == 'true' ">
     <!--All published file in different tools/tfm-->
 
-     <ItemGroup>
-      <!--TODO wul do not glob-->
+    <ItemGroup>
         <_PublishedTfmSpecificPackageFiles Include="@(ResolvedFileToPublish->'$(PublishDir)%(RelativePath)')"/>
+        <_PublishedTfmSpecificPackageFiles Include="$(PublishDepsFilePath)"/>
+        <_PublishedTfmSpecificPackageFiles Include="$(PublishRuntimeConfigFilePath)"/>
     </ItemGroup>
+
     <ItemGroup>
       <TfmSpecificPackageFile Include="@(_PublishedTfmSpecificPackageFiles)">
         <PackagePath>tools/$(targetframework)/any/%(_PublishedTfmSpecificPackageFiles.RecursiveDir)%(_PublishedTfmSpecificPackageFiles.Filename)%(_PublishedTfmSpecificPackageFiles.Extension)</PackagePath>
       </TfmSpecificPackageFile>
     </ItemGroup>
 
-      <ItemGroup>
+    <ItemGroup>
        <PackageReference Remove="@(PackageReference)"/>
     </ItemGroup>
 
@@ -44,6 +46,5 @@ Copyright (c) .NET Foundation. All rights reserved.
        CommandName="$(ToolCommandName)"
        ToolsSettingsFilePath="$(_ToolsSettingsFilePath)" />
   </Target>
-
 
 </Project>
