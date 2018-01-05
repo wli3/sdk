@@ -117,9 +117,15 @@ namespace Microsoft.NET.ToolPack.Tests
             }
         }
 
-        [Fact(Skip = "Pending")]
+        [Fact]
         public void It_contains_packagetype_dotnettool()
-        { }
+        {
+            using (var nupkgReader = new PackageArchiveReader(_nugetPackage))
+            {
+                nupkgReader
+                    .GetPackageTypes().Should().ContainSingle(t => t.Name == "DotnetTool");
+            }
+        }
 
         [Fact]
         public void It_contains_dependencies_dll()
