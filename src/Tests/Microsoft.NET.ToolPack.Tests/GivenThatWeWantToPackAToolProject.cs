@@ -52,8 +52,7 @@ namespace Microsoft.NET.ToolPack.Tests
             using (var nupkgReader = new PackageArchiveReader(_nugetPackage))
             {
                 nupkgReader
-                    .GetToolItems().Skip(2).First().Items
-                    .Should().HaveCount(68);
+                    .GetToolItems().Where(i => i.TargetFramework.GetShortFolderName().Contains("netcoreapp2.0")).First().Items.Aggregate((i, j) => i + ";" + j).ToString().Should().Be("tools/netcoreapp2.0/any/consoledemo.deps.json;tools/netcoreapp2.0/any/consoledemo.dll;tools/netcoreapp2.0/any/consoledemo.pdb;tools/netcoreapp2.0/any/consoledemo.runtimeconfig.json;tools/netcoreapp2.0/any/Newtonsoft.Json.dll");
             }
         }
 

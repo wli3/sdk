@@ -15,13 +15,9 @@ Copyright (c) .NET Foundation. All rights reserved.
               AssemblyFile="$(MicrosoftNETBuildTasksAssembly)" />
 
   <Target Name="PackTool" DependsOnTargets="GenerateToolsSettingsFileFromBuildProperty;Publish" Condition=" '$(PackAsTool)' == 'true' ">
-    <ItemGroup>
-      <!--TODO wul do not glob-->
-      <TfmSpecificPackageFiles Include="$(PublishDir)/**/*.*"/>
-    </ItemGroup>
     <!--All published file in different tools/tfm-->
     <ItemGroup>
-      <TfmSpecificPackageFile Include="@(TfmSpecificPackageFiles)">
+      <TfmSpecificPackageFile Include="@(ResolvedFileToPublish->'$(PublishDir)%(RelativePath)')">
         <PackagePath>tools/$(targetframework)/any/%(TfmSpecificPackageFiles.RecursiveDir)%(TfmSpecificPackageFiles.Filename)%(TfmSpecificPackageFiles.Extension)</PackagePath>
       </TfmSpecificPackageFile>
     </ItemGroup>
