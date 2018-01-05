@@ -32,7 +32,6 @@ Copyright (c) .NET Foundation. All rights reserved.
     <ItemGroup>
        <PackageReference Remove="@(PackageReference)"/>
     </ItemGroup>
-
   </Target>
 
   <PropertyGroup>

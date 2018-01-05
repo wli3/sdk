@@ -1,12 +1,9 @@
 ﻿// Copyright (c) .NET Foundation and contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Xml.Linq;
 using Microsoft.NET.TestFramework;
 using Microsoft.NET.TestFramework.Assertions;
 using Microsoft.NET.TestFramework.Commands;
@@ -24,7 +21,7 @@ namespace Microsoft.NET.ToolPack.Tests
         public GivenThatWeWantToPackAToolProject(ITestOutputHelper log) : base(log)
         {
             TestAsset helloWorldAsset = _testAssetsManager
-                .CopyTestAsset("PortableTool", "PackPortableTool" + Path.GetRandomFileName()) // TODO no check in remove random file name
+                .CopyTestAsset("PortableTool", "PackPortableTool")
                 .WithSource()
                 .Restore(Log);
 
@@ -64,18 +61,15 @@ namespace Microsoft.NET.ToolPack.Tests
             }
         }
 
-        [Fact]
-        public void It_adds_platform_project_file_to_dependency()
+        [Fact(Skip = "Pending https://github.com/NuGet/Home/issues/6354")]
+        public void It_adds_platform_package_to_dependency_and_remove_other_package_dependency()
         {
-            //using (var nupkgReader = new PackageArchiveReader(_nugetPackage))
-            //{
-            //    nupkgReader.GetPackageDependencies().Should()contain only one
-            //}
-        }
-
-        [Fact(Skip = "Pending")]
-        public void It_has_runtime_config_pointing_using_implicit_runtime_version_instead_of_current_runtime_version()
-        {
+            using (var nupkgReader = new PackageArchiveReader(_nugetPackage))
+            {
+                nupkgReader
+                    .GetPackageDependencies().First().Packages
+                    .Should().OnlyContain(p => p.Id == "Microsoft.NETCore.Platforms");
+            }
         }
 
         [Fact]
@@ -104,7 +98,7 @@ namespace Microsoft.NET.ToolPack.Tests
         {
             using (var nupkgReader = new PackageArchiveReader(_nugetPackage))
             {
-                nupkgReader.GetLibItems().Should().BeEmpty();                       
+                nupkgReader.GetLibItems().Should().BeEmpty();
             }
         }
 
