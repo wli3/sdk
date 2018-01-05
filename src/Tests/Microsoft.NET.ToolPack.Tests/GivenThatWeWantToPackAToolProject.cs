@@ -47,16 +47,6 @@ namespace Microsoft.NET.ToolPack.Tests
         }
 
         [Fact]
-        public void TODO_REMOVETHIS_item_counts_the_same()
-        {
-            using (var nupkgReader = new PackageArchiveReader(_nugetPackage))
-            {
-                nupkgReader
-                    .GetToolItems().Where(i => i.TargetFramework.GetShortFolderName().Contains("netcoreapp2.0")).First().Items.Aggregate((i, j) => i + ";" + j).ToString().Should().Be("tools/netcoreapp2.0/any/consoledemo.deps.json;tools/netcoreapp2.0/any/consoledemo.dll;tools/netcoreapp2.0/any/consoledemo.pdb;tools/netcoreapp2.0/any/consoledemo.runtimeconfig.json;tools/netcoreapp2.0/any/Newtonsoft.Json.dll");
-            }
-        }
-
-        [Fact]
         public void It_finds_the_entry_point_dll_and_commmand_name_and_put_in_setting_file()
         {
             using (var nupkgReader = new PackageArchiveReader(_nugetPackage))
