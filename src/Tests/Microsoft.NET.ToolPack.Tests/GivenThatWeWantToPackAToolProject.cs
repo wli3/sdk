@@ -47,6 +47,17 @@ namespace Microsoft.NET.ToolPack.Tests
         }
 
         [Fact]
+        public void TODO_REMOVETHIS_item_counts_the_same()
+        {
+            using (var nupkgReader = new PackageArchiveReader(_nugetPackage))
+            {
+                nupkgReader
+                    .GetToolItems().Skip(2).First().Items
+                    .Should().HaveCount(68);
+            }
+        }
+
+        [Fact]
         public void It_finds_the_entry_point_dll_and_commmand_name_and_put_in_setting_file()
         {
             using (var nupkgReader = new PackageArchiveReader(_nugetPackage))
@@ -64,9 +75,15 @@ namespace Microsoft.NET.ToolPack.Tests
             }
         }
 
-        [Fact(Skip = "Pending")]
+        [Fact]
         public void It_adds_platform_project_file_to_dependency()
         {
+            //using (var nupkgReader = new PackageArchiveReader(_nugetPackage))
+            //{
+            //    nupkgReader.GetPackageDependencies().Should()contain only one
+            //}
+          
+
         }
 
         [Fact(Skip = "Pending")]

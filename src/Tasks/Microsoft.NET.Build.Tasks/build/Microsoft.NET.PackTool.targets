@@ -25,6 +25,11 @@ Copyright (c) .NET Foundation. All rights reserved.
         <PackagePath>tools/$(targetframework)/any/%(TfmSpecificPackageFiles.RecursiveDir)%(TfmSpecificPackageFiles.Filename)%(TfmSpecificPackageFiles.Extension)</PackagePath>
       </TfmSpecificPackageFile>
     </ItemGroup>
+
+      <ItemGroup>
+       <PackageReference Remove="@(PackageReference)"/>
+    </ItemGroup>
+
   </Target>
 
   <PropertyGroup>
@@ -38,4 +43,6 @@ Copyright (c) .NET Foundation. All rights reserved.
        CommandName="$(ToolCommandName)"
        ToolsSettingsFilePath="$(_ToolsSettingsFilePath)" />
   </Target>
+
+
 </Project>
