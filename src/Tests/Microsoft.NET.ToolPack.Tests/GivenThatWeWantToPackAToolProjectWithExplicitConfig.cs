@@ -46,11 +46,20 @@ namespace Microsoft.NET.ToolPack.Tests
             var nugetPackage = packCommand.GetNuGetPackage();
             using (var nupkgReader = new PackageArchiveReader(nugetPackage))
             {
+                var anyTfm = nupkgReader.GetSupportedFrameworks().First().GetShortFolderName();
                 var tmpfilePath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-                string copiedFile = nupkgReader.ExtractFile($"tools/DotnetToolSettings.xml", tmpfilePath, null);
+                string copiedFile = nupkgReader.ExtractFile($"tools/{anyTfm}/any/DotnetToolSettings.xml", tmpfilePath, null);
                 File.ReadAllText(copiedFile)
                     .Should()
                     .Contain($"EntryPoint=\"{explicitEntryPoint}\"");
+
+                XElement.Load(copiedFile)
+                        .Element("DotNetCliTool")
+                        .Element("Commands")
+                        .Element("Command")
+                        .Attribute("EntryPoint")
+                        .Value
+                        .Should().Be("explicitEntryPoint");
             }
         }
 
@@ -76,11 +85,17 @@ namespace Microsoft.NET.ToolPack.Tests
             var nugetPackage = packCommand.GetNuGetPackage();
             using (var nupkgReader = new PackageArchiveReader(nugetPackage))
             {
+                var anyTfm = nupkgReader.GetSupportedFrameworks().First().GetShortFolderName();
                 var tmpfilePath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-                string copiedFile = nupkgReader.ExtractFile($"tools/DotnetToolSettings.xml", tmpfilePath, null);
-                File.ReadAllText(copiedFile)
-                    .Should()
-                    .Contain($"<Command Name=\"{explicitCommandName}\"");
+                string copiedFile = nupkgReader.ExtractFile($"tools/{anyTfm}/any/DotnetToolSettings.xml", tmpfilePath, null);
+
+                XElement.Load(copiedFile)
+                        .Element("DotNetCliTool")
+                        .Element("Commands")
+                        .Element("Command")
+                        .Attribute("EntryPoint")
+                        .Value
+                        .Should().Be("explicitEntryPoint");
             }
         }
     }

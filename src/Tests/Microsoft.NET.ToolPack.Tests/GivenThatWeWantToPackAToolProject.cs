@@ -11,6 +11,7 @@ using FluentAssertions;
 using Xunit;
 using Xunit.Abstractions;
 using NuGet.Packaging;
+using System.Xml.Linq;
 
 namespace Microsoft.NET.ToolPack.Tests
 {
@@ -48,16 +49,22 @@ namespace Microsoft.NET.ToolPack.Tests
         {
             using (var nupkgReader = new PackageArchiveReader(_nugetPackage))
             {
-                IEnumerable<NuGet.Frameworks.NuGetFramework> supportedFrameworks = nupkgReader.GetSupportedFrameworks();
-                supportedFrameworks.Should().NotBeEmpty();
-
+                var anyTfm = nupkgReader.GetSupportedFrameworks().First().GetShortFolderName();
                 var tmpfilePath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-                string copiedFile = nupkgReader.ExtractFile($"tools/DotnetToolSettings.xml", tmpfilePath, null);
-                File.ReadAllText(copiedFile)
-                    .Should()
-                    .Contain("consoledemo.dll", "it should contain entry point dll that is same as the msbuild well known properties $(TargetFileName)")
-                    .And
-                    .Contain("consoledemo", "it should contain command name that is same as the msbuild well known properties $(TargetName)");
+                string copiedFile = nupkgReader.ExtractFile($"tools/{anyTfm}/any/DotnetToolSettings.xml", tmpfilePath, null);
+                XElement command = XElement.Load(copiedFile)
+                                      .Element("DotNetCliTool")
+                                      .Element("Commands")
+                                      .Element("Command");
+
+                command.Attribute("Name")
+                        .Value
+                        .Should().Be("consoledemo", "it should contain command name that is same as the msbuild well known properties $(TargetName)");
+
+                command.Attribute("EntryPoint")
+                        .Value
+                        .Should().Be("consoledemo.dll", "it should contain entry point dll that is same as the msbuild well known properties $(TargetFileName)");
+
             }
         }
 
@@ -89,6 +96,27 @@ namespace Microsoft.NET.ToolPack.Tests
 
                     var allItems = nupkgReader.GetToolItems().SelectMany(i => i.Items).ToList();
                     allItems.Should().Contain($"tools/{framework.GetShortFolderName()}/any/consoledemo.runtimeconfig.json");
+                }
+            }
+        }
+
+        [Fact]
+        public void It_contains_DotnetToolSettingsXml_for_each_tfm()
+        {
+            using (var nupkgReader = new PackageArchiveReader(_nugetPackage))
+            {
+                IEnumerable<NuGet.Frameworks.NuGetFramework> supportedFrameworks = nupkgReader.GetSupportedFrameworks();
+                supportedFrameworks.Should().NotBeEmpty();
+
+                foreach (NuGet.Frameworks.NuGetFramework framework in supportedFrameworks)
+                {
+                    if (framework.GetShortFolderName() == "any")
+                    {
+                        continue;
+                    }
+
+                    var allItems = nupkgReader.GetToolItems().SelectMany(i => i.Items).ToList();
+                    allItems.Should().Contain($"tools/{framework.GetShortFolderName()}/any/DotnetToolSettings.xml");
                 }
             }
         }

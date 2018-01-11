@@ -19,6 +19,7 @@ Copyright (c) .NET Foundation. All rights reserved.
     -->
   <PropertyGroup>
     <NETCorePlatformsImplicitPackageVersion Condition=" '$(NETCorePlatformsImplicitPackageVersion)' == '' ">2.0.1</NETCorePlatformsImplicitPackageVersion>
+    <_ToolsSettingsFilePath>$(BaseIntermediateOutputPath)DotnetToolSettings.xml</_ToolsSettingsFilePath>
   </PropertyGroup>
 
   <ItemGroup Condition=" '$(PackAsTool)' == 'true' ">
@@ -31,11 +32,13 @@ Copyright (c) .NET Foundation. All rights reserved.
   </ItemGroup>
 
   <Target Name="PackTool" DependsOnTargets="GenerateToolsSettingsFileFromBuildProperty;Publish" Condition=" '$(PackAsTool)' == 'true' ">
-    <!--All published file in different tools/tfm-->
     <ItemGroup>
+        <!--All published file in different tools/tfm-->
         <_PublishedTfmSpecificPackageFiles Include="@(ResolvedFileToPublish->'$(PublishDir)%(RelativePath)')"/>
         <_PublishedTfmSpecificPackageFiles Include="$(PublishDepsFilePath)"/>
         <_PublishedTfmSpecificPackageFiles Include="$(PublishRuntimeConfigFilePath)"/>
+        <!--DotnetToolSettings.xml-->
+        <_PublishedTfmSpecificPackageFiles Include="$(_ToolsSettingsFilePath)"/>
     </ItemGroup>
 
     <ItemGroup>
