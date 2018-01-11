@@ -52,7 +52,7 @@ namespace Microsoft.NET.ToolPack.Tests
                 var anyTfm = nupkgReader.GetSupportedFrameworks().First().GetShortFolderName();
                 var tmpfilePath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
                 string copiedFile = nupkgReader.ExtractFile($"tools/{anyTfm}/any/DotnetToolSettings.xml", tmpfilePath, null);
-                XElement command = XElement.Load(copiedFile)
+                XElement command = XDocument.Load(copiedFile)
                                       .Element("DotNetCliTool")
                                       .Element("Commands")
                                       .Element("Command");
