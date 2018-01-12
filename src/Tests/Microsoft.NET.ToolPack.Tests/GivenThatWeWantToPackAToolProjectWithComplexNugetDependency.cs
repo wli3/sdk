@@ -25,14 +25,14 @@ namespace Microsoft.NET.ToolPack.Tests
         }
 
         [Fact]
-        public void It_finds_the_entry_point_dll_and_put_in_setting_file()
+        public void It_has_native_and_transitive_dependencies_dll()
         {
             TestAsset helloWorldAsset = _testAssetsManager
-                                        .CopyTestAsset("PortableTool", "PackAToolGraphOfNuGetPackages")
+                                        .CopyTestAsset("PortableTool")
                                         .WithSource()
                                         .WithProjectChanges(project =>
                                         {
-                                            AddPackageThatDependesOnOtherPackage(project);
+                                            ChangeToPackageThatDependesOnOtherPackage(project);
                                         })
                                         .Restore(Log);
             var packCommand = new PackCommand(Log, helloWorldAsset.TestRoot);
@@ -44,30 +44,29 @@ namespace Microsoft.NET.ToolPack.Tests
                 IEnumerable<NuGet.Frameworks.NuGetFramework> supportedFrameworks = nupkgReader.GetSupportedFrameworks();
                 supportedFrameworks.Should().NotBeEmpty();
 
-                //var immediatePackageDepedencyDll = ""
-                foreach (NuGet.Frameworks.NuGetFramework framework in supportedFrameworks)
-                {
-                    if (framework.GetShortFolderName() == "any")
-                    {
-                        continue;
-                    }
+                var transitiveDependency = "runtimes/unix/lib/netstandard1.3/System.Data.SqlClient.dll";
+                var nativeDependency = "runtimes/win7-x86/native/sni.dll";
 
-                    var allItems = nupkgReader.GetToolItems().SelectMany(i => i.Items).ToList();
-                    //something like this
-                    //allItems.Should().Contain($"tools/{framework.GetShortFolderName()}/runtimes/win7-x86/native.dll");
-                    allItems.Should().Contain($"tools/{framework.GetShortFolderName()}/any/Newtonsoft.Json.dll"); //some runtime asset
-                    //Also asset no package dependence 
+                foreach (var dependency in new string[] { transitiveDependency, nativeDependency })
+                {
+                    foreach (NuGet.Frameworks.NuGetFramework framework in supportedFrameworks)
+                    {
+                        var allItems = nupkgReader.GetToolItems().SelectMany(i => i.Items).ToList();
+                        allItems.Should().Contain($"tools/{framework.GetShortFolderName()}/any/{dependency}"); 
+                    }
                 }
             }
         }
 
-        private static void AddPackageThatDependesOnOtherPackage(XDocument project)
+        //also no dependecy
+
+        private static void ChangeToPackageThatDependesOnOtherPackage(XDocument project)
         {
-            var ns = project.Root.Name.Namespace;
+            XNamespace ns = project.Root.Name.Namespace;
 
             var itemGroup = new XElement(ns + "ItemGroup");
-            project.Root.Add(itemGroup);
 
+          //  itemGroup.Element(ns + "PackageReference").Remove();
             itemGroup.Add(new XElement(ns + "PackageReference", new XAttribute("Include", "System.Data.SqlClient"),
                                                                 new XAttribute("Version", "4.3.0")));
         }

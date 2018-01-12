@@ -116,11 +116,6 @@ namespace Microsoft.NET.ToolPack.Tests
 
                 foreach (NuGet.Frameworks.NuGetFramework framework in supportedFrameworks)
                 {
-                    if (framework.GetShortFolderName() == "any")
-                    {
-                        continue;
-                    }
-
                     var allItems = nupkgReader.GetToolItems().SelectMany(i => i.Items).ToList();
                     allItems.Should().Contain($"tools/{framework.GetShortFolderName()}/any/consoledemo.runtimeconfig.json");
                 }
@@ -140,11 +135,6 @@ namespace Microsoft.NET.ToolPack.Tests
 
                 foreach (NuGet.Frameworks.NuGetFramework framework in supportedFrameworks)
                 {
-                    if (framework.GetShortFolderName() == "any")
-                    {
-                        continue;
-                    }
-
                     var allItems = nupkgReader.GetToolItems().SelectMany(i => i.Items).ToList();
                     allItems.Should().Contain($"tools/{framework.GetShortFolderName()}/any/DotnetToolSettings.xml");
                 }
@@ -205,11 +195,6 @@ namespace Microsoft.NET.ToolPack.Tests
 
                 foreach (NuGet.Frameworks.NuGetFramework framework in supportedFrameworks)
                 {
-                    if (framework.GetShortFolderName() == "any")
-                    {
-                        continue;
-                    }
-
                     var allItems = nupkgReader.GetToolItems().SelectMany(i => i.Items).ToList();
                     allItems.Should().Contain($"tools/{framework.GetShortFolderName()}/any/Newtonsoft.Json.dll");
                 }
