@@ -17,26 +17,30 @@ namespace Microsoft.NET.ToolPack.Tests
 {
     public class GivenThatWeWantToPackAToolProject : SdkTest
     {
-        private readonly string _nugetPackage;
 
         public GivenThatWeWantToPackAToolProject(ITestOutputHelper log) : base(log)
         {
+        }
+
+        private string SetupNuGetPackage()
+        {
             TestAsset helloWorldAsset = _testAssetsManager
-                .CopyTestAsset("PortableTool", "PackPortableTool" + Path.GetRandomFileName()) //TODO remvoe that, no checkin 
-                .WithSource()
+                .CopyTestAsset("PortableTool")
+                //.WithSource( /* (multi targeted vs non ) */ )
                 .Restore(Log);
 
             var packCommand = new PackCommand(Log, helloWorldAsset.TestRoot);
 
             packCommand.Execute();
 
-            _nugetPackage = packCommand.GetNuGetPackage();
+            return packCommand.GetNuGetPackage();
         }
 
         [Fact]
         public void It_packs_successfully()
         {
-            using (var nupkgReader = new PackageArchiveReader(_nugetPackage))
+            var nugetPackage = SetupNuGetPackage();
+            using (var nupkgReader = new PackageArchiveReader(nugetPackage))
             {
                 nupkgReader
                     .GetToolItems()
@@ -47,7 +51,8 @@ namespace Microsoft.NET.ToolPack.Tests
         [Fact]
         public void It_finds_the_entry_point_dll_and_command_name_and_put_in_setting_file()
         {
-            using (var nupkgReader = new PackageArchiveReader(_nugetPackage))
+            var nugetPackage = SetupNuGetPackage();
+            using (var nupkgReader = new PackageArchiveReader(nugetPackage))
             {
                 var anyTfm = nupkgReader.GetSupportedFrameworks().First().GetShortFolderName();
                 var tmpfilePath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
@@ -71,7 +76,8 @@ namespace Microsoft.NET.ToolPack.Tests
         [Fact]
         public void It_adds_platform_package_to_dependency_and_remove_other_package_dependency()
         {
-            using (var nupkgReader = new PackageArchiveReader(_nugetPackage))
+            var nugetPackage = SetupNuGetPackage();
+            using (var nupkgReader = new PackageArchiveReader(nugetPackage))
             {
                 nupkgReader
                     .GetPackageDependencies().First().Packages
@@ -82,7 +88,8 @@ namespace Microsoft.NET.ToolPack.Tests
         [Fact]
         public void It_contains_runtimeconfig_for_each_tfm()
         {
-            using (var nupkgReader = new PackageArchiveReader(_nugetPackage))
+            var nugetPackage = SetupNuGetPackage();
+            using (var nupkgReader = new PackageArchiveReader(nugetPackage))
             {
                 IEnumerable<NuGet.Frameworks.NuGetFramework> supportedFrameworks = nupkgReader.GetSupportedFrameworks();
                 supportedFrameworks.Should().NotBeEmpty();
@@ -103,7 +110,8 @@ namespace Microsoft.NET.ToolPack.Tests
         [Fact]
         public void It_contains_DotnetToolSettingsXml_for_each_tfm()
         {
-            using (var nupkgReader = new PackageArchiveReader(_nugetPackage))
+            var nugetPackage = SetupNuGetPackage();
+            using (var nupkgReader = new PackageArchiveReader(nugetPackage))
             {
                 IEnumerable<NuGet.Frameworks.NuGetFramework> supportedFrameworks = nupkgReader.GetSupportedFrameworks();
                 supportedFrameworks.Should().NotBeEmpty();
@@ -124,7 +132,8 @@ namespace Microsoft.NET.ToolPack.Tests
         [Fact]
         public void It_does_not_contain_lib()
         {
-            using (var nupkgReader = new PackageArchiveReader(_nugetPackage))
+            var nugetPackage = SetupNuGetPackage();
+            using (var nupkgReader = new PackageArchiveReader(nugetPackage))
             {
                 nupkgReader.GetLibItems().Should().BeEmpty();
             }
@@ -133,7 +142,8 @@ namespace Microsoft.NET.ToolPack.Tests
         [Fact]
         public void It_contains_folder_structure_tfm_any()
         {
-            using (var nupkgReader = new PackageArchiveReader(_nugetPackage))
+            var nugetPackage = SetupNuGetPackage();
+            using (var nupkgReader = new PackageArchiveReader(nugetPackage))
             {
                 nupkgReader
                     .GetToolItems()
@@ -146,7 +156,8 @@ namespace Microsoft.NET.ToolPack.Tests
         [Fact]
         public void It_contains_packagetype_dotnettool()
         {
-            using (var nupkgReader = new PackageArchiveReader(_nugetPackage))
+            var nugetPackage = SetupNuGetPackage();
+            using (var nupkgReader = new PackageArchiveReader(nugetPackage))
             {
                 nupkgReader
                     .GetPackageTypes().Should().ContainSingle(t => t.Name == "DotnetTool");
@@ -156,7 +167,8 @@ namespace Microsoft.NET.ToolPack.Tests
         [Fact]
         public void It_contains_dependencies_dll()
         {
-            using (var nupkgReader = new PackageArchiveReader(_nugetPackage))
+            var nugetPackage = SetupNuGetPackage();
+            using (var nupkgReader = new PackageArchiveReader(nugetPackage))
             {
                 IEnumerable<NuGet.Frameworks.NuGetFramework> supportedFrameworks = nupkgReader.GetSupportedFrameworks();
                 supportedFrameworks.Should().NotBeEmpty();

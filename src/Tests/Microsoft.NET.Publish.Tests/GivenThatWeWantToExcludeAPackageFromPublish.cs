@@ -28,15 +28,7 @@ namespace Microsoft.NET.Publish.Tests
                 .WithSource()
                 .WithProjectChanges(project =>
                 {
-                    var ns = project.Root.Name.Namespace;
-
-                    var itemGroup = new XElement(ns + "ItemGroup");
-                    project.Root.Add(itemGroup);
-
-                    //  Using different casing for the package ID here, to test the scenario from https://github.com/dotnet/sdk/issues/376
-                    itemGroup.Add(new XElement(ns + "PackageReference", new XAttribute("Include", "NEWTONSOFT.Json"),
-                                                                        new XAttribute("Version", "9.0.1"),
-                                                                        new XAttribute("PrivateAssets", "All")));
+                    AddPackageThatDependesOnOtherPackage(project);
                 })
                 .Restore(Log);
 
@@ -53,6 +45,17 @@ namespace Microsoft.NET.Publish.Tests
                 "HelloWorld.deps.json",
                 "HelloWorld.runtimeconfig.json"
             });
+        }
+
+        private static void AddPackageThatDependesOnOtherPackage(XDocument project)
+        {
+            var ns = project.Root.Name.Namespace;
+
+            var itemGroup = new XElement(ns + "ItemGroup");
+            project.Root.Add(itemGroup);
+
+            itemGroup.Add(new XElement(ns + "PackageReference", new XAttribute("Include", "System.Data.SqlClient"),
+                                                                new XAttribute("Version", "4.3.0")));
         }
 
         [Fact]
