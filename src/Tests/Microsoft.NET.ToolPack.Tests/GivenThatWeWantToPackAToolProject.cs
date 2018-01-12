@@ -18,6 +18,7 @@ namespace Microsoft.NET.ToolPack.Tests
 {
     public class GivenThatWeWantToPackAToolProject : SdkTest
     {
+        private string _testRoot;
 
         public GivenThatWeWantToPackAToolProject(ITestOutputHelper log) : base(log)
         {
@@ -40,6 +41,8 @@ namespace Microsoft.NET.ToolPack.Tests
                     }
                 })
                 .Restore(Log);
+
+            _testRoot = helloWorldAsset.TestRoot;
 
             var packCommand = new PackCommand(Log, helloWorldAsset.TestRoot);
 
@@ -71,7 +74,7 @@ namespace Microsoft.NET.ToolPack.Tests
             using (var nupkgReader = new PackageArchiveReader(nugetPackage))
             {
                 var anyTfm = nupkgReader.GetSupportedFrameworks().First().GetShortFolderName();
-                var tmpfilePath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+                var tmpfilePath = Path.Combine(_testRoot, "temp", Path.GetRandomFileName());
                 string copiedFile = nupkgReader.ExtractFile($"tools/{anyTfm}/any/DotnetToolSettings.xml", tmpfilePath, null);
                 XElement command = XDocument.Load(copiedFile)
                                       .Element("DotNetCliTool")
