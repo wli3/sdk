@@ -12,6 +12,7 @@ using Xunit;
 using Xunit.Abstractions;
 using NuGet.Packaging;
 using System.Xml.Linq;
+using System.Runtime.CompilerServices;
 
 namespace Microsoft.NET.ToolPack.Tests
 {
@@ -22,11 +23,22 @@ namespace Microsoft.NET.ToolPack.Tests
         {
         }
 
-        private string SetupNuGetPackage()
+        private string SetupNuGetPackage(bool multiTarget, [CallerMemberName] string callingMethod = "")
         {
             TestAsset helloWorldAsset = _testAssetsManager
-                .CopyTestAsset("PortableTool")
-                //.WithSource( /* (multi targeted vs non ) */ )
+                .CopyTestAsset("PortableTool", callingMethod + multiTarget)
+                .WithSource()
+                .WithProjectChanges(project =>
+                {
+                    XNamespace ns = project.Root.Name.Namespace;
+                    XElement propertyGroup = project.Root.Elements(ns + "PropertyGroup").First();
+
+                    if (multiTarget)
+                    {
+                        propertyGroup.Element(ns + "TargetFramework").Remove();
+                        propertyGroup.Add(new XElement(ns + "TargetFrameworks", "netcoreapp1.1;netcoreapp2.0"));
+                    }
+                })
                 .Restore(Log);
 
             var packCommand = new PackCommand(Log, helloWorldAsset.TestRoot);
@@ -36,10 +48,12 @@ namespace Microsoft.NET.ToolPack.Tests
             return packCommand.GetNuGetPackage();
         }
 
-        [Fact]
-        public void It_packs_successfully()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void It_packs_successfully(bool multiTarget)
         {
-            var nugetPackage = SetupNuGetPackage();
+            var nugetPackage = SetupNuGetPackage(multiTarget);
             using (var nupkgReader = new PackageArchiveReader(nugetPackage))
             {
                 nupkgReader
@@ -48,10 +62,12 @@ namespace Microsoft.NET.ToolPack.Tests
             }
         }
 
-        [Fact]
-        public void It_finds_the_entry_point_dll_and_command_name_and_put_in_setting_file()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void It_finds_the_entry_point_dll_and_command_name_and_put_in_setting_file(bool multiTarget)
         {
-            var nugetPackage = SetupNuGetPackage();
+            var nugetPackage = SetupNuGetPackage(multiTarget);
             using (var nupkgReader = new PackageArchiveReader(nugetPackage))
             {
                 var anyTfm = nupkgReader.GetSupportedFrameworks().First().GetShortFolderName();
@@ -73,10 +89,12 @@ namespace Microsoft.NET.ToolPack.Tests
             }
         }
 
-        [Fact]
-        public void It_adds_platform_package_to_dependency_and_remove_other_package_dependency()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void It_adds_platform_package_to_dependency_and_remove_other_package_dependency(bool multiTarget)
         {
-            var nugetPackage = SetupNuGetPackage();
+            var nugetPackage = SetupNuGetPackage(multiTarget);
             using (var nupkgReader = new PackageArchiveReader(nugetPackage))
             {
                 nupkgReader
@@ -85,10 +103,12 @@ namespace Microsoft.NET.ToolPack.Tests
             }
         }
 
-        [Fact]
-        public void It_contains_runtimeconfig_for_each_tfm()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void It_contains_runtimeconfig_for_each_tfm(bool multiTarget)
         {
-            var nugetPackage = SetupNuGetPackage();
+            var nugetPackage = SetupNuGetPackage(multiTarget);
             using (var nupkgReader = new PackageArchiveReader(nugetPackage))
             {
                 IEnumerable<NuGet.Frameworks.NuGetFramework> supportedFrameworks = nupkgReader.GetSupportedFrameworks();
@@ -107,10 +127,12 @@ namespace Microsoft.NET.ToolPack.Tests
             }
         }
 
-        [Fact]
-        public void It_contains_DotnetToolSettingsXml_for_each_tfm()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void It_contains_DotnetToolSettingsXml_for_each_tfm(bool multiTarget)
         {
-            var nugetPackage = SetupNuGetPackage();
+            var nugetPackage = SetupNuGetPackage(multiTarget);
             using (var nupkgReader = new PackageArchiveReader(nugetPackage))
             {
                 IEnumerable<NuGet.Frameworks.NuGetFramework> supportedFrameworks = nupkgReader.GetSupportedFrameworks();
@@ -129,20 +151,24 @@ namespace Microsoft.NET.ToolPack.Tests
             }
         }
 
-        [Fact]
-        public void It_does_not_contain_lib()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void It_does_not_contain_lib(bool multiTarget)
         {
-            var nugetPackage = SetupNuGetPackage();
+            var nugetPackage = SetupNuGetPackage(multiTarget);
             using (var nupkgReader = new PackageArchiveReader(nugetPackage))
             {
                 nupkgReader.GetLibItems().Should().BeEmpty();
             }
         }
 
-        [Fact]
-        public void It_contains_folder_structure_tfm_any()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void It_contains_folder_structure_tfm_any(bool multiTarget)
         {
-            var nugetPackage = SetupNuGetPackage();
+            var nugetPackage = SetupNuGetPackage(multiTarget);
             using (var nupkgReader = new PackageArchiveReader(nugetPackage))
             {
                 nupkgReader
@@ -153,10 +179,12 @@ namespace Microsoft.NET.ToolPack.Tests
             }
         }
 
-        [Fact]
-        public void It_contains_packagetype_dotnettool()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void It_contains_packagetype_dotnettool(bool multiTarget)
         {
-            var nugetPackage = SetupNuGetPackage();
+            var nugetPackage = SetupNuGetPackage(multiTarget);
             using (var nupkgReader = new PackageArchiveReader(nugetPackage))
             {
                 nupkgReader
@@ -164,10 +192,12 @@ namespace Microsoft.NET.ToolPack.Tests
             }
         }
 
-        [Fact]
-        public void It_contains_dependencies_dll()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void It_contains_dependencies_dll(bool multiTarget)
         {
-            var nugetPackage = SetupNuGetPackage();
+            var nugetPackage = SetupNuGetPackage(multiTarget);
             using (var nupkgReader = new PackageArchiveReader(nugetPackage))
             {
                 IEnumerable<NuGet.Frameworks.NuGetFramework> supportedFrameworks = nupkgReader.GetSupportedFrameworks();
