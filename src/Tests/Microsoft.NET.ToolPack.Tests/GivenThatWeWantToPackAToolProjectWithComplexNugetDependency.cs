@@ -24,8 +24,10 @@ namespace Microsoft.NET.ToolPack.Tests
 
         }
 
-        [Fact]
-        public void It_has_native_and_transitive_dependencies_dll()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void It_has_native_and_transitive_dependencies_dll(bool multiTarget)
         {
             TestAsset helloWorldAsset = _testAssetsManager
                                         .CopyTestAsset("PortableTool")
@@ -33,6 +35,15 @@ namespace Microsoft.NET.ToolPack.Tests
                                         .WithProjectChanges(project =>
                                         {
                                             ChangeToPackageThatDependesOnOtherPackage(project);
+
+                                            XNamespace ns = project.Root.Name.Namespace;
+                                            XElement propertyGroup = project.Root.Elements(ns + "PropertyGroup").First();
+
+                                            if (multiTarget)
+                                            {
+                                                propertyGroup.Element(ns + "TargetFramework").Remove();
+                                                propertyGroup.Add(new XElement(ns + "TargetFrameworks", "netcoreapp1.1;netcoreapp2.0"));
+                                            }
                                         })
                                         .Restore(Log);
             var packCommand = new PackCommand(Log, helloWorldAsset.TestRoot);
@@ -52,21 +63,20 @@ namespace Microsoft.NET.ToolPack.Tests
                     foreach (NuGet.Frameworks.NuGetFramework framework in supportedFrameworks)
                     {
                         var allItems = nupkgReader.GetToolItems().SelectMany(i => i.Items).ToList();
-                        allItems.Should().Contain($"tools/{framework.GetShortFolderName()}/any/{dependency}"); 
+                        allItems.Should().Contain($"tools/{framework.GetShortFolderName()}/any/{dependency}");
                     }
                 }
+
+                nupkgReader
+                    .GetPackageDependencies().First().Packages
+                    .Should().OnlyContain(p => p.Id == "Microsoft.NETCore.Platforms");
             }
         }
-
-        //also no dependecy
 
         private static void ChangeToPackageThatDependesOnOtherPackage(XDocument project)
         {
             XNamespace ns = project.Root.Name.Namespace;
-
-            var itemGroup = new XElement(ns + "ItemGroup");
-
-          //  itemGroup.Element(ns + "PackageReference").Remove();
+            XElement itemGroup = project.Root.Elements(ns + "ItemGroup").First();
             itemGroup.Add(new XElement(ns + "PackageReference", new XAttribute("Include", "System.Data.SqlClient"),
                                                                 new XAttribute("Version", "4.3.0")));
         }
