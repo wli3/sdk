@@ -39,8 +39,12 @@ Copyright (c) .NET Foundation. All rights reserved.
                  ResourceName="PackAsToolCannotSupportSelfContained" />
 
     <ItemGroup>
-        <_GeneratedFiles Include="$(PublishDepsFilePath)"/>
-        <_GeneratedFiles Include="$(PublishRuntimeConfigFilePath)"/>
+      <_PublishedTfmSpecificPackageFiles Include="$(PublishDir)/**/*.*"/>
+    </ItemGroup>
+      <ItemGroup>
+        <_GeneratedFiles Include="@(_PublishedTfmSpecificPackageFiles)"/>
+        <!--<_GeneratedFiles Include="$(PublishDepsFilePath)"/>-->
+        <!--<_GeneratedFiles Include="$(PublishRuntimeConfigFilePath)"/>-->
         <_GeneratedFiles Include="$(_ToolsSettingsFilePath)"/>
     </ItemGroup>
 
@@ -49,9 +53,9 @@ Copyright (c) .NET Foundation. All rights reserved.
         <PackagePath>tools/$(targetframework)/any/%(_GeneratedFiles.RecursiveDir)%(_GeneratedFiles.Filename)%(_GeneratedFiles.Extension)</PackagePath>
       </TfmSpecificPackageFile>
 
-      <TfmSpecificPackageFile Include="@(ResolvedFileToPublish->'$(PublishDir)%(RelativePath)')">
+      <!--<TfmSpecificPackageFile Include="@(ResolvedFileToPublish->'$(PublishDir)%(RelativePath)')">
         <PackagePath>tools/$(targetframework)/any/%(ResolvedFileToPublish.RelativePath)</PackagePath>
-      </TfmSpecificPackageFile>
+      </TfmSpecificPackageFile>-->
     </ItemGroup>
   </Target>
 
