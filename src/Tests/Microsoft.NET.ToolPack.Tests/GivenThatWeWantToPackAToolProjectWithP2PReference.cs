@@ -9,9 +9,9 @@ using Microsoft.NET.TestFramework.Commands;
 using FluentAssertions;
 using Xunit;
 using Xunit.Abstractions;
-using Microsoft.DotNet.Cli.Utils;
 using System.Runtime.CompilerServices;
 using NuGet.Packaging;
+using System.IO;
 
 namespace Microsoft.NET.ToolPack.Tests
 {
@@ -23,23 +23,20 @@ namespace Microsoft.NET.ToolPack.Tests
 
         }
 
-        private string _testRoot;
-
         private string SetupNuGetPackage([CallerMemberName] string callingMethod = "")
         {
-            TestAsset helloWorldAsset = _testAssetsManager
-                .CopyTestAsset("PortableTool", callingMethod)
+            TestAsset testAsset = _testAssetsManager
+                .CopyTestAsset("PortableToolWithP2P", callingMethod)
                 .WithSource()
                 .WithProjectChanges(project =>
                 {
                     XNamespace ns = project.Root.Name.Namespace;
                     XElement propertyGroup = project.Root.Elements(ns + "PropertyGroup").First();
                 })
-                .Restore(Log);
+                .Restore(Log, "App");
 
-            _testRoot = helloWorldAsset.TestRoot;
-
-            var packCommand = new PackCommand(Log, helloWorldAsset.TestRoot);
+            var appProjectDirectory = Path.Combine(testAsset.TestRoot, "App");
+            var packCommand = new PackCommand(Log, appProjectDirectory);
 
             packCommand.Execute();
 
