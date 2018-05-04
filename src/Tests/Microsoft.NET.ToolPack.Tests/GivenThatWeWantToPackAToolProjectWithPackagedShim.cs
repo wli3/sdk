@@ -19,6 +19,7 @@ namespace Microsoft.NET.ToolPack.Tests
     public class GivenThatWeWantToPackAToolProjectWithPackagedShim : SdkTest
     {
         private string _testRoot;
+        private const string _customToolCommandName = "customToolCommandName";
 
         public GivenThatWeWantToPackAToolProjectWithPackagedShim(ITestOutputHelper log) : base(log)
         {
@@ -33,6 +34,8 @@ namespace Microsoft.NET.ToolPack.Tests
                 {
                     XNamespace ns = project.Root.Name.Namespace;
                     XElement propertyGroup = project.Root.Elements(ns + "PropertyGroup").First();
+                    propertyGroup.Add(new XElement(ns + "PackageToolShimRuntimeIdentifiers", "win-x64;ubuntu-x64"));
+                    propertyGroup.Add(new XElement(ns + "ToolCommandName", _customToolCommandName));
 
                     if (multiTarget)
                     {
@@ -80,6 +83,28 @@ namespace Microsoft.NET.ToolPack.Tests
                 {
                     var allItems = nupkgReader.GetToolItems().SelectMany(i => i.Items).ToList();
                     allItems.Should().Contain($"tools/{framework.GetShortFolderName()}/any/Newtonsoft.Json.dll");
+                }
+            }
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void It_contains_shim(bool multiTarget)
+        {
+            var nugetPackage = SetupNuGetPackage(multiTarget);
+            using (var nupkgReader = new PackageArchiveReader(nugetPackage))
+            {
+                IEnumerable<NuGet.Frameworks.NuGetFramework> supportedFrameworks = nupkgReader.GetSupportedFrameworks();
+                supportedFrameworks.Should().NotBeEmpty();
+
+                foreach (NuGet.Frameworks.NuGetFramework framework in supportedFrameworks)
+                {
+                    var allItems = nupkgReader.GetToolItems().SelectMany(i => i.Items).ToList();
+                    allItems.Should().Contain($"tools/{framework.GetShortFolderName()}/any/shims/win-x64/{_customToolCommandName}.exe",
+                        "Name should be the same as the command name even customized");
+                    allItems.Should().Contain($"tools/{framework.GetShortFolderName()}/any/shims/ubuntu-x64/{_customToolCommandName}",
+                        "RID should be the excat match of the property, even Apphost only has explicitly win, osx and linux");
                 }
             }
         }
