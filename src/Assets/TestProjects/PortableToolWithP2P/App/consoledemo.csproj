@@ -4,10 +4,12 @@
     <TargetFramework>netcoreapp2.1</TargetFramework>
     <AssemblyName>consoledemo</AssemblyName>
     <PackAsTool>true</PackAsTool>
+    <DisableImplicitFrameworkReferences>true</DisableImplicitFrameworkReferences>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Library\Library.csproj" />
+    <PackageReference Include="Microsoft.NETCore.App" Version="2.1.0-rtm-26504-03" />
   </ItemGroup>
 
 </Project>
