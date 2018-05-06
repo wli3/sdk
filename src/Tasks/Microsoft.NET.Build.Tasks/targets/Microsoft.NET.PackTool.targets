@@ -29,12 +29,12 @@ Copyright (c) .NET Foundation. All rights reserved.
 
     <ProjectReference Update="@(ProjectReference)">
       <PrivateAssets>All</PrivateAssets>
-      <Publish Condition=" '%(ProjectReference.Publish)' != 'false' ">true</Publish>
+      <Publish Condition=" '%(ProjectReference.Publish)' !=pack 'false' ">true</Publish>
     </ProjectReference>
 
   </ItemGroup>
 
-  <Target Name="PackTool" DependsOnTargets="GenerateToolsSettingsFileFromBuildProperty;Publish" Condition=" '$(PackAsTool)' == 'true' ">
+  <Target Name="PackTool" DependsOnTargets="GenerateToolsSettingsFileFromBuildProperty;Publish;RuntimeAppleSauceTask" Condition=" '$(PackAsTool)' == 'true' ">
 
     <NETSdkError Condition=" '$(SelfContained)' == 'true' "
                  ResourceName="PackAsToolCannotSupportSelfContained" />
@@ -61,6 +61,8 @@ Copyright (c) .NET Foundation. All rights reserved.
       </TfmSpecificPackageFile>
     </ItemGroup>
   </Target>
+  
+
 
   <PropertyGroup>
     <ToolCommandName Condition=" '$(ToolCommandName)' == '' ">$(TargetName)</ToolCommandName>
@@ -72,6 +74,22 @@ Copyright (c) .NET Foundation. All rights reserved.
        EntryPointRelativePath="$(ToolEntryPoint)"
        CommandName="$(ToolCommandName)"
        ToolsSettingsFilePath="$(_ToolsSettingsFilePath)" />
+  </Target>
+
+  <Target Name="RuntimeAppleSauceTask" DependsOnTargets="Publish">
+    <ItemGroup>
+      <RuntimeAppleSauce Include="$(PackageToolShimRuntimeIdentifiers)">
+        
+      </RuntimeAppleSauce>
+    </ItemGroup>
+
+    <ItemGroup>
+      <RuntimeAppleSauce Update="@(RuntimeAppleSauce)">
+        <_NugetTargetMonikerAndShimRID>$(NuGetTargetMoniker)/%(RuntimeAppleSauce.Identity)</_NugetTargetMonikerAndShimRID>
+      </RuntimeAppleSauce>
+    </ItemGroup>
+    
+    <Message Text="RuntimeAppleSauce = $(RuntimeAppleSauce)" />
   </Target>
 
 </Project>
