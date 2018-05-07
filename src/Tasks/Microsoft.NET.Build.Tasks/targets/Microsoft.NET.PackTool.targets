@@ -63,7 +63,6 @@ Copyright (c) .NET Foundation. All rights reserved.
   </Target>
   
 
-
   <PropertyGroup>
     <ToolCommandName Condition=" '$(ToolCommandName)' == '' ">$(TargetName)</ToolCommandName>
     <ToolEntryPoint Condition=" '$(ToolEntryPoint)' == '' ">$(TargetFileName)</ToolEntryPoint>
@@ -78,15 +77,15 @@ Copyright (c) .NET Foundation. All rights reserved.
 
   <Target Name="RuntimeAppleSauceTask" DependsOnTargets="Publish">
     <ItemGroup>
-      <RuntimeAppleSauce Include="$(PackageToolShimRuntimeIdentifiers)">
+      <_PackageToolShimRuntimeIdentifiers Include="$(PackageToolShimRuntimeIdentifiers)">
         
-      </RuntimeAppleSauce>
+      </_PackageToolShimRuntimeIdentifiers>
     </ItemGroup>
 
     <ItemGroup>
-      <RuntimeAppleSauce Update="@(RuntimeAppleSauce)">
-        <_NugetTargetMonikerAndShimRID>$(NuGetTargetMoniker)/%(RuntimeAppleSauce.Identity)</_NugetTargetMonikerAndShimRID>
-      </RuntimeAppleSauce>
+      <_PackageToolShimFiles Include="@(_PackageToolShimRuntimeIdentifiers)">
+        <_NugetTargetMonikerAndShimRID>$(NuGetTargetMoniker)/%(Identity)</_NugetTargetMonikerAndShimRID>
+      </_PackageToolShimFiles>
     </ItemGroup>
     
     <Message Text="RuntimeAppleSauce = $(RuntimeAppleSauce)" />
