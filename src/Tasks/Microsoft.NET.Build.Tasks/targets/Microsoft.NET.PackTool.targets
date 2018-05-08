@@ -75,19 +75,50 @@ Copyright (c) .NET Foundation. All rights reserved.
        ToolsSettingsFilePath="$(_ToolsSettingsFilePath)" />
   </Target>
 
-  <Target Name="RuntimeAppleSauceTask" DependsOnTargets="Publish">
+  <Target Name="RuntimeAppleSauceTask" DependsOnTargets="ResolveReferences;Publish">
     <ItemGroup>
       <_PackageToolShimRuntimeIdentifiers Include="$(PackageToolShimRuntimeIdentifiers)">
         
       </_PackageToolShimRuntimeIdentifiers>
     </ItemGroup>
 
+    <!--<ItemGroup>
+      <_PackageToolShimRuntimeIdentifiers Update="@(_PackageToolShimRuntimeIdentifiers)">
+        <_NativeExecutableExtension>.exe</_NativeExecutableExtension>
+      </_PackageToolShimRuntimeIdentifiers>
+    </ItemGroup>-->
+
     <ItemGroup>
-      <_PackageToolShimFiles Include="@(_PackageToolShimRuntimeIdentifiers)">
-        <_NugetTargetMonikerAndShimRID>$(NuGetTargetMoniker)/%(Identity)</_NugetTargetMonikerAndShimRID>
-      </_PackageToolShimFiles>
+      <!--<_PackageToolShimRuntimeIdentifiers Update="@(_PackageToolShimRuntimeIdentifiers)">
+        <_DotNetAppHostExecutableName>apphost%(_NativeExecutableExtension)</_DotNetAppHostExecutableName>
+      </_PackageToolShimRuntimeIdentifiers>-->
     </ItemGroup>
-    
+
+    <ResolvePackageAssets
+      ProjectAssetsFile="$(ProjectAssetsFile)"
+      ProjectAssetsCacheFile="$(ProjectAssetsCacheFile)"
+      ProjectPath="$(MSBuildProjectFullPath)"
+      ProjectLanguage="$(Language)"
+      EmitAssetsLogMessages="$(EmitAssetsLogMessages)"
+      TargetFrameworkMoniker="$(NuGetTargetMoniker)"
+      RuntimeIdentifier="%(_PackageToolShimRuntimeIdentifiers.Identity)"
+      MarkPackageReferencesAsExternallyResolved="$(MarkPackageReferencesAsExternallyResolved)"
+      DisablePackageAssetsCache="$(DisablePackageAssetsCache)"
+      DisableFrameworkAssemblies="$(DisableLockFileFrameworks)"
+      DisableTransitiveProjectReferences="$(DisableTransitiveProjectReferences)"
+      EnsureRuntimePackageDependencies="$(EnsureRuntimePackageDependencies)"
+      VerifyMatchingImplicitPackageVersion="$(VerifyMatchingImplicitPackageVersion)"
+      ExpectedPlatformPackages="@(ExpectedPlatformPackages)"
+      >
+
+      <Output TaskParameter="NativeLibraries" ItemName="_ShimNativeCopyLocalItems" />
+    </ResolvePackageAssets>
+
+    <ItemGroup>        
+        <_NativeRestoredAppHostNETCore Include="@(_ShimNativeCopyLocalItems)"
+                                  Condition="'%(NativeCopyLocalItems.FileName)' == 'apphost"/>
+    </ItemGroup>
+
     <Message Text="RuntimeAppleSauce = $(RuntimeAppleSauce)" />
   </Target>
 
