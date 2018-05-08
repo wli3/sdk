@@ -13,6 +13,8 @@ Copyright (c) .NET Foundation. All rights reserved.
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <UsingTask TaskName="Microsoft.NET.Build.Tasks.GenerateToolsSettingsFile"
               AssemblyFile="$(MicrosoftNETBuildTasksAssembly)" />
+  <UsingTask TaskName="Microsoft.NET.Build.Tasks.ResolveAppHostPackageAssets"
+          AssemblyFile="$(MicrosoftNETBuildTasksAssembly)" />
   <!--
     Mark all dependecy as private assets. But keep them as Publish. So dependency DLLs will be included in NuGet package, while
     there is no dependency in nuspec. And add Microsoft.NETCore.Platforms, which is used to select correct RID assets.
@@ -34,7 +36,7 @@ Copyright (c) .NET Foundation. All rights reserved.
 
   </ItemGroup>
 
-  <Target Name="PackTool" DependsOnTargets="GenerateToolsSettingsFileFromBuildProperty;Publish;RuntimeAppleSauceTask" Condition=" '$(PackAsTool)' == 'true' ">
+  <Target Name="PackTool" DependsOnTargets="GenerateToolsSettingsFileFromBuildProperty;Publish;ResolveApphostAsset" Condition=" '$(PackAsTool)' == 'true' ">
 
     <NETSdkError Condition=" '$(SelfContained)' == 'true' "
                  ResourceName="PackAsToolCannotSupportSelfContained" />
@@ -75,33 +77,21 @@ Copyright (c) .NET Foundation. All rights reserved.
        ToolsSettingsFilePath="$(_ToolsSettingsFilePath)" />
   </Target>
 
-  <Target Name="RuntimeAppleSauceTask" DependsOnTargets="ResolveReferences;Publish">
+  <Target Name="ResolveApphostAsset" DependsOnTargets="ResolveReferences;Publish">
     <ItemGroup>
       <_PackageToolShimRuntimeIdentifiers Include="$(PackageToolShimRuntimeIdentifiers)">
         
       </_PackageToolShimRuntimeIdentifiers>
     </ItemGroup>
 
-    <!--<ItemGroup>
-      <_PackageToolShimRuntimeIdentifiers Update="@(_PackageToolShimRuntimeIdentifiers)">
-        <_NativeExecutableExtension>.exe</_NativeExecutableExtension>
-      </_PackageToolShimRuntimeIdentifiers>
-    </ItemGroup>-->
-
-    <ItemGroup>
-      <!--<_PackageToolShimRuntimeIdentifiers Update="@(_PackageToolShimRuntimeIdentifiers)">
-        <_DotNetAppHostExecutableName>apphost%(_NativeExecutableExtension)</_DotNetAppHostExecutableName>
-      </_PackageToolShimRuntimeIdentifiers>-->
-    </ItemGroup>
-
-    <ResolvePackageAssets
+    <ResolveAppHostPackageAssets
       ProjectAssetsFile="$(ProjectAssetsFile)"
       ProjectAssetsCacheFile="$(ProjectAssetsCacheFile)"
       ProjectPath="$(MSBuildProjectFullPath)"
       ProjectLanguage="$(Language)"
       EmitAssetsLogMessages="$(EmitAssetsLogMessages)"
       TargetFrameworkMoniker="$(NuGetTargetMoniker)"
-      RuntimeIdentifier="%(_PackageToolShimRuntimeIdentifiers.Identity)"
+      RuntimeIdentifier="@(_PackageToolShimRuntimeIdentifiers)"
       MarkPackageReferencesAsExternallyResolved="$(MarkPackageReferencesAsExternallyResolved)"
       DisablePackageAssetsCache="$(DisablePackageAssetsCache)"
       DisableFrameworkAssemblies="$(DisableLockFileFrameworks)"
@@ -111,15 +101,8 @@ Copyright (c) .NET Foundation. All rights reserved.
       ExpectedPlatformPackages="@(ExpectedPlatformPackages)"
       >
 
-      <Output TaskParameter="NativeLibraries" ItemName="_ShimNativeCopyLocalItems" />
-    </ResolvePackageAssets>
-
-    <ItemGroup>        
-        <_NativeRestoredAppHostNETCore Include="@(_ShimNativeCopyLocalItems)"
-                                  Condition="'%(NativeCopyLocalItems.FileName)' == 'apphost"/>
-    </ItemGroup>
-
-    <Message Text="RuntimeAppleSauce = $(RuntimeAppleSauce)" />
+      <Output TaskParameter="RuntimeIdentifierApphost" ItemName="_RuntimeIdentifierApphost" />
+    </ResolveAppHostPackageAssets>
   </Target>
 
 </Project>
