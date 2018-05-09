@@ -20,7 +20,7 @@ namespace Microsoft.NET.Build.Tasks
         /// <param name="appHostSourceFilePath">The path of AppHost template, which has the place holder</param>
         /// <param name="appHostDestinationFilePath">The destination path for desired location to place, including the file name</param>
         /// <param name="appBinaryFilePath">Full path to app binary or relative path to appHostDestinationFilePath</param>
-        public static void EmbedAndReturnModifiedAppHostPath(
+        public static void EmbedAppHost(
             string appHostSourceFilePath,
             string appHostDestinationFilePath,
             string appBinaryFilePath)

@@ -91,9 +91,12 @@ Copyright (c) .NET Foundation. All rights reserved.
       TargetFrameworkMoniker="$(NuGetTargetMoniker)"
       PackageToolShimRuntimeIdentifiers="@(_PackageToolShimRuntimeIdentifiers)"
       PackagedShimOutputDirectory="$(IntermediateOutputPath)/shims/$(targetframework)"
+      PackageId="$(PackageId)"
+      PackageVersion="$(Version)"
+      ToolCommandName="$(ToolCommandName)"
       >
 
-      <Output TaskParameter="RuntimeIdentifierApphost" ItemName="_RuntimeIdentifierApphost" />
+      <Output TaskParameter="EmbeddedApphostPaths" ItemName="_EmbeddedApphostPaths" />
     </ResolveAppHostPackageAssets>
   </Target>
 

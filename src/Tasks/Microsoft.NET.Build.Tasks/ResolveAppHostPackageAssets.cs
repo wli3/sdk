@@ -35,44 +35,59 @@ namespace Microsoft.NET.Build.Tasks
         public string TargetFrameworkMoniker { get; set; }
 
         [Required]
+        public string PackageId { get; set; }
+
+        [Required]
+        public string PackageVersion { get; set; }
+
+        [Required]
+        public string ToolCommandName { get; set; }
+
+        [Required]
         public string PackagedShimOutputDirectory { get; set; }
 
         [Required]
         public ITaskItem[] PackageToolShimRuntimeIdentifiers { get; set; }
 
         [Output]
-        public ITaskItem[] RuntimeIdentifierApphost { get; private set; }
+        public ITaskItem[] EmbeddedApphostPaths { get; private set; }
 
         protected override void ExecuteCore()
         {
-            var resultPackages = new List<ITaskItem>();
+            var embeddedApphostPaths = new List<ITaskItem>();
             NuGet.Frameworks.NuGetFramework targetFramework = NuGetUtils.ParseFrameworkName(TargetFrameworkMoniker);
             LockFile lockFile = new LockFileCache(this).GetLockFile(ProjectAssetsFile);
             _packageResolver = NuGetPackageResolver.CreateResolver(lockFile, ProjectPath);
             LockFileTarget compileTimeTarget = lockFile.GetTargetAndThrowIfNotFound(targetFramework, runtime: null);
 
-            foreach (string rid in PackageToolShimRuntimeIdentifiers.Select(r => r.ItemSpec))
+            foreach (string runtimeIdentifier in PackageToolShimRuntimeIdentifiers.Select(r => r.ItemSpec))
             {
                 var apphostName = DotNetAppHostExecutableNameWithoutExtension;
 
-                if (rid.StartsWith("win"))
+                if (runtimeIdentifier.StartsWith("win"))
                 {
                     apphostName += ".exe";
                 }
-                LockFileTarget runtimeTarget = lockFile.GetTargetAndThrowIfNotFound(targetFramework, rid);
-                TaskItem item = new TaskItem(rid);
-                string resolvedPackageAssetPath = FindApphost(apphostName, runtimeTarget);
-                item.SetMetadata("AppHostFilePath", resolvedPackageAssetPath);
+                LockFileTarget runtimeTarget = lockFile.GetTargetAndThrowIfNotFound(targetFramework, runtimeIdentifier);
 
-                resultPackages.Add(item);
-                var PackagedShimOutputDirectoryAndRid = Path.Combine(PackagedShimOutputDirectory, rid);
+                string resolvedPackageAssetPath = FindApphost(apphostName, runtimeTarget);
+
+                var PackagedShimOutputDirectoryAndRid = Path.Combine(PackagedShimOutputDirectory, runtimeIdentifier);
                 Directory.CreateDirectory(PackagedShimOutputDirectoryAndRid);
-                File.Copy(resolvedPackageAssetPath,
-                    Path.Combine(PackagedShimOutputDirectoryAndRid, Path.GetFileName(resolvedPackageAssetPath)),
-                    overwrite: true);
+                string destFileName = Path.Combine(PackagedShimOutputDirectoryAndRid, $"{ToolCommandName}.{Path.GetExtension(resolvedPackageAssetPath)}");
+
+                EmbedAppNameInHostUtil.EmbedAppHost(
+                    resolvedPackageAssetPath,
+                    destFileName,
+                    $".store/{PackageId.ToLowerInvariant()}/{PackageVersion}/{PackageId.ToLowerInvariant()}/{PackageVersion}/tools/{targetFramework.GetShortFolderName()}/any/{ToolCommandName}"
+                    );
+
+                TaskItem item = new TaskItem(destFileName);
+                item.SetMetadata("ShimRuntimeIdentifier", runtimeIdentifier);
+                embeddedApphostPaths.Add(item);
             }
 
-            RuntimeIdentifierApphost = resultPackages.ToArray();
+            EmbeddedApphostPaths = embeddedApphostPaths.ToArray();
         }
 
         private string FindApphost(string apphostName, LockFileTarget runtimeTarget)
