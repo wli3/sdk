@@ -40,17 +40,17 @@ Copyright (c) .NET Foundation. All rights reserved.
 
     <NETSdkError Condition=" '$(SelfContained)' == 'true' "
                  ResourceName="PackAsToolCannotSupportSelfContained" />
-    
+
     <NETSdkError Condition=" '$(TargetFrameworkIdentifier)' != '.NETCoreApp' "
                  ResourceName="DotnetToolOnlySupportNetcoreapp" />
-    
+
     <NETSdkError Condition=" '$(_TargetFrameworkVersionWithoutV)' &lt; '2.1' "
                  ResourceName="DotnetToolDoesNotSupportTFMLowerThanNetcoreapp21" />
 
     <ItemGroup>
-        <_GeneratedFiles Include="$(PublishDepsFilePath)"/>
-        <_GeneratedFiles Include="$(PublishRuntimeConfigFilePath)"/>
-        <_GeneratedFiles Include="$(_ToolsSettingsFilePath)"/>
+      <_GeneratedFiles Include="$(PublishDepsFilePath)"/>
+      <_GeneratedFiles Include="$(PublishRuntimeConfigFilePath)"/>
+      <_GeneratedFiles Include="$(_ToolsSettingsFilePath)"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -63,7 +63,7 @@ Copyright (c) .NET Foundation. All rights reserved.
       </TfmSpecificPackageFile>
     </ItemGroup>
   </Target>
-  
+
 
   <PropertyGroup>
     <ToolCommandName Condition=" '$(ToolCommandName)' == '' ">$(TargetName)</ToolCommandName>
@@ -80,25 +80,17 @@ Copyright (c) .NET Foundation. All rights reserved.
   <Target Name="ResolveApphostAsset" DependsOnTargets="ResolveReferences;Publish">
     <ItemGroup>
       <_PackageToolShimRuntimeIdentifiers Include="$(PackageToolShimRuntimeIdentifiers)">
-        
+
       </_PackageToolShimRuntimeIdentifiers>
     </ItemGroup>
 
     <ResolveAppHostPackageAssets
+      DotNetAppHostExecutableNameWithoutExtension="$(_DotNetAppHostExecutableNameWithoutExtension)"
       ProjectAssetsFile="$(ProjectAssetsFile)"
-      ProjectAssetsCacheFile="$(ProjectAssetsCacheFile)"
       ProjectPath="$(MSBuildProjectFullPath)"
-      ProjectLanguage="$(Language)"
-      EmitAssetsLogMessages="$(EmitAssetsLogMessages)"
       TargetFrameworkMoniker="$(NuGetTargetMoniker)"
-      RuntimeIdentifier="@(_PackageToolShimRuntimeIdentifiers)"
-      MarkPackageReferencesAsExternallyResolved="$(MarkPackageReferencesAsExternallyResolved)"
-      DisablePackageAssetsCache="$(DisablePackageAssetsCache)"
-      DisableFrameworkAssemblies="$(DisableLockFileFrameworks)"
-      DisableTransitiveProjectReferences="$(DisableTransitiveProjectReferences)"
-      EnsureRuntimePackageDependencies="$(EnsureRuntimePackageDependencies)"
-      VerifyMatchingImplicitPackageVersion="$(VerifyMatchingImplicitPackageVersion)"
-      ExpectedPlatformPackages="@(ExpectedPlatformPackages)"
+      PackageToolShimRuntimeIdentifiers="@(_PackageToolShimRuntimeIdentifiers)"
+      PackagedShimOutputDirectory="$(IntermediateOutputPath)/shims/$(targetframework)"
       >
 
       <Output TaskParameter="RuntimeIdentifierApphost" ItemName="_RuntimeIdentifierApphost" />
