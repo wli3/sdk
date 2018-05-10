@@ -98,6 +98,7 @@ Copyright (c) .NET Foundation. All rights reserved.
       PackageId="$(PackageId)"
       PackageVersion="$(Version)"
       ToolCommandName="$(ToolCommandName)"
+      ToolEntryPoint="$(ToolEntryPoint)"
       >
 
       <Output TaskParameter="EmbeddedApphostPaths" ItemName="_EmbeddedApphostPaths" />

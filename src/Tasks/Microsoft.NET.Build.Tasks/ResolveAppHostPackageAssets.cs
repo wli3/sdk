@@ -44,6 +44,9 @@ namespace Microsoft.NET.Build.Tasks
         public string ToolCommandName { get; set; }
 
         [Required]
+        public string ToolEntryPoint { get; set; }
+
+        [Required]
         public string PackagedShimOutputDirectory { get; set; }
 
         [Required]
@@ -72,17 +75,23 @@ namespace Microsoft.NET.Build.Tasks
 
                 string resolvedPackageAssetPath = FindApphost(apphostName, runtimeTarget);
 
+                Log.LogWarning(resolvedPackageAssetPath);
                 var PackagedShimOutputDirectoryAndRid = Path.Combine(PackagedShimOutputDirectory, runtimeIdentifier);
                 Directory.CreateDirectory(PackagedShimOutputDirectoryAndRid);
-                string destFileName = Path.Combine(PackagedShimOutputDirectoryAndRid, $"{ToolCommandName}{Path.GetExtension(resolvedPackageAssetPath)}");
+                string appBinaryFilePath = Path.Combine(PackagedShimOutputDirectoryAndRid, $"{ToolCommandName}{Path.GetExtension(resolvedPackageAssetPath)}");
+
+                if (File.Exists(appBinaryFilePath))
+                {
+                    File.Delete(appBinaryFilePath);
+                }
 
                 EmbedAppNameInHostUtil.EmbedAppHost(
                     resolvedPackageAssetPath,
-                    destFileName,
-                    $".store/{PackageId.ToLowerInvariant()}/{PackageVersion}/{PackageId.ToLowerInvariant()}/{PackageVersion}/tools/{targetFramework.GetShortFolderName()}/any/{ToolCommandName}"
+                    appBinaryFilePath,
+                    $".store/{PackageId.ToLowerInvariant()}/{PackageVersion}/{PackageId.ToLowerInvariant()}/{PackageVersion}/tools/{targetFramework.GetShortFolderName()}/any/{ToolEntryPoint}"
                     );
 
-                TaskItem item = new TaskItem(destFileName);
+                TaskItem item = new TaskItem(appBinaryFilePath);
                 item.SetMetadata("ShimRuntimeIdentifier", runtimeIdentifier);
                 embeddedApphostPaths.Add(item);
             }
