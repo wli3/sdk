@@ -31,7 +31,7 @@ Copyright (c) .NET Foundation. All rights reserved.
 
     <ProjectReference Update="@(ProjectReference)">
       <PrivateAssets>All</PrivateAssets>
-      <Publish Condition=" '%(ProjectReference.Publish)' !=pack 'false' ">true</Publish>
+      <Publish Condition=" '%(ProjectReference.Publish)' != 'false' ">true</Publish>
     </ProjectReference>
 
   </ItemGroup>
@@ -60,6 +60,10 @@ Copyright (c) .NET Foundation. All rights reserved.
 
       <TfmSpecificPackageFile Include="@(ResolvedFileToPublish->'$([MSBuild]::NormalizeDirectory($(PublishDir)))%(RelativePath)')">
         <PackagePath>tools/$(targetframework)/any/%(ResolvedFileToPublish.RelativePath)</PackagePath>
+      </TfmSpecificPackageFile>
+
+      <TfmSpecificPackageFile Include="@(_EmbeddedApphostPaths)">
+        <PackagePath>tools/$(targetframework)/any/shims/%(_EmbeddedApphostPaths.ShimRuntimeIdentifier)</PackagePath>
       </TfmSpecificPackageFile>
     </ItemGroup>
   </Target>

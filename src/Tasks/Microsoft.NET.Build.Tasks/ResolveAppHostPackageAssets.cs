@@ -74,7 +74,7 @@ namespace Microsoft.NET.Build.Tasks
 
                 var PackagedShimOutputDirectoryAndRid = Path.Combine(PackagedShimOutputDirectory, runtimeIdentifier);
                 Directory.CreateDirectory(PackagedShimOutputDirectoryAndRid);
-                string destFileName = Path.Combine(PackagedShimOutputDirectoryAndRid, $"{ToolCommandName}.{Path.GetExtension(resolvedPackageAssetPath)}");
+                string destFileName = Path.Combine(PackagedShimOutputDirectoryAndRid, $"{ToolCommandName}{Path.GetExtension(resolvedPackageAssetPath)}");
 
                 EmbedAppNameInHostUtil.EmbedAppHost(
                     resolvedPackageAssetPath,
