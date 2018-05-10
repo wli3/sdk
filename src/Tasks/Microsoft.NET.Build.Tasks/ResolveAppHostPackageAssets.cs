@@ -57,41 +57,33 @@ namespace Microsoft.NET.Build.Tasks
 
         protected override void ExecuteCore()
         {
-            var embeddedApphostPaths = new List<ITaskItem>();
             NuGet.Frameworks.NuGetFramework targetFramework = NuGetUtils.ParseFrameworkName(TargetFrameworkMoniker);
             LockFile lockFile = new LockFileCache(this).GetLockFile(ProjectAssetsFile);
             _packageResolver = NuGetPackageResolver.CreateResolver(lockFile, ProjectPath);
             LockFileTarget compileTimeTarget = lockFile.GetTargetAndThrowIfNotFound(targetFramework, runtime: null);
 
+            var embeddedApphostPaths = new List<ITaskItem>();
             foreach (string runtimeIdentifier in PackageToolShimRuntimeIdentifiers.Select(r => r.ItemSpec))
             {
-                var apphostName = DotNetAppHostExecutableNameWithoutExtension;
+                string resolvedApphostAssetPath = GetApphostAsset(targetFramework, lockFile, runtimeIdentifier);
 
-                if (runtimeIdentifier.StartsWith("win"))
-                {
-                    apphostName += ".exe";
-                }
-                LockFileTarget runtimeTarget = lockFile.GetTargetAndThrowIfNotFound(targetFramework, runtimeIdentifier);
-
-                string resolvedPackageAssetPath = FindApphost(apphostName, runtimeTarget);
-
-                Log.LogWarning(resolvedPackageAssetPath);
                 var PackagedShimOutputDirectoryAndRid = Path.Combine(PackagedShimOutputDirectory, runtimeIdentifier);
+                string appHostDestinationFilePath =
+                    Path.Combine(PackagedShimOutputDirectoryAndRid, $"{ToolCommandName}{Path.GetExtension(resolvedApphostAssetPath)}");
+                string appBinaryFilePath = $".store/{PackageId.ToLowerInvariant()}/{PackageVersion}/{PackageId.ToLowerInvariant()}/{PackageVersion}/tools/{targetFramework.GetShortFolderName()}/any/{ToolEntryPoint}";
+
                 Directory.CreateDirectory(PackagedShimOutputDirectoryAndRid);
-                string appBinaryFilePath = Path.Combine(PackagedShimOutputDirectoryAndRid, $"{ToolCommandName}{Path.GetExtension(resolvedPackageAssetPath)}");
-
-                if (File.Exists(appBinaryFilePath))
+                if (File.Exists(appHostDestinationFilePath))
                 {
-                    File.Delete(appBinaryFilePath);
+                    File.Delete(appHostDestinationFilePath);
                 }
-
                 EmbedAppNameInHostUtil.EmbedAppHost(
-                    resolvedPackageAssetPath,
-                    appBinaryFilePath,
-                    $".store/{PackageId.ToLowerInvariant()}/{PackageVersion}/{PackageId.ToLowerInvariant()}/{PackageVersion}/tools/{targetFramework.GetShortFolderName()}/any/{ToolEntryPoint}"
+                    resolvedApphostAssetPath,
+                    appHostDestinationFilePath,
+                    appBinaryFilePath
                     );
 
-                TaskItem item = new TaskItem(appBinaryFilePath);
+                TaskItem item = new TaskItem(appHostDestinationFilePath);
                 item.SetMetadata("ShimRuntimeIdentifier", runtimeIdentifier);
                 embeddedApphostPaths.Add(item);
             }
@@ -99,7 +91,20 @@ namespace Microsoft.NET.Build.Tasks
             EmbeddedApphostPaths = embeddedApphostPaths.ToArray();
         }
 
-        private string FindApphost(string apphostName, LockFileTarget runtimeTarget)
+        private string GetApphostAsset(NuGet.Frameworks.NuGetFramework targetFramework, LockFile lockFile, string runtimeIdentifier)
+        {
+            var apphostName = DotNetAppHostExecutableNameWithoutExtension;
+
+            if (runtimeIdentifier.StartsWith("win"))
+            {
+                apphostName += ".exe";
+            }
+            LockFileTarget runtimeTarget = lockFile.GetTargetAndThrowIfNotFound(targetFramework, runtimeIdentifier);
+
+            return FindApphostInRuntimeTarget(apphostName, runtimeTarget);
+        }
+
+        private string FindApphostInRuntimeTarget(string apphostName, LockFileTarget runtimeTarget)
         {
             foreach (LockFileTargetLibrary library in runtimeTarget.Libraries)
             {
