@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using Xunit.Abstractions;
@@ -10,11 +11,11 @@ namespace Microsoft.NET.TestFramework.Commands
 {
     public class ShimCommand : TestCommand
     {
-        private readonly string _commandName;
+        private readonly string _commandPath;
 
-        public ShimCommand(ITestOutputHelper log, string commandName, params string[] args) : base(log)
+        public ShimCommand(ITestOutputHelper log, string commandPath, params string[] args) : base(log)
         {
-            _commandName = commandName;
+            _commandPath = commandPath;
             Arguments.AddRange(args);
         }
 
@@ -22,22 +23,27 @@ namespace Microsoft.NET.TestFramework.Commands
         {
             var sdkCommandSpec = new SdkCommandSpec()
             {
-                FileName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? _commandName + ".exe" : _commandName,
+                FileName = _commandPath,
                 Arguments = args.ToList(),
-                WorkingDirectory = WorkingDirectory
+                WorkingDirectory = WorkingDirectory,
+                UseShellExecute = false,
             };
 
+            if (!File.Exists(sdkCommandSpec.FileName))
+            {
+                throw new ArgumentException($"Cannot find FileName {sdkCommandSpec.FileName}");
+            }
 
+            string dotnetRoot = Path.GetDirectoryName(TestContext.Current.ToolsetUnderTest.DotNetHostPath);
             if (Environment.Is64BitProcess)
             {
-                sdkCommandSpec.Environment.Add("DOTNET_ROOT", TestContext.Current.ToolsetUnderTest.DotNetHostPath);
+                sdkCommandSpec.Environment.Add("DOTNET_ROOT", dotnetRoot);
             }
             else
             {
-                sdkCommandSpec.Environment.Add("DOTNET_ROOT(x86)", TestContext.Current.ToolsetUnderTest.DotNetHostPath);
+                sdkCommandSpec.Environment.Add("DOTNET_ROOT(x86)", dotnetRoot);
             }
 
-            TestContext.Current.AddTestEnvironmentVariables(sdkCommandSpec);
             return sdkCommandSpec;
         }
     }

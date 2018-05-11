@@ -26,11 +26,9 @@ namespace Microsoft.NET.ToolPack.Tests
         private string _packageId;
         private readonly string _packageVersion = "1.0.0";
         private const string _customToolCommandName = "customToolCommandName";
-        private ITestOutputHelper _log;
 
         public GivenThatWeWantToPackAToolProjectWithPackagedShim(ITestOutputHelper log) : base(log)
         {
-            _log = log;
         }
 
         private string SetupNuGetPackage(bool multiTarget, [CallerMemberName] string callingMethod = "")
@@ -44,7 +42,6 @@ namespace Microsoft.NET.ToolPack.Tests
                     XElement propertyGroup = project.Root.Elements(ns + "PropertyGroup").First();
                     propertyGroup.Add(new XElement(ns + "PackageToolShimRuntimeIdentifiers", "win-x64;ubuntu-x64"));
                     propertyGroup.Add(new XElement(ns + "ToolCommandName", _customToolCommandName));
-                    propertyGroup.Add(new XElement(ns + "PackageId", _customToolCommandName));
 
                     if (multiTarget)
                     {
@@ -134,26 +131,28 @@ namespace Microsoft.NET.ToolPack.Tests
             {
                 IEnumerable<NuGet.Frameworks.NuGetFramework> supportedFrameworks = nupkgReader.GetSupportedFrameworks();
                 supportedFrameworks.Should().NotBeEmpty();
-                var tmpfilePathRoot = Path.Combine(_testRoot, "temp", Path.GetRandomFileName());
+                var simulateToolPathRoot = Path.Combine(_testRoot, "temp", Path.GetRandomFileName());
 
                 foreach (NuGet.Frameworks.NuGetFramework framework in supportedFrameworks)
                 {
-                    CopyPackageAssetToToolLayout("consoledemo.runtimeconfig.json", nupkgReader, tmpfilePathRoot, framework);
-                    CopyPackageAssetToToolLayout("consoledemo.deps.json", nupkgReader, tmpfilePathRoot, framework);
-                    CopyPackageAssetToToolLayout("try-toolrid.dll", nupkgReader, tmpfilePathRoot, framework);
+                    CopyPackageAssetToToolLayout("consoledemo.runtimeconfig.json", nupkgReader, simulateToolPathRoot, framework);
+                    CopyPackageAssetToToolLayout("consoledemo.deps.json", nupkgReader, simulateToolPathRoot, framework);
+                    CopyPackageAssetToToolLayout("consoledemo.dll", nupkgReader, simulateToolPathRoot, framework);
+                    CopyPackageAssetToToolLayout("Newtonsoft.Json.dll", nupkgReader, simulateToolPathRoot, framework);
 
-                    string shimPath = Path.Combine(tmpfilePathRoot, $"{_customToolCommandName}.exe");
+                    string shimPath = Path.Combine(simulateToolPathRoot, $"{_customToolCommandName}.exe");
                     nupkgReader.ExtractFile(
                         $"tools/{framework.GetShortFolderName()}/any/shims/win-x64/{_customToolCommandName}.exe",
                         shimPath,
                         null);
 
-                    var command = new ShimCommand(_log, _customToolCommandName);
+                    var command = new ShimCommand(Log, shimPath);
+                    command.WorkingDirectory = simulateToolPathRoot;
 
                     command.Execute().Should()
                       .Pass()
                       .And
-                      .HaveStdOutContaining("Hello World!");
+                      .HaveStdOutContaining("Hello World from Global Tool");
                 }
             }
 
