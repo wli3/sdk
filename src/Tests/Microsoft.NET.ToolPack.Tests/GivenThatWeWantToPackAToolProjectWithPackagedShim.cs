@@ -109,7 +109,7 @@ namespace Microsoft.NET.ToolPack.Tests
                     allItems.Should().Contain($"tools/{framework.GetShortFolderName()}/any/shims/win-x64/{_customToolCommandName}.exe",
                         "Name should be the same as the command name even customized");
                     allItems.Should().Contain($"tools/{framework.GetShortFolderName()}/any/shims/ubuntu-x64/{_customToolCommandName}",
-                        "RID should be the excat match of the RID in the property, even Apphost only has version of win, osx and linux");
+                        "RID should be the exact match of the RID in the property, even Apphost only has version of win, osx and linux");
                 }
             }
         }
