@@ -134,7 +134,7 @@ namespace Microsoft.NET.ToolPack.Tests
 
                 foreach (NuGetFramework framework in supportedFrameworks)
                 {
-                    string[] portableAppContent = new string[] {
+                    string[] portableAppContent = {
                         "consoledemo.runtimeconfig.json",
                         "consoledemo.deps.json",
                         "consoledemo.dll",
