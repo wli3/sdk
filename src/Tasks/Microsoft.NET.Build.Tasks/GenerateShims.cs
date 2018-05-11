@@ -19,6 +19,9 @@ namespace Microsoft.NET.Build.Tasks
         /// </summary>
         public string ProjectAssetsFile { get; set; }
 
+        /// <summary>
+        /// The file name of Apphost asset.
+        /// </summary>
         [Required]
         public string DotNetAppHostExecutableNameWithoutExtension { get; set; }
 
@@ -34,24 +37,45 @@ namespace Microsoft.NET.Build.Tasks
         [Required]
         public string TargetFrameworkMoniker { get; set; }
 
+        /// <summary>
+        /// PackageId of the dotnet tool NuGet Package.
+        /// </summary>
         [Required]
         public string PackageId { get; set; }
 
+        /// <summary>
+        /// Package Version of the dotnet tool NuGet Package.
+        /// </summary>
         [Required]
         public string PackageVersion { get; set; }
 
+        /// <summary>
+        /// The command name of the dotnet tool.
+        /// </summary>
         [Required]
         public string ToolCommandName { get; set; }
 
+        /// <summary>
+        /// The entry point of the dotnet tool which will be run by Apphost
+        /// </summary>
         [Required]
         public string ToolEntryPoint { get; set; }
 
+        /// <summary>
+        /// The output Directroy path of generated shims.
+        /// </summary>
         [Required]
         public string PackagedShimOutputDirectory { get; set; }
 
+        /// <summary>
+        /// The RuntimeIdentifiers that shims will be generated for.
+        /// </summary>
         [Required]
         public ITaskItem[] PackageToolShimRuntimeIdentifiers { get; set; }
 
+        /// <summary>
+        /// Path of generated shims. metadata "ShimRuntimeIdentifier" is used to map back to PackageToolShimRuntimeIdentifiers.
+        /// </summary>
         [Output]
         public ITaskItem[] EmbeddedApphostPaths { get; private set; }
 
@@ -77,6 +101,7 @@ namespace Microsoft.NET.Build.Tasks
                 {
                     File.Delete(appHostDestinationFilePath);
                 }
+
                 EmbedAppNameInHostUtil.EmbedAppHost(
                     resolvedApphostAssetPath,
                     appHostDestinationFilePath,
