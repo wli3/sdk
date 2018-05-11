@@ -14,9 +14,7 @@ using NuGet.Packaging;
 using System.Xml.Linq;
 using System.Runtime.CompilerServices;
 using System;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-using Microsoft.DotNet.Cli.Utils;
+using NuGet.Frameworks;
 
 namespace Microsoft.NET.ToolPack.Tests
 {
@@ -83,10 +81,10 @@ namespace Microsoft.NET.ToolPack.Tests
             var nugetPackage = SetupNuGetPackage(multiTarget);
             using (var nupkgReader = new PackageArchiveReader(nugetPackage))
             {
-                IEnumerable<NuGet.Frameworks.NuGetFramework> supportedFrameworks = nupkgReader.GetSupportedFrameworks();
+                IEnumerable<NuGetFramework> supportedFrameworks = nupkgReader.GetSupportedFrameworks();
                 supportedFrameworks.Should().NotBeEmpty();
 
-                foreach (NuGet.Frameworks.NuGetFramework framework in supportedFrameworks)
+                foreach (NuGetFramework framework in supportedFrameworks)
                 {
                     var allItems = nupkgReader.GetToolItems().SelectMany(i => i.Items).ToList();
                     allItems.Should().Contain($"tools/{framework.GetShortFolderName()}/any/Newtonsoft.Json.dll");
@@ -102,16 +100,16 @@ namespace Microsoft.NET.ToolPack.Tests
             var nugetPackage = SetupNuGetPackage(multiTarget);
             using (var nupkgReader = new PackageArchiveReader(nugetPackage))
             {
-                IEnumerable<NuGet.Frameworks.NuGetFramework> supportedFrameworks = nupkgReader.GetSupportedFrameworks();
+                IEnumerable<NuGetFramework> supportedFrameworks = nupkgReader.GetSupportedFrameworks();
                 supportedFrameworks.Should().NotBeEmpty();
 
-                foreach (NuGet.Frameworks.NuGetFramework framework in supportedFrameworks)
+                foreach (NuGetFramework framework in supportedFrameworks)
                 {
                     var allItems = nupkgReader.GetToolItems().SelectMany(i => i.Items).ToList();
                     allItems.Should().Contain($"tools/{framework.GetShortFolderName()}/any/shims/win-x64/{_customToolCommandName}.exe",
                         "Name should be the same as the command name even customized");
                     allItems.Should().Contain($"tools/{framework.GetShortFolderName()}/any/shims/ubuntu-x64/{_customToolCommandName}",
-                        "RID should be the excat match of the property, even Apphost only has explicitly win, osx and linux");
+                        "RID should be the excat match of the RID in the property, even Apphost only has version of win, osx and linux");
                 }
             }
         }
@@ -119,26 +117,29 @@ namespace Microsoft.NET.ToolPack.Tests
         [WindowsOnlyTheory]
         [InlineData(true)]
         [InlineData(false)]
-        public void It_produce_valid_shims(bool multiTarget)
+        public void It_produces_valid_shims(bool multiTarget)
         {
             if (!Environment.Is64BitOperatingSystem)
             {
                 // only sample test on win-x64 since shims are RID specific
                 return;
             }
+
             var nugetPackage = SetupNuGetPackage(multiTarget);
             using (var nupkgReader = new PackageArchiveReader(nugetPackage))
             {
-                IEnumerable<NuGet.Frameworks.NuGetFramework> supportedFrameworks = nupkgReader.GetSupportedFrameworks();
+                IEnumerable<NuGetFramework> supportedFrameworks = nupkgReader.GetSupportedFrameworks();
                 supportedFrameworks.Should().NotBeEmpty();
                 var simulateToolPathRoot = Path.Combine(_testRoot, "temp", Path.GetRandomFileName());
 
-                foreach (NuGet.Frameworks.NuGetFramework framework in supportedFrameworks)
+                foreach (NuGetFramework framework in supportedFrameworks)
                 {
-                    CopyPackageAssetToToolLayout("consoledemo.runtimeconfig.json", nupkgReader, simulateToolPathRoot, framework);
-                    CopyPackageAssetToToolLayout("consoledemo.deps.json", nupkgReader, simulateToolPathRoot, framework);
-                    CopyPackageAssetToToolLayout("consoledemo.dll", nupkgReader, simulateToolPathRoot, framework);
-                    CopyPackageAssetToToolLayout("Newtonsoft.Json.dll", nupkgReader, simulateToolPathRoot, framework);
+                    string[] portableAppContent = new string[] {
+                        "consoledemo.runtimeconfig.json",
+                        "consoledemo.deps.json",
+                        "consoledemo.dll",
+                        "Newtonsoft.Json.dll"};
+                    CopyPackageAssetToToolLayout(portableAppContent, nupkgReader, simulateToolPathRoot, framework);
 
                     string shimPath = Path.Combine(simulateToolPathRoot, $"{_customToolCommandName}.exe");
                     nupkgReader.ExtractFile(
@@ -146,31 +147,45 @@ namespace Microsoft.NET.ToolPack.Tests
                         shimPath,
                         null);
 
-                    var command = new ShimCommand(Log, shimPath);
-                    command.WorkingDirectory = simulateToolPathRoot;
-
+                    var command = new ShimCommand(Log, shimPath)
+                    {
+                        WorkingDirectory = simulateToolPathRoot
+                    };
                     command.Execute().Should()
                       .Pass()
                       .And
                       .HaveStdOutContaining("Hello World from Global Tool");
                 }
             }
-
-
-            //tring copiedFile = nupkgReader.ExtractFile($"tools/{anyTfm}/any/DotnetToolSettings.xml", tmpfilePath, null);
         }
 
         private void CopyPackageAssetToToolLayout(
-            string nupkgAssetName,
+            string[] nupkgAssetNames,
             PackageArchiveReader nupkgReader,
-            string tmpfilePathRoot, 
-            NuGet.Frameworks.NuGetFramework framework)
+            string tmpfilePathRoot,
+            NuGetFramework framework)
         {
-            var toolLayoutDirectory = 
-                Path.Combine(tmpfilePathRoot, ".store", _packageId, _packageVersion, _packageId, _packageVersion, "tools", framework.GetShortFolderName(), "any");
-            var destinationFilePath = 
-                Path.Combine(toolLayoutDirectory, nupkgAssetName);
-            var copiedFile = nupkgReader.ExtractFile($"tools/{framework.GetShortFolderName()}/any/{nupkgAssetName}", destinationFilePath, null);
+            var toolLayoutDirectory =
+                Path.Combine(
+                    tmpfilePathRoot,
+                    ".store",
+                    _packageId,
+                    _packageVersion,
+                    _packageId,
+                    _packageVersion,
+                    "tools",
+                    framework.GetShortFolderName(),
+                    "any");
+
+            foreach (string nupkgAssetName in nupkgAssetNames)
+            {
+                var destinationFilePath =
+                    Path.Combine(toolLayoutDirectory, nupkgAssetName);
+                nupkgReader.ExtractFile(
+                    $"tools/{framework.GetShortFolderName()}/any/{nupkgAssetName}",
+                    destinationFilePath,
+                    null);
+            }
         }
     }
 }

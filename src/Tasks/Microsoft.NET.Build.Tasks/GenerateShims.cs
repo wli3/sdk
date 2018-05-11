@@ -10,7 +10,7 @@ using NuGet.ProjectModel;
 
 namespace Microsoft.NET.Build.Tasks
 {
-    public sealed class ResolveAppHostPackageAssets : TaskBase
+    public sealed class GenerateShims : TaskBase
     {
         private NuGetPackageResolver _packageResolver;
 

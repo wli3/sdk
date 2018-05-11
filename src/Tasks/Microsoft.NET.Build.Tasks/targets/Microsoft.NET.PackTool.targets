@@ -94,7 +94,7 @@ Copyright (c) .NET Foundation. All rights reserved.
       ProjectPath="$(MSBuildProjectFullPath)"
       TargetFrameworkMoniker="$(NuGetTargetMoniker)"
       PackageToolShimRuntimeIdentifiers="@(_PackageToolShimRuntimeIdentifiers)"
-      PackagedShimOutputDirectory="$(IntermediateOutputPath)/shims/$(targetframework)"
+      PackagedShimOutputDirectory="$(IntermediateOutputPath)/$(Configuration)/shims/$(targetframework)"
       PackageId="$(PackageId)"
       PackageVersion="$(Version)"
       ToolCommandName="$(ToolCommandName)"
