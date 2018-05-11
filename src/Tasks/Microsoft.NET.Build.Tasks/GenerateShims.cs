@@ -82,8 +82,8 @@ namespace Microsoft.NET.Build.Tasks
 
         protected override void ExecuteCore()
         {
-            var targetFramework = NuGetUtils.ParseFrameworkName(TargetFrameworkMoniker);
-            var lockFile = new LockFileCache(this).GetLockFile(ProjectAssetsFile);
+            NuGetFramework targetFramework = NuGetUtils.ParseFrameworkName(TargetFrameworkMoniker);
+            LockFile lockFile = new LockFileCache(this).GetLockFile(ProjectAssetsFile);
             _packageResolver = NuGetPackageResolver.CreateResolver(lockFile, ProjectPath);
 
             var embeddedApphostPaths = new List<ITaskItem>();
@@ -127,21 +127,21 @@ namespace Microsoft.NET.Build.Tasks
                 apphostName += ".exe";
             }
 
-            var runtimeTarget = lockFile.GetTargetAndThrowIfNotFound(targetFramework, runtimeIdentifier);
+            LockFileTarget runtimeTarget = lockFile.GetTargetAndThrowIfNotFound(targetFramework, runtimeIdentifier);
 
             return FindApphostInRuntimeTarget(apphostName, runtimeTarget);
         }
 
         private string FindApphostInRuntimeTarget(string apphostName, LockFileTarget runtimeTarget)
         {
-            foreach (var library in runtimeTarget.Libraries)
+            foreach (LockFileTargetLibrary library in runtimeTarget.Libraries)
             {
                 if (!library.IsPackage())
                 {
                     continue;
                 }
 
-                foreach (var asset in library.NativeLibraries)
+                foreach (LockFileItem asset in library.NativeLibraries)
                 {
                     if (asset.IsPlaceholderFile())
                     {
