@@ -15,6 +15,11 @@ namespace Microsoft.NET.TestFramework.Commands
 
         public ShimCommand(ITestOutputHelper log, string commandPath, params string[] args) : base(log)
         {
+            if (!File.Exists(commandPath))
+            {
+                throw new ArgumentException($"Cannot find command {commandPath}");
+            }
+
             _commandPath = commandPath;
             Arguments.AddRange(args);
         }
@@ -26,13 +31,8 @@ namespace Microsoft.NET.TestFramework.Commands
                 FileName = _commandPath,
                 Arguments = args.ToList(),
                 WorkingDirectory = WorkingDirectory,
-                UseShellExecute = false,
             };
 
-            if (!File.Exists(sdkCommandSpec.FileName))
-            {
-                throw new ArgumentException($"Cannot find FileName {sdkCommandSpec.FileName}");
-            }
 
             string dotnetRoot = Path.GetDirectoryName(TestContext.Current.ToolsetUnderTest.DotNetHostPath);
             if (Environment.Is64BitProcess)

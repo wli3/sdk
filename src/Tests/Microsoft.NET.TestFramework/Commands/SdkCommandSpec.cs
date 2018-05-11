@@ -16,7 +16,6 @@ namespace Microsoft.NET.TestFramework.Commands
         public Dictionary<string, string> Environment { get; set; } = new Dictionary<string, string>();
 
         public string WorkingDirectory { get; set; }
-        public bool UseShellExecute { get; set; }
 
         private string EscapeArgs()
         {
@@ -49,7 +48,6 @@ namespace Microsoft.NET.TestFramework.Commands
         {
             var ret = new ProcessStartInfo();
             ret.FileName = FileName;
-            //ret.UseShellExecute = UseShellExecute;
             ret.Arguments = EscapeArgs();
             foreach (var kvp in Environment)
             {
