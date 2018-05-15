@@ -18,6 +18,7 @@ namespace Microsoft.NET.Build.Tasks
         /// <summary>
         /// Path to assets.json.
         /// </summary>
+        [Required]
         public string ProjectAssetsFile { get; set; }
 
         /// <summary>
@@ -72,10 +73,10 @@ namespace Microsoft.NET.Build.Tasks
         /// The RuntimeIdentifiers that shims will be generated for.
         /// </summary>
         [Required]
-        public ITaskItem[] PackAsToolShimRuntimeIdentifiers { get; set; }
+        public ITaskItem[] ShimRuntimeIdentifiers { get; set; }
 
         /// <summary>
-        /// Path of generated shims. metadata "ShimRuntimeIdentifier" is used to map back to PackAsToolShimRuntimeIdentifiers.
+        /// Path of generated shims. metadata "ShimRuntimeIdentifier" is used to map back to input ShimRuntimeIdentifiers.
         /// </summary>
         [Output]
         public ITaskItem[] EmbeddedApphostPaths { get; private set; }
@@ -87,7 +88,7 @@ namespace Microsoft.NET.Build.Tasks
             _packageResolver = NuGetPackageResolver.CreateResolver(lockFile, ProjectPath);
 
             var embeddedApphostPaths = new List<ITaskItem>();
-            foreach (var runtimeIdentifier in PackAsToolShimRuntimeIdentifiers.Select(r => r.ItemSpec))
+            foreach (var runtimeIdentifier in ShimRuntimeIdentifiers.Select(r => r.ItemSpec))
             {
                 var resolvedApphostAssetPath = GetApphostAsset(targetFramework, lockFile, runtimeIdentifier);
 
