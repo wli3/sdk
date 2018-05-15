@@ -149,7 +149,8 @@ namespace Microsoft.NET.Build.Tasks
                         continue;
                     }
 
-                    var resolvedPackageAssetPath = ResolvePackageAssetPath(library, asset.Path);
+                    var resolvedPackageAssetPath = _packageResolver.ResolvePackageAssetPath(library, asset.Path);
+
                     if (Path.GetFileName(resolvedPackageAssetPath) == apphostName)
                     {
                         return resolvedPackageAssetPath;
@@ -158,17 +159,6 @@ namespace Microsoft.NET.Build.Tasks
             }
 
             throw new BuildErrorException(Strings.CannotFindApphostForRid, runtimeTarget.RuntimeIdentifier);
-        }
-
-        private string ResolvePackageAssetPath(LockFileTargetLibrary package, string relativePath)
-        {
-            var packagePath = _packageResolver.GetPackageDirectory(package.Name, package.Version);
-            return Path.Combine(packagePath, NormalizeRelativePath(relativePath));
-        }
-
-        private static string NormalizeRelativePath(string relativePath)
-        {
-            return relativePath.Replace('/', Path.DirectorySeparatorChar);
         }
     }
 }
