@@ -83,16 +83,16 @@ Copyright (c) .NET Foundation. All rights reserved.
 
   <Target Name="ResolveApphostAsset" DependsOnTargets="ResolveReferences;Publish">
     <ItemGroup>
-      <_PackageToolShimRuntimeIdentifiers Include="$(PackageToolShimRuntimeIdentifiers)">
+      <_PackAsToolShimRuntimeIdentifiers Include="$(PackAsToolShimRuntimeIdentifiers)">
 
-      </_PackageToolShimRuntimeIdentifiers>
+      </_PackAsToolShimRuntimeIdentifiers>
     </ItemGroup>
 
     <GenerateShims
       DotNetAppHostExecutableNameWithoutExtension="$(_DotNetAppHostExecutableNameWithoutExtension)"
       PackagedShimOutputDirectory="$(IntermediateOutputPath)/$(Configuration)/shims/$(targetframework)"
       PackageId="$(PackageId)"
-      PackageToolShimRuntimeIdentifiers="@(_PackageToolShimRuntimeIdentifiers)"
+      PackAsToolShimRuntimeIdentifiers="@(_PackAsToolShimRuntimeIdentifiers)"
       PackageVersion="$(Version)"
       ProjectAssetsFile="$(ProjectAssetsFile)"
       ProjectPath="$(MSBuildProjectFullPath)"
