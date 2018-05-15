@@ -83,9 +83,7 @@ Copyright (c) .NET Foundation. All rights reserved.
 
   <Target Name="ResolveApphostAsset" DependsOnTargets="ResolveReferences;Publish">
     <ItemGroup>
-      <_PackAsToolShimRuntimeIdentifiers Include="$(PackAsToolShimRuntimeIdentifiers)">
-
-      </_PackAsToolShimRuntimeIdentifiers>
+      <_PackAsToolShimRuntimeIdentifiers Include="$(PackAsToolShimRuntimeIdentifiers)"/>
     </ItemGroup>
 
     <GenerateShims
