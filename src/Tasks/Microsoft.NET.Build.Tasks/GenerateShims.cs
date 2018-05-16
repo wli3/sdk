@@ -64,7 +64,7 @@ namespace Microsoft.NET.Build.Tasks
         public string ToolEntryPoint { get; set; }
 
         /// <summary>
-        /// The output Directroy path of generated shims.
+        /// The output directory path of generated shims.
         /// </summary>
         [Required]
         public string PackagedShimOutputDirectory { get; set; }
@@ -92,23 +92,35 @@ namespace Microsoft.NET.Build.Tasks
             {
                 var resolvedApphostAssetPath = GetApphostAsset(targetFramework, lockFile, runtimeIdentifier);
 
-                var packagedShimOutputDirectoryAndRid = Path.Combine(PackagedShimOutputDirectory, runtimeIdentifier);
-                var appHostDestinationFilePath =
-                    Path.Combine(packagedShimOutputDirectoryAndRid,
-                        $"{ToolCommandName}{Path.GetExtension(resolvedApphostAssetPath)}");
-                var appBinaryFilePath =
-                    $".store/{PackageId.ToLowerInvariant()}/{PackageVersion}/{PackageId.ToLowerInvariant()}/{PackageVersion}/tools/{targetFramework.GetShortFolderName()}/any/{ToolEntryPoint}";
+                var packagedShimOutputDirectoryAndRid = Path.Combine(
+                        PackagedShimOutputDirectory,
+                        runtimeIdentifier);
+
+                var appHostDestinationFilePath = Path.Combine(
+                        packagedShimOutputDirectoryAndRid,
+                        ToolCommandName + Path.GetExtension(resolvedApphostAssetPath));
 
                 Directory.CreateDirectory(packagedShimOutputDirectoryAndRid);
-                if (File.Exists(appHostDestinationFilePath))
-                {
-                    File.Delete(appHostDestinationFilePath);
-                }
+
+                // This is the embedded string. We should normalize it on forward slash, so the file won't be different according to
+                // build machine.
+                var appBinaryFilePath = string.Join("/",
+                    new[] {
+                        ".store",
+                        PackageId.ToLowerInvariant(),
+                        PackageVersion,
+                        PackageId.ToLowerInvariant(),
+                        PackageVersion,
+                        "tools",
+                        targetFramework.GetShortFolderName(),
+                        "any",
+                        ToolEntryPoint});
 
                 AppHost.Create(
                     resolvedApphostAssetPath,
                     appHostDestinationFilePath,
-                    appBinaryFilePath
+                    appBinaryFilePath,
+                    overwriteExisting: true
                 );
 
                 var item = new TaskItem(appHostDestinationFilePath);
