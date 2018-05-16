@@ -41,6 +41,9 @@ Copyright (c) .NET Foundation. All rights reserved.
     <NETSdkError Condition=" '$(SelfContained)' == 'true' "
                  ResourceName="PackAsToolCannotSupportSelfContained" />
 
+    <NETSdkError Condition=" '$(PackAsToolShimRuntimeIdentifiers)' != '' and '$(PackAsTool)' != 'true' "
+                 ResourceName="ShimRuntimeIdentifiersRequiresPackAsTool" />
+
     <NETSdkError Condition=" '$(TargetFrameworkIdentifier)' != '.NETCoreApp' "
                  ResourceName="DotnetToolOnlySupportNetcoreapp" />
 

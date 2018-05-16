@@ -114,6 +114,33 @@ namespace Microsoft.NET.ToolPack.Tests
             }
         }
 
+        [Fact]
+        public void It_errors_when_property_is_not_consistent()
+        {
+            TestAsset helloWorldAsset = _testAssetsManager
+                .CopyTestAsset("PortableTool")
+                .WithSource()
+                .WithProjectChanges(project =>
+                {
+                    XNamespace ns = project.Root.Name.Namespace;
+                    XElement propertyGroup = project.Root.Elements(ns + "PropertyGroup").First();
+                    propertyGroup.Add(new XElement(ns + "PackAsToolShimRuntimeIdentifiers", "win-x64;osx.10.12-x64"));
+                    propertyGroup.Element("PackAsTool").Remove();
+                })
+                .Restore(Log);
+
+            _testRoot = helloWorldAsset.TestRoot;
+
+            var packCommand = new PackCommand(Log, helloWorldAsset.TestRoot);
+
+            packCommand
+                .Execute()
+                .Should()
+                .Fail()
+                .And
+                .HaveStdOut("\"PackAsToolShimRuntimeIdentifiers\" is a property to configure tool package.It requires property \"PackAsTool\" being set to \"true\".");
+        }
+
         [WindowsOnlyTheory]
         [InlineData(true)]
         [InlineData(false)]
