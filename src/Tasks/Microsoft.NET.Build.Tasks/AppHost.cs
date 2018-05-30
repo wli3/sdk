@@ -1,6 +1,8 @@
 ﻿// Copyright (c) .NET Foundation and contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 
@@ -11,6 +13,7 @@ namespace Microsoft.NET.Build.Tasks
     /// </summary>
     public static class AppHost
     {
+        private static StringBuilder _alllog;
         private const string _placeHolder = "c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2"; //hash value embedded in default apphost executable
         private readonly static byte[] _bytesToSearch = Encoding.UTF8.GetBytes(_placeHolder);
 
@@ -27,6 +30,11 @@ namespace Microsoft.NET.Build.Tasks
             string appBinaryFilePath,
             bool overwriteExisting = false)
         {
+            _alllog = new StringBuilder();
+            Stopwatch stopWatch = new Stopwatch();
+            stopWatch.Start();
+
+            _alllog.AppendLine("memory: " + GC.GetTotalMemory(false));
             var hostExtension = Path.GetExtension(appHostSourceFilePath);
             var appbaseName = Path.GetFileNameWithoutExtension(appBinaryFilePath);
             var bytesToWrite = Encoding.UTF8.GetBytes(appBinaryFilePath);
@@ -38,28 +46,38 @@ namespace Microsoft.NET.Build.Tasks
                 return;
             }
 
+            _alllog.AppendLine("memory: " + GC.GetTotalMemory(false));
             if (bytesToWrite.Length > 1024)
             {
                 throw new BuildErrorException(Strings.FileNameIsTooLong, appBinaryFilePath);
             }
 
+            _alllog.AppendLine("memory: " + GC.GetTotalMemory(false));
             var array = File.ReadAllBytes(appHostSourceFilePath);
 
             SearchAndReplace(array, _bytesToSearch, bytesToWrite, appHostSourceFilePath);
 
+            _alllog.AppendLine("memory: " + GC.GetTotalMemory(false));
             if (!Directory.Exists(destinationDirectory))
             {
                 Directory.CreateDirectory(destinationDirectory);
             }
 
+            _alllog.AppendLine("memory: " + GC.GetTotalMemory(false));
             // Copy AppHostSourcePath to ModifiedAppHostPath so it inherits the same attributes\permissions.
             File.Copy(appHostSourceFilePath, appHostDestinationFilePath, overwriteExisting);
 
+            _alllog.AppendLine("memory: " + GC.GetTotalMemory(false));
             // Re-write ModifiedAppHostPath with the proper contents.
             using (FileStream fs = new FileStream(appHostDestinationFilePath, FileMode.Truncate, FileAccess.ReadWrite, FileShare.Read))
             {
+                _alllog.AppendLine("memory: " + GC.GetTotalMemory(false));
                 fs.Write(array, 0, array.Length);
             }
+
+            stopWatch.Stop();
+            _alllog.AppendLine(stopWatch.Elapsed.ToString());
+            File.WriteAllText(@"C:\Users\wul\Downloads\AppHostLog_baseline.txt", _alllog.ToString());
         }
 
         // See: https://en.wikipedia.org/wiki/Knuth%E2%80%93Morris%E2%80%93Pratt_algorithm
@@ -134,14 +152,19 @@ namespace Microsoft.NET.Build.Tasks
 
         private static void SearchAndReplace(byte[] array, byte[] searchPattern, byte[] patternToReplace, string appHostSourcePath)
         {
+            _alllog.AppendLine("memory: " + GC.GetTotalMemory(false));
+
+
             int offset = KMPSearch(searchPattern, array);
             if (offset < 0)
             {
                 throw new BuildErrorException(Strings.AppHostHasBeenModified, appHostSourcePath, _placeHolder);
             }
 
+            _alllog.AppendLine("memory: " + GC.GetTotalMemory(false));
             patternToReplace.CopyTo(array, offset);
 
+            _alllog.AppendLine("memory: " + GC.GetTotalMemory(false));
             if (patternToReplace.Length < searchPattern.Length)
             {
                 for (int i = patternToReplace.Length; i < searchPattern.Length; i++)
