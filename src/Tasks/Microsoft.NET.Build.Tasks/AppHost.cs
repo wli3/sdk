@@ -1,6 +1,8 @@
 ﻿// Copyright (c) .NET Foundation and contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
+using System.Diagnostics;
 using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Text;
@@ -14,6 +16,7 @@ namespace Microsoft.NET.Build.Tasks
     {
         private const string _placeHolder = "c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2"; //hash value embedded in default apphost executable
         private readonly static byte[] _bytesToSearch = Encoding.UTF8.GetBytes(_placeHolder);
+        private static StringBuilder _alllog;
 
         /// <summary>
         /// Create an AppHost with embedded configuration of app binary location
@@ -28,10 +31,15 @@ namespace Microsoft.NET.Build.Tasks
             string appBinaryFilePath,
             bool overwriteExisting = false)
         {
+            _alllog = new StringBuilder();
+            Stopwatch stopWatch = new Stopwatch();
+            stopWatch.Start();
             var hostExtension = Path.GetExtension(appHostSourceFilePath);
             var appbaseName = Path.GetFileNameWithoutExtension(appBinaryFilePath);
             var bytesToWrite = Encoding.UTF8.GetBytes(appBinaryFilePath);
             var destinationDirectory = new FileInfo(appHostDestinationFilePath).Directory.FullName;
+
+            _alllog.AppendLine("memory: " + GC.GetTotalMemory(true));
 
             if (File.Exists(appHostDestinationFilePath))
             {
@@ -44,20 +52,30 @@ namespace Microsoft.NET.Build.Tasks
                 throw new BuildErrorException(Strings.FileNameIsTooLong, appBinaryFilePath);
             }
 
+            _alllog.AppendLine("memory: " + GC.GetTotalMemory(true));
+
             if (!Directory.Exists(destinationDirectory))
             {
                 Directory.CreateDirectory(destinationDirectory);
             }
 
+
+            _alllog.AppendLine("memory: " + GC.GetTotalMemory(true));
+
             File.Copy(appHostSourceFilePath, appHostDestinationFilePath, overwriteExisting);
 
+            _alllog.AppendLine("memory: " + GC.GetTotalMemory(true));
             using (var memoryMappedFile = MemoryMappedFile.CreateFromFile(appHostDestinationFilePath, FileMode.Open))
             {
                 using (MemoryMappedViewAccessor accessor = memoryMappedFile.CreateViewAccessor())
                 {
+                    _alllog.AppendLine("memory: " + GC.GetTotalMemory(true));
                     SearchAndReplace(accessor, _bytesToSearch, bytesToWrite, appHostSourceFilePath);
                 }
             }
+            stopWatch.Stop();
+            _alllog.AppendLine(stopWatch.Elapsed.ToString());
+            File.WriteAllText(@"C:\Users\wul\Downloads\AppHostLog.txt", _alllog.ToString());
         }
 
         // See: https://en.wikipedia.org/wiki/Knuth%E2%80%93Morris%E2%80%93Pratt_algorithm
@@ -136,18 +154,21 @@ namespace Microsoft.NET.Build.Tasks
             byte[] patternToReplace,
             string appHostSourcePath)
         {
+            _alllog.AppendLine("memory: " + GC.GetTotalMemory(true));
             int position = KMPSearch(searchPattern, accessor);
             if (position < 0)
             {
                 throw new BuildErrorException(Strings.AppHostHasBeenModified, appHostSourcePath, _placeHolder);
             }
 
+            _alllog.AppendLine("memory: " + GC.GetTotalMemory(true));
             accessor.WriteArray(
                 position: position,
                 array: patternToReplace,
                 offset: 0,
                 count: patternToReplace.Length);
 
+            _alllog.AppendLine("memory: " + GC.GetTotalMemory(true));
             if (patternToReplace.Length < searchPattern.Length)
             {
                 for (int i = patternToReplace.Length; i < searchPattern.Length; i++)
@@ -156,6 +177,8 @@ namespace Microsoft.NET.Build.Tasks
                     accessor.Write(i + position, empty);
                 }
             }
+
+            _alllog.AppendLine("memory: " + GC.GetTotalMemory(true));
         }
     }
 }
