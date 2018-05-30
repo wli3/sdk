@@ -63,7 +63,7 @@ namespace Microsoft.NET.Build.Tasks
             //}
 
 
-            using (var mmf = MemoryMappedFile.CreateFromFile(appHostDestinationFilePath, FileMode.Truncate))
+            using (var mmf = MemoryMappedFile.CreateFromFile(appHostDestinationFilePath, FileMode.Open)) // TODO wat no checkin? FileMode.Tuncate
             {
                 using (var accessor = mmf.CreateViewAccessor())
                 {
