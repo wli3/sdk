@@ -44,37 +44,18 @@ namespace Microsoft.NET.Build.Tasks
                 throw new BuildErrorException(Strings.FileNameIsTooLong, appBinaryFilePath);
             }
 
-            //var array = File.ReadAllBytes(appHostSourceFilePath);
-
-            //SearchAndReplace(array, _bytesToSearch, bytesToWrite, appHostSourceFilePath);
-
             if (!Directory.Exists(destinationDirectory))
             {
                 Directory.CreateDirectory(destinationDirectory);
             }
 
-            // Copy AppHostSourcePath to ModifiedAppHostPath so it inherits the same attributes\permissions.
             File.Copy(appHostSourceFilePath, appHostDestinationFilePath, overwriteExisting);
 
-            //// Re-write ModifiedAppHostPath with the proper contents.
-            //using (FileStream fs = new FileStream(appHostDestinationFilePath, FileMode.Truncate, FileAccess.ReadWrite, FileShare.Read))
-            //{
-            //    fs.Write(array, 0, array.Length);
-            //}
-
-
-            using (var mmf = MemoryMappedFile.CreateFromFile(appHostDestinationFilePath, FileMode.Open)) // TODO wat no checkin? FileMode.Tuncate
+            using (var memoryMappedFile = MemoryMappedFile.CreateFromFile(appHostDestinationFilePath, FileMode.Open))
             {
-                using (var accessor = mmf.CreateViewAccessor())
+                using (MemoryMappedViewAccessor accessor = memoryMappedFile.CreateViewAccessor())
                 {
                     SearchAndReplace(accessor, _bytesToSearch, bytesToWrite, appHostSourceFilePath);
-                    
-                    //for (long i = 0; i < length; i += colorSize)
-                    //{
-                    //    accessor.Read(i, out color);
-                    //    color.Brighten(10);
-                    //    accessor.Write(i, ref color);
-                    //}
                 }
             }
         }
@@ -149,22 +130,30 @@ namespace Microsoft.NET.Build.Tasks
             return -1;
         }
 
-        private static void SearchAndReplace(MemoryMappedViewAccessor accessor, byte[] searchPattern, byte[] patternToReplace, string appHostSourcePath)
+        private static void SearchAndReplace(
+            MemoryMappedViewAccessor accessor,
+            byte[] searchPattern,
+            byte[] patternToReplace,
+            string appHostSourcePath)
         {
-            int offset = KMPSearch(searchPattern, accessor);
-            if (offset < 0)
+            int position = KMPSearch(searchPattern, accessor);
+            if (position < 0)
             {
                 throw new BuildErrorException(Strings.AppHostHasBeenModified, appHostSourcePath, _placeHolder);
             }
 
-            accessor.WriteArray(offset, patternToReplace, 0, patternToReplace.Length);
+            accessor.WriteArray(
+                position: position,
+                array: patternToReplace,
+                offset: 0,
+                count: patternToReplace.Length);
 
             if (patternToReplace.Length < searchPattern.Length)
             {
                 for (int i = patternToReplace.Length; i < searchPattern.Length; i++)
                 {
                     byte empty = 0x0;
-                    accessor.Write(i + offset, empty);
+                    accessor.Write(i + position, empty);
                 }
             }
         }
