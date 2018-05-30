@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.IO;
+using System.IO.MemoryMappedFiles;
 using System.Text;
 
 namespace Microsoft.NET.Build.Tasks
@@ -43,9 +44,9 @@ namespace Microsoft.NET.Build.Tasks
                 throw new BuildErrorException(Strings.FileNameIsTooLong, appBinaryFilePath);
             }
 
-            var array = File.ReadAllBytes(appHostSourceFilePath);
+            //var array = File.ReadAllBytes(appHostSourceFilePath);
 
-            SearchAndReplace(array, _bytesToSearch, bytesToWrite, appHostSourceFilePath);
+            //SearchAndReplace(array, _bytesToSearch, bytesToWrite, appHostSourceFilePath);
 
             if (!Directory.Exists(destinationDirectory))
             {
@@ -55,10 +56,26 @@ namespace Microsoft.NET.Build.Tasks
             // Copy AppHostSourcePath to ModifiedAppHostPath so it inherits the same attributes\permissions.
             File.Copy(appHostSourceFilePath, appHostDestinationFilePath, overwriteExisting);
 
-            // Re-write ModifiedAppHostPath with the proper contents.
-            using (FileStream fs = new FileStream(appHostDestinationFilePath, FileMode.Truncate, FileAccess.ReadWrite, FileShare.Read))
+            //// Re-write ModifiedAppHostPath with the proper contents.
+            //using (FileStream fs = new FileStream(appHostDestinationFilePath, FileMode.Truncate, FileAccess.ReadWrite, FileShare.Read))
+            //{
+            //    fs.Write(array, 0, array.Length);
+            //}
+
+
+            using (var mmf = MemoryMappedFile.CreateFromFile(appHostDestinationFilePath, FileMode.Truncate))
             {
-                fs.Write(array, 0, array.Length);
+                using (var accessor = mmf.CreateViewAccessor())
+                {
+                    SearchAndReplace(accessor, _bytesToSearch, bytesToWrite, appHostSourceFilePath);
+                    
+                    //for (long i = 0; i < length; i += colorSize)
+                    //{
+                    //    accessor.Read(i, out color);
+                    //    color.Brighten(10);
+                    //    accessor.Write(i, ref color);
+                    //}
+                }
             }
         }
 
@@ -99,15 +116,15 @@ namespace Microsoft.NET.Build.Tasks
         }
 
         // See: https://en.wikipedia.org/wiki/Knuth%E2%80%93Morris%E2%80%93Pratt_algorithm
-        private static int KMPSearch(byte[] pattern, byte[] bytes)
+        private static int KMPSearch(byte[] pattern, MemoryMappedViewAccessor accessor)
         {
             int m = 0;
             int i = 0;
             int[] table = ComputeKMPFailureFunction(pattern);
 
-            while (m + i < bytes.Length)
+            while (m + i < accessor.Capacity)
             {
-                if (pattern[i] == bytes[m + i])
+                if (pattern[i] == accessor.ReadByte(m + i))
                 {
                     if (i == pattern.Length - 1)
                     {
@@ -132,21 +149,22 @@ namespace Microsoft.NET.Build.Tasks
             return -1;
         }
 
-        private static void SearchAndReplace(byte[] array, byte[] searchPattern, byte[] patternToReplace, string appHostSourcePath)
+        private static void SearchAndReplace(MemoryMappedViewAccessor accessor, byte[] searchPattern, byte[] patternToReplace, string appHostSourcePath)
         {
-            int offset = KMPSearch(searchPattern, array);
+            int offset = KMPSearch(searchPattern, accessor);
             if (offset < 0)
             {
                 throw new BuildErrorException(Strings.AppHostHasBeenModified, appHostSourcePath, _placeHolder);
             }
 
-            patternToReplace.CopyTo(array, offset);
+            accessor.WriteArray(offset, patternToReplace, 0, patternToReplace.Length);
 
             if (patternToReplace.Length < searchPattern.Length)
             {
                 for (int i = patternToReplace.Length; i < searchPattern.Length; i++)
                 {
-                    array[i + offset] = 0x0;
+                    byte empty = 0x0;
+                    accessor.Write(i + offset, empty);
                 }
             }
         }
