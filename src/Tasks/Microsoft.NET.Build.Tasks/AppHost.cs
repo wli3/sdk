@@ -5,6 +5,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.IO.MemoryMappedFiles;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Microsoft.NET.Build.Tasks
@@ -119,16 +120,21 @@ namespace Microsoft.NET.Build.Tasks
         }
 
         // See: https://en.wikipedia.org/wiki/Knuth%E2%80%93Morris%E2%80%93Pratt_algorithm
-        private static int KMPSearch(byte[] pattern, MemoryMappedViewAccessor accessor)
+        private static unsafe int KMPSearch(byte[] pattern, MemoryMappedViewAccessor accessor)
         {
             int m = 0;
             int i = 0;
             int[] table = ComputeKMPFailureFunction(pattern);
 
             _alllog.AppendLine("125: " + _stopWatch.Elapsed.ToString());
+
+            byte* ptrMemMap = (byte*)0;
+            accessor.SafeMemoryMappedViewHandle.AcquirePointer(ref ptrMemMap);
+          //  new String((sbyte*)ptrMemMap + offset);
+
             while (m + i < accessor.Capacity)
             {
-                if (pattern[i] == accessor.ReadByte(m + i))
+                if (pattern[i] == *(ptrMemMap + m + i))
                 {
                     if (i == pattern.Length - 1)
                     {
