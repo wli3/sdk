@@ -14,6 +14,7 @@ namespace Microsoft.NET.Build.Tasks
     public static class AppHost
     {
         private static StringBuilder _alllog;
+        private static Stopwatch _stopWatch;
         private const string _placeHolder = "c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2"; //hash value embedded in default apphost executable
         private readonly static byte[] _bytesToSearch = Encoding.UTF8.GetBytes(_placeHolder);
 
@@ -31,10 +32,10 @@ namespace Microsoft.NET.Build.Tasks
             bool overwriteExisting = false)
         {
             _alllog = new StringBuilder();
-            Stopwatch stopWatch = new Stopwatch();
-            stopWatch.Start();
+            _stopWatch = new Stopwatch();
+            _stopWatch.Start();
 
-            _alllog.AppendLine("memory: " + GC.GetTotalMemory(false));
+            _alllog.AppendLine("038: "+ _stopWatch.Elapsed.ToString());
             var hostExtension = Path.GetExtension(appHostSourceFilePath);
             var appbaseName = Path.GetFileNameWithoutExtension(appBinaryFilePath);
             var bytesToWrite = Encoding.UTF8.GetBytes(appBinaryFilePath);
@@ -46,43 +47,45 @@ namespace Microsoft.NET.Build.Tasks
                 return;
             }
 
-            _alllog.AppendLine("memory: " + GC.GetTotalMemory(false));
             if (bytesToWrite.Length > 1024)
             {
                 throw new BuildErrorException(Strings.FileNameIsTooLong, appBinaryFilePath);
             }
 
-            _alllog.AppendLine("memory: " + GC.GetTotalMemory(false));
+            _alllog.AppendLine("055: " + _stopWatch.Elapsed.ToString());
             var array = File.ReadAllBytes(appHostSourceFilePath);
 
+            _alllog.AppendLine("057: " + _stopWatch.Elapsed.ToString());
             SearchAndReplace(array, _bytesToSearch, bytesToWrite, appHostSourceFilePath);
 
-            _alllog.AppendLine("memory: " + GC.GetTotalMemory(false));
+            _alllog.AppendLine("060: " + _stopWatch.Elapsed.ToString());
             if (!Directory.Exists(destinationDirectory))
             {
                 Directory.CreateDirectory(destinationDirectory);
             }
 
-            _alllog.AppendLine("memory: " + GC.GetTotalMemory(false));
+            _alllog.AppendLine("067: " + _stopWatch.Elapsed.ToString());
             // Copy AppHostSourcePath to ModifiedAppHostPath so it inherits the same attributes\permissions.
             File.Copy(appHostSourceFilePath, appHostDestinationFilePath, overwriteExisting);
 
-            _alllog.AppendLine("memory: " + GC.GetTotalMemory(false));
+            _alllog.AppendLine("071: " + _stopWatch.Elapsed.ToString());
             // Re-write ModifiedAppHostPath with the proper contents.
             using (FileStream fs = new FileStream(appHostDestinationFilePath, FileMode.Truncate, FileAccess.ReadWrite, FileShare.Read))
             {
-                _alllog.AppendLine("memory: " + GC.GetTotalMemory(false));
+                _alllog.AppendLine("075: " + _stopWatch.Elapsed.ToString());
                 fs.Write(array, 0, array.Length);
             }
 
-            stopWatch.Stop();
-            _alllog.AppendLine(stopWatch.Elapsed.ToString());
+            _stopWatch.Stop();
+            _alllog.AppendLine("080: " + _stopWatch.Elapsed.ToString());
+            _alllog.AppendLine(_stopWatch.Elapsed.ToString());
             File.WriteAllText(@"C:\Users\wul\Downloads\AppHostLog_baseline.txt", _alllog.ToString());
         }
 
         // See: https://en.wikipedia.org/wiki/Knuth%E2%80%93Morris%E2%80%93Pratt_algorithm
         private static int[] ComputeKMPFailureFunction(byte[] pattern)
         {
+            _alllog.AppendLine("088: " + _stopWatch.Elapsed.ToString());
             int[] table = new int[pattern.Length];
             if (pattern.Length >= 1)
             {
@@ -123,6 +126,7 @@ namespace Microsoft.NET.Build.Tasks
             int i = 0;
             int[] table = ComputeKMPFailureFunction(pattern);
 
+            _alllog.AppendLine("129: " + _stopWatch.Elapsed.ToString());
             while (m + i < bytes.Length)
             {
                 if (pattern[i] == bytes[m + i])
@@ -152,7 +156,7 @@ namespace Microsoft.NET.Build.Tasks
 
         private static void SearchAndReplace(byte[] array, byte[] searchPattern, byte[] patternToReplace, string appHostSourcePath)
         {
-            _alllog.AppendLine("memory: " + GC.GetTotalMemory(false));
+            _alllog.AppendLine("159: " + _stopWatch.Elapsed.ToString());
 
 
             int offset = KMPSearch(searchPattern, array);
@@ -161,10 +165,10 @@ namespace Microsoft.NET.Build.Tasks
                 throw new BuildErrorException(Strings.AppHostHasBeenModified, appHostSourcePath, _placeHolder);
             }
 
-            _alllog.AppendLine("memory: " + GC.GetTotalMemory(false));
+            _alllog.AppendLine("168: " + _stopWatch.Elapsed.ToString());
             patternToReplace.CopyTo(array, offset);
 
-            _alllog.AppendLine("memory: " + GC.GetTotalMemory(false));
+            _alllog.AppendLine("171: " + _stopWatch.Elapsed.ToString());
             if (patternToReplace.Length < searchPattern.Length)
             {
                 for (int i = patternToReplace.Length; i < searchPattern.Length; i++)
@@ -172,6 +176,7 @@ namespace Microsoft.NET.Build.Tasks
                     array[i + offset] = 0x0;
                 }
             }
+            _alllog.AppendLine("0179: " + _stopWatch.Elapsed.ToString());
         }
     }
 }
