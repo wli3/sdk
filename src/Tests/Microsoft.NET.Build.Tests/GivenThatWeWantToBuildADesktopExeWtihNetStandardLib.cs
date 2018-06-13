@@ -274,14 +274,6 @@ namespace Microsoft.NET.Build.Tests
             });
         }
 
-        private bool HasAndOnlyHasWarningNETSDK1066(string stdout)
-        {
-            var allWarningCount = Regex.Matches(stdout, "warning").Count;
-            var targetCount = Regex.Matches(stdout, "warning NETSDK1066").Count;
-
-            return (targetCount > 0) && (targetCount == allWarningCount);
-        }
-
         [WindowsOnlyTheory]
         [InlineData(true)]
         [InlineData(false)]
@@ -437,16 +429,25 @@ namespace Microsoft.NET.Build.Tests
         }
 
         [WindowsOnlyTheory]
-        [InlineData("net461", "netstandard1.5", true, ".NETFramework < 4.7.2 -> .NETStandard >= 1.5 --> warning")]
-        [InlineData("net461", "netstandard1.5", false, ".NETFramework < 4.7.2 -> .NETStandard >= 1.5 --> warning")]
-        public void It_generate_warning_depends(string framework, string libraryNetstandard, bool isSdk, string explain)
+        [InlineData("net461", "netstandard1.5", true, true, ".NETFramework < 4.7.2 -> .NETStandard >= 1.5 --> warning")]
+        [InlineData("net461", "netstandard1.5", true, false, ".NETFramework < 4.7.2 -> .NETStandard >= 1.5 --> warning")]
+        [InlineData("net461", "netstandard1.4", false, true, ".NETFramework any -> .NETStandard < 1.5 --> no warning")]
+        [InlineData("net461", "netstandard1.4", false, false, ".NETFramework any -> .NETStandard < 1.5 --> no warning")]
+        [InlineData("net472", "netstandard1.4", false, true, ".NETFramework any -> .NETStandard < 1.5 --> no warning")]
+        [InlineData("net472", "netstandard1.4", false, false, ".NETFramework any -> .NETStandard < 1.5 --> no warning")]
+        [InlineData("net472", "netstandard1.5", false, true, ".NETFramework >= 4.7.2 -> .NETStandard any --> no warning")]
+        [InlineData("net472", "netstandard1.5", false, false, ".NETFramework >= 4.7.2 -> .NETStandard any --> no warning")]
+        [InlineData("net472", "netstandard2.0", false, true, ".NETFramework >= 4.7.2 -> .NETStandard any --> no warning")]
+        [InlineData("net472", "netstandard2.0", false, false, ".NETFramework >= 4.7.2 -> .NETStandard any --> no warning")]
+
+        public void It_generate_warning_depends_on_framework_and_library_netstandard_version(string framework, string libraryNetstandard, bool shouldHaveWarning, bool isSdk, string explain)
         {
             var testAsset = _testAssetsManager
                 .CopyTestAsset(GetTemplateName(isSdk), identifier: isSdk.ToString())
                 .WithSource()
                 .WithProjectChanges((projectPath, project) =>
                 {
-                    var parsedFramework = NuGet.Frameworks.NuGetFramework.Parse(framework); //TODO
+                    var parsedFramework = NuGet.Frameworks.NuGetFramework.Parse(framework);
 
                     if (IsAppProject(projectPath))
                     {
@@ -481,12 +482,33 @@ namespace Microsoft.NET.Build.Tests
             testAsset.Restore(Log, relativePath: AppName);
 
             var buildCommand = new BuildCommand(Log, Path.Combine(testAsset.TestRoot, AppName));
-            buildCommand
+
+            if (shouldHaveWarning)
+            {
+                buildCommand
                 .Execute()
                 .Should()
                 .Pass()
                 .And
                 .HaveStdOutContaining(HasAndOnlyHasWarningNETSDK1066, explain);
+            }
+            else
+            {
+                buildCommand
+                .Execute()
+                .Should()
+                .Pass()
+                .And
+                .NotHaveStdOutContaining("warning");
+            }
+        }
+
+        private bool HasAndOnlyHasWarningNETSDK1066(string stdout)
+        {
+            var allWarningCount = Regex.Matches(stdout, "warning").Count;
+            var targetCount = Regex.Matches(stdout, "warning NETSDK1066").Count;
+
+            return (targetCount > 0) && (targetCount == allWarningCount);
         }
 
         // Copy convert from NuGet.From 4.6.1.0 to 4.6.1
