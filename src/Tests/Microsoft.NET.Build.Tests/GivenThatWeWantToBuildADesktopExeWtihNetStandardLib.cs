@@ -15,6 +15,8 @@ using Xunit;
 
 using Xunit.Abstractions;
 using System.Text.RegularExpressions;
+using System.Text;
+using System.Globalization;
 
 namespace Microsoft.NET.Build.Tests
 {
@@ -274,7 +276,10 @@ namespace Microsoft.NET.Build.Tests
 
         private bool HasAndOnlyHasWarningNETSDK1066(string stdout)
         {
-            return Regex.Matches(stdout, "warning").Count == Regex.Matches(stdout, "warning NETSDK1066").Count;
+            var allWarningCount = Regex.Matches(stdout, "warning").Count;
+            var targetCount = Regex.Matches(stdout, "warning NETSDK1066").Count;
+
+            return (targetCount > 0) && (targetCount == allWarningCount);
         }
 
         [WindowsOnlyTheory]
@@ -429,6 +434,78 @@ namespace Microsoft.NET.Build.Tests
                 "netstandard.dll",
                 $"{AppName}.exe.config"
             });
+        }
+
+        [WindowsOnlyTheory]
+        [InlineData("net461", "netstandard1.5", true, ".NETFramework < 4.7.2 -> .NETStandard >= 1.5 --> warning")]
+        [InlineData("net461", "netstandard1.5", false, ".NETFramework < 4.7.2 -> .NETStandard >= 1.5 --> warning")]
+        public void It_generate_warning_depends(string framework, string libraryNetstandard, bool isSdk, string explain)
+        {
+            var testAsset = _testAssetsManager
+                .CopyTestAsset(GetTemplateName(isSdk), identifier: isSdk.ToString())
+                .WithSource()
+                .WithProjectChanges((projectPath, project) =>
+                {
+                    var parsedFramework = NuGet.Frameworks.NuGetFramework.Parse(framework); //TODO
+
+                    if (IsAppProject(projectPath))
+                    {
+                        var ns = project.Root.Name.Namespace;
+
+                        AddReferenceToLibrary(project, ReferenceScenario.ProjectReference);
+
+                        if (isSdk)
+                        {
+                            project.Root.Element(ns + "PropertyGroup")
+                                        .Element(ns + "TargetFramework")
+                                        .Value = parsedFramework.GetShortFolderName();
+
+                        }
+                        else
+                        {
+                            project.Root.Element(ns + "PropertyGroup")
+                                        .Element(ns + "TargetFrameworkVersion")
+                                        .Value = "v" + GetDisplayVersion(parsedFramework.Version);
+                        }
+                    }
+
+                    if (IsLibraryProject(projectPath))
+                    {
+                        var ns = project.Root.Name.Namespace;
+                        var propertyGroup = project.Root.Elements(ns + "PropertyGroup").First();
+                        var targetFrameworkProperty = propertyGroup.Element(ns + "TargetFramework");
+                        targetFrameworkProperty.Value = libraryNetstandard;
+                    }
+                });
+
+            testAsset.Restore(Log, relativePath: AppName);
+
+            var buildCommand = new BuildCommand(Log, Path.Combine(testAsset.TestRoot, AppName));
+            buildCommand
+                .Execute()
+                .Should()
+                .Pass()
+                .And
+                .HaveStdOutContaining(HasAndOnlyHasWarningNETSDK1066, explain);
+        }
+
+        // Copy convert from NuGet.From 4.6.1.0 to 4.6.1
+        private static string GetDisplayVersion(Version version)
+        {
+            var sb = new StringBuilder(string.Format(CultureInfo.InvariantCulture, "{0}.{1}", version.Major, version.Minor));
+
+            if (version.Build > 0
+                || version.Revision > 0)
+            {
+                sb.AppendFormat(CultureInfo.InvariantCulture, ".{0}", version.Build);
+
+                if (version.Revision > 0)
+                {
+                    sb.AppendFormat(CultureInfo.InvariantCulture, ".{0}", version.Revision);
+                }
+            }
+
+            return sb.ToString();
         }
     }
 }
