@@ -14,6 +14,7 @@ using FluentAssertions;
 using Xunit;
 
 using Xunit.Abstractions;
+using System.Text.RegularExpressions;
 
 namespace Microsoft.NET.Build.Tests
 {
@@ -257,7 +258,7 @@ namespace Microsoft.NET.Build.Tests
                 .Should()
                 .Pass()
                 .And
-                .NotHaveStdOutContaining("warning")
+                .HaveStdOutContaining(HasAndOnlyHasWarningNETSDK1066)
                 .And
                 .HaveStdOutContainingIgnoreCase(successMessage);
 
@@ -269,6 +270,11 @@ namespace Microsoft.NET.Build.Tests
                 "netstandard.dll",
                 $"{AppName}.exe.config"
             });
+        }
+
+        private bool HasAndOnlyHasWarningNETSDK1066(string stdout)
+        {
+            return Regex.Matches(stdout, "warning").Count == Regex.Matches(stdout, "warning NETSDK1066").Count;
         }
 
         [WindowsOnlyTheory]
@@ -424,13 +430,5 @@ namespace Microsoft.NET.Build.Tests
                 $"{AppName}.exe.config"
             });
         }
-
-        public AndConstraint<CommandResultAssertions> ContainAndOnlyContain(string pattern)
-        {
-            Execute.Assertion.ForCondition(!_commandResult.StdOut.Contains(pattern))
-                .FailWith(AppendDiagnosticsTo($"The command output contained a result it should not have contained: {pattern}{Environment.NewLine}"));
-            return new AndConstraint<CommandResultAssertions>(this);
-        }
-
     }
 }
