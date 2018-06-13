@@ -425,5 +425,12 @@ namespace Microsoft.NET.Build.Tests
             });
         }
 
+        public AndConstraint<CommandResultAssertions> ContainAndOnlyContain(string pattern)
+        {
+            Execute.Assertion.ForCondition(!_commandResult.StdOut.Contains(pattern))
+                .FailWith(AppendDiagnosticsTo($"The command output contained a result it should not have contained: {pattern}{Environment.NewLine}"));
+            return new AndConstraint<CommandResultAssertions>(this);
+        }
+
     }
 }
