@@ -80,26 +80,4 @@ Copyright (c) .NET Foundation. All rights reserved.
        ToolsSettingsFilePath="$(_ToolsSettingsFilePath)" />
   </Target>
 
-  <Target Name="ResolveApphostAsset" DependsOnTargets="ResolveReferences;Publish">
-    <ItemGroup>
-      <_PackAsToolShimRuntimeIdentifiers Include="$(PackAsToolShimRuntimeIdentifiers)"/>
-    </ItemGroup>
-
-    <GenerateShims
-      DotNetAppHostExecutableNameWithoutExtension="$(_DotNetAppHostExecutableNameWithoutExtension)"
-      PackagedShimOutputDirectory="$(IntermediateOutputPath)/$(Configuration)/shims/$(TargetFramework)"
-      PackageId="$(PackageId)"
-      PackageVersion="$(Version)"
-      ProjectAssetsFile="$(ProjectAssetsFile)"
-      ProjectPath="$(MSBuildProjectFullPath)"
-      ShimRuntimeIdentifiers="@(_PackAsToolShimRuntimeIdentifiers)"
-      TargetFrameworkMoniker="$(NuGetTargetMoniker)"
-      ToolCommandName="$(ToolCommandName)"
-      ToolEntryPoint="$(ToolEntryPoint)"
-      >
-
-      <Output TaskParameter="EmbeddedApphostPaths" ItemName="_EmbeddedApphostPaths" />
-    </GenerateShims>
-  </Target>
-
 </Project>
