@@ -640,34 +640,4 @@ Copyright (c) .NET Foundation. All rights reserved.
 
   </Target>
 
-
-  <!--
-    ============================================================
-                                        GenerateShimsAssets
-
-    Generate packaged shims for signing when PackAsToolShimRuntimeIdentifiers is set
-    ============================================================
-    -->
-  <Target Name="GenerateShimsAssets" DependsOnTargets="ResolveReferences" Condition=" '$(PackAsTool)' == 'true' ">
-    <ItemGroup>
-      <_PackAsToolShimRuntimeIdentifiers Include="$(PackAsToolShimRuntimeIdentifiers)"/>
-    </ItemGroup>
-
-    <GenerateShims
-      DotNetAppHostExecutableNameWithoutExtension="$(_DotNetAppHostExecutableNameWithoutExtension)"
-      PackagedShimOutputDirectory="$(IntermediateOutputPath)/$(Configuration)/shims/$(TargetFramework)"
-      PackageId="$(PackageId)"
-      PackageVersion="$(Version)"
-      ProjectAssetsFile="$(ProjectAssetsFile)"
-      ProjectPath="$(MSBuildProjectFullPath)"
-      ShimRuntimeIdentifiers="@(_PackAsToolShimRuntimeIdentifiers)"
-      TargetFrameworkMoniker="$(NuGetTargetMoniker)"
-      ToolCommandName="$(ToolCommandName)"
-      ToolEntryPoint="$(ToolEntryPoint)"
-      >
-
-      <Output TaskParameter="EmbeddedApphostPaths" ItemName="_EmbeddedApphostPaths" />
-    </GenerateShims>
-  </Target>
-
 </Project>
