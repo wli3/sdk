@@ -80,11 +80,6 @@ Copyright (c) .NET Foundation. All rights reserved.
        ToolsSettingsFilePath="$(_ToolsSettingsFilePath)" />
   </Target>
 
-  <PropertyGroup>
-    <IsInnerBuild Condition="'$(TargetFramework)' != '' AND '$(TargetFrameworks)' != ''">true</IsInnerBuild>
-  </PropertyGroup>
-
-
   <!--
     ============================================================
                                         GenerateShimsAssets
@@ -96,7 +91,7 @@ Copyright (c) .NET Foundation. All rights reserved.
   <Target Name="GenerateShimsAssets"
           AfterTargets="Build"
           DependsOnTargets="ResolvePackageAssets"
-          Condition="'$(IsInnerBuild)' == 'true' and '$(PackAsTool)' == 'true'" >
+          Condition="'$(PackAsTool)' == 'true'" >
 
     <ItemGroup>
       <_PackAsToolShimRuntimeIdentifiers Include="$(PackAsToolShimRuntimeIdentifiers)"/>
