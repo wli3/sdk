@@ -56,5 +56,22 @@ namespace Microsoft.NET.ToolPack.Tests
                 .Sub("win-x64")
                 .EnumerateFiles().Should().Contain(f => f.Name == _customToolCommandName + ".exe");
         }
+
+        [Fact]
+        public void It_contains_dependencies_shims_with_no_build()
+        {
+            var testAsset = SetupTestAsset();
+            var buildCommand = new BuildCommand(Log, testAsset.TestRoot);
+            buildCommand.Execute();
+
+            var publishCommand = new PublishCommand(Log, testAsset.TestRoot);
+
+            publishCommand.Execute("/p:NoBuild=true");
+
+            publishCommand.GetOutputDirectory(targetFramework: "netcoreapp2.1")
+                .Sub("shims")
+                .Sub("win-x64")
+                .EnumerateFiles().Should().Contain(f => f.Name == _customToolCommandName + ".exe");
+        }
     }
 }
