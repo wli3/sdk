@@ -53,7 +53,6 @@ Copyright (c) .NET Foundation. All rights reserved.
       ComputeAndCopyFilesToPublishDirectory;
       GeneratePublishDependencyFile;
       GeneratePublishRuntimeConfigurationFile;
-      GenerateShimsAssets;
     </_CorePublishTargets>
   </PropertyGroup>
 

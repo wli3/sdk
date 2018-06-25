@@ -36,7 +36,7 @@ Copyright (c) .NET Foundation. All rights reserved.
 
   </ItemGroup>
 
-  <Target Name="PackTool" DependsOnTargets="GenerateToolsSettingsFileFromBuildProperty;Publish;ResolveApphostAsset" Condition=" '$(PackAsTool)' == 'true' ">
+  <Target Name="PackTool" DependsOnTargets="GenerateToolsSettingsFileFromBuildProperty;Publish" Condition=" '$(PackAsTool)' == 'true' ">
 
     <NETSdkError Condition=" '$(SelfContained)' == 'true' "
                  ResourceName="PackAsToolCannotSupportSelfContained" />
@@ -78,6 +78,45 @@ Copyright (c) .NET Foundation. All rights reserved.
        EntryPointRelativePath="$(ToolEntryPoint)"
        CommandName="$(ToolCommandName)"
        ToolsSettingsFilePath="$(_ToolsSettingsFilePath)" />
+  </Target>
+
+  <PropertyGroup>
+    <IsInnerBuild Condition="'$(TargetFramework)' != '' AND '$(TargetFrameworks)' != ''">true</IsInnerBuild>
+  </PropertyGroup>
+
+
+  <!--
+    ============================================================
+                                        GenerateShimsAssets
+
+    Generate packaged shims for signing when PackAsToolShimRuntimeIdentifiers is set
+    ============================================================
+    -->
+
+  <Target Name="GenerateShimsAssets"
+          AfterTargets="Build"
+          DependsOnTargets="ResolvePackageAssets"
+          Condition="'$(IsInnerBuild)' == 'true' and '$(PackAsTool)' == 'true'" >
+
+    <ItemGroup>
+      <_PackAsToolShimRuntimeIdentifiers Include="$(PackAsToolShimRuntimeIdentifiers)"/>
+    </ItemGroup>
+
+    <GenerateShims
+      DotNetAppHostExecutableNameWithoutExtension="$(_DotNetAppHostExecutableNameWithoutExtension)"
+      PackagedShimOutputDirectory="$(IntermediateOutputPath)/$(Configuration)/shims/$(TargetFramework)"
+      PackageId="$(PackageId)"
+      PackageVersion="$(Version)"
+      ProjectAssetsFile="$(ProjectAssetsFile)"
+      ProjectPath="$(MSBuildProjectFullPath)"
+      ShimRuntimeIdentifiers="@(_PackAsToolShimRuntimeIdentifiers)"
+      TargetFrameworkMoniker="$(NuGetTargetMoniker)"
+      ToolCommandName="$(ToolCommandName)"
+      ToolEntryPoint="$(ToolEntryPoint)"
+      >
+
+      <Output TaskParameter="EmbeddedApphostPaths" ItemName="_EmbeddedApphostPaths" />
+    </GenerateShims>
   </Target>
 
 </Project>
