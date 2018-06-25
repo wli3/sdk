@@ -247,6 +247,11 @@ Copyright (c) .NET Foundation. All rights reserved.
                               Condition="'$(PublishDocumentationFile)' == 'true'">
         <RelativePath>@(FinalDocFile->'%(Filename)%(Extension)')</RelativePath>
       </ResolvedFileToPublish>
+
+      <!-- Copy all PackAsTool shims (if any) -->
+      <ResolvedFileToPublish Include="@(_EmbeddedApphostPaths)">
+        <RelativePath>shims/%(_EmbeddedApphostPaths.ShimRuntimeIdentifier)/%(_EmbeddedApphostPaths.Filename)%(_EmbeddedApphostPaths.Extension)</RelativePath>
+      </ResolvedFileToPublish >
     </ItemGroup>
 
   </Target>

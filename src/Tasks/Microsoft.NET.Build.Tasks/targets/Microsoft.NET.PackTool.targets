@@ -99,7 +99,7 @@ Copyright (c) .NET Foundation. All rights reserved.
 
     <GenerateShims
       DotNetAppHostExecutableNameWithoutExtension="$(_DotNetAppHostExecutableNameWithoutExtension)"
-      PackagedShimOutputDirectory="$(IntermediateOutputPath)/$(Configuration)/shims/$(TargetFramework)"
+      PackagedShimOutputDirectory="$(OutDir)/shims/$(TargetFramework)"
       PackageId="$(PackageId)"
       PackageVersion="$(Version)"
       ProjectAssetsFile="$(ProjectAssetsFile)"
