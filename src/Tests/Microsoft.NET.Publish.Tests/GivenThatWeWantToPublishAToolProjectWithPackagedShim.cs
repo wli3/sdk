@@ -51,7 +51,10 @@ namespace Microsoft.NET.ToolPack.Tests
 
             publishCommand.Execute();
 
-            publishCommand.GetOutputDirectory(targetFramework:"netcoreapp2.1").EnumerateFiles().Should().Contain(f => f.Name == $"{_customToolCommandName}.exe");            
+            publishCommand.GetOutputDirectory(targetFramework: "netcoreapp2.1")
+                .Sub("shims")
+                .Sub("win-x64")
+                .EnumerateFiles().Should().Contain(f => f.Name == _customToolCommandName + ".exe");
         }
     }
 }
