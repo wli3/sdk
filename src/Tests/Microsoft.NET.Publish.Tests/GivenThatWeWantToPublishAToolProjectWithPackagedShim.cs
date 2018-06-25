@@ -20,9 +20,6 @@ namespace Microsoft.NET.ToolPack.Tests
 {
     public class GivenThatWeWantToPublishAToolProjectWithPackagedShim : SdkTest
     {
-        private string _testRoot;
-        private string _packageId;
-        private readonly string _packageVersion = "1.0.0";
         private const string _customToolCommandName = "customToolCommandName";
 
         public GivenThatWeWantToPublishAToolProjectWithPackagedShim(ITestOutputHelper log) : base(log)
@@ -44,126 +41,17 @@ namespace Microsoft.NET.ToolPack.Tests
                 .Restore(Log);
 
             return helloWorldAsset;
-
-            //var publishCommand = new PublishCommand(Log, helloWorldAsset.TestRoot);
-
-            //publishCommand.Execute($"/p:TargetFramework={targetFramework}");
-            //_packageId = Path.GetFileNameWithoutExtension(publishCommand.ProjectFile);
-
-            //return publishCommand.GetOutputDirectory();
         }
 
         [Fact]
         public void It_contains_dependencies_shims()
         {
-            var nugetPackage = Publish(multiTarget);
-            using (var nupkgReader = new PackageArchiveReader(nugetPackage))
-            {
-                IEnumerable<NuGetFramework> supportedFrameworks = nupkgReader.GetSupportedFrameworks();
-                supportedFrameworks.Should().NotBeEmpty();
+            var testAsset = SetupTestAsset();
+            var publishCommand = new PublishCommand(Log, testAsset.TestRoot);
 
-                foreach (NuGetFramework framework in supportedFrameworks)
-                {
-                    var allItems = nupkgReader.GetToolItems().SelectMany(i => i.Items).ToList();
-                    allItems.Should().Contain($"tools/{framework.GetShortFolderName()}/any/Newtonsoft.Json.dll");
-                }
-            }
-        }
+            publishCommand.Execute();
 
-        [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
-        public void It_contains_shim(bool multiTarget)
-        {
-            var nugetPackage = Publish(multiTarget);
-            using (var nupkgReader = new PackageArchiveReader(nugetPackage))
-            {
-                IEnumerable<NuGetFramework> supportedFrameworks = nupkgReader.GetSupportedFrameworks();
-                supportedFrameworks.Should().NotBeEmpty();
-
-                foreach (NuGetFramework framework in supportedFrameworks)
-                {
-                    var allItems = nupkgReader.GetToolItems().SelectMany(i => i.Items).ToList();
-                    allItems.Should().Contain($"tools/{framework.GetShortFolderName()}/any/shims/win-x64/{_customToolCommandName}.exe",
-                        "Name should be the same as the command name even customized");
-                    allItems.Should().Contain($"tools/{framework.GetShortFolderName()}/any/shims/osx.10.12-x64/{_customToolCommandName}",
-                        "RID should be the exact match of the RID in the property, even Apphost only has version of win, osx and linux");
-                }
-            }
-        }
-
-        [WindowsOnlyTheory]
-        [InlineData(true)]
-        [InlineData(false)]
-        public void It_produces_valid_shims(bool multiTarget)
-        {
-            if (!Environment.Is64BitOperatingSystem)
-            {
-                // only sample test on win-x64 since shims are RID specific
-                return;
-            }
-
-            var nugetPackage = Publish(multiTarget);
-            using (var nupkgReader = new PackageArchiveReader(nugetPackage))
-            {
-                IEnumerable<NuGetFramework> supportedFrameworks = nupkgReader.GetSupportedFrameworks();
-                supportedFrameworks.Should().NotBeEmpty();
-                var simulateToolPathRoot = Path.Combine(_testRoot, "temp", Path.GetRandomFileName());
-
-                foreach (NuGetFramework framework in supportedFrameworks)
-                {
-                    string[] portableAppContent = {
-                        "consoledemo.runtimeconfig.json",
-                        "consoledemo.deps.json",
-                        "consoledemo.dll",
-                        "Newtonsoft.Json.dll"};
-                    CopyPackageAssetToToolLayout(portableAppContent, nupkgReader, simulateToolPathRoot, framework);
-
-                    string shimPath = Path.Combine(simulateToolPathRoot, $"{_customToolCommandName}.exe");
-                    nupkgReader.ExtractFile(
-                        $"tools/{framework.GetShortFolderName()}/any/shims/win-x64/{_customToolCommandName}.exe",
-                        shimPath,
-                        null);
-
-                    var command = new ShimCommand(Log, shimPath)
-                    {
-                        WorkingDirectory = simulateToolPathRoot
-                    };
-                    command.Execute().Should()
-                      .Pass()
-                      .And
-                      .HaveStdOutContaining("Hello World from Global Tool");
-                }
-            }
-        }
-
-        private void CopyPackageAssetToToolLayout(
-            string[] nupkgAssetNames,
-            PackageArchiveReader nupkgReader,
-            string tmpfilePathRoot,
-            NuGetFramework framework)
-        {
-            var toolLayoutDirectory =
-                Path.Combine(
-                    tmpfilePathRoot,
-                    ".store",
-                    _packageId,
-                    _packageVersion,
-                    _packageId,
-                    _packageVersion,
-                    "tools",
-                    framework.GetShortFolderName(),
-                    "any");
-
-            foreach (string nupkgAssetName in nupkgAssetNames)
-            {
-                var destinationFilePath =
-                    Path.Combine(toolLayoutDirectory, nupkgAssetName);
-                nupkgReader.ExtractFile(
-                    $"tools/{framework.GetShortFolderName()}/any/{nupkgAssetName}",
-                    destinationFilePath,
-                    null);
-            }
+            publishCommand.GetOutputDirectory(targetFramework:"netcoreapp2.1").EnumerateFiles().Should().Contain(f => f.Name == $"{_customToolCommandName}.exe");            
         }
     }
 }
