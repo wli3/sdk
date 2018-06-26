@@ -641,7 +641,6 @@ Copyright (c) .NET Foundation. All rights reserved.
         <RelativePath>$(AssemblyName)$(_NativeExecutableExtension)</RelativePath>
       </ResolvedFileToPublish>
 
-
     </ItemGroup>
 
   </Target>

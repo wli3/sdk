@@ -38,6 +38,12 @@ Copyright (c) .NET Foundation. All rights reserved.
 
   <Target Name="PackTool" DependsOnTargets="GenerateToolsSettingsFileFromBuildProperty;Publish" Condition=" '$(PackAsTool)' == 'true' ">
 
+
+
+    <UsingTask TaskName="Microsoft.NET.Build.Tasks.PublishRelativePathToPackPackagePath"
+        AssemblyFile="$(MicrosoftNETBuildTasksAssembly)" />
+
+    
     <NETSdkError Condition=" '$(SelfContained)' == 'true' "
                  ResourceName="PackAsToolCannotSupportSelfContained" />
 
@@ -59,9 +65,14 @@ Copyright (c) .NET Foundation. All rights reserved.
       </TfmSpecificPackageFile>
 
       <TfmSpecificPackageFile Include="@(ResolvedFileToPublish->'$([MSBuild]::NormalizeDirectory($(PublishDir)))%(RelativePath)')">
-        <PackagePath>tools/$(TargetFramework)/any/%(ResolvedFileToPublish.RelativePath)</PackagePath>
-      </TfmSpecificPackageFile>
+        <PublishRelativePathToPackPackagePath
+          PublishRelativePath="%(ResolvedFileToPublish.RelativePath)">
 
+          <Output TaskParameter="PackPackagePath" ItemName="_PackPackagePath" />
+        </PublishRelativePathToPackPackagePath>
+
+        <PackagePath>tools/$(TargetFramework)/any/$(_PackPackagePath)/</PackagePath>
+      </TfmSpecificPackageFile>
     </ItemGroup>
   </Target>
 
