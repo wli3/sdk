@@ -35,14 +35,14 @@ namespace Microsoft.NET.Build.Tasks
                     Path.Combine(PublishDir,
                     relativePath));
                 var i = new TaskItem(fullpath);
-                i.SetMetadata("PackagePath", $"tools/{TargetFramework}/any/{GetDirectoryPathInRelativePath(relativePath)}/");
+                i.SetMetadata("PackagePath", $"tools/{TargetFramework}/any/{GetDirectoryPathInRelativePath(relativePath)}");
                 result.Add(i);
             }
 
             ResolvedFileToPublishWithPackagePath = result.ToArray();
         }
 
-        private string GetDirectoryPathInRelativePath(string publishRelativePath)
+        internal static string GetDirectoryPathInRelativePath(string publishRelativePath)
         {
             publishRelativePath = NormalizeDirectorySeparators(publishRelativePath);
             var index = publishRelativePath.LastIndexOf(AltDirectorySeparatorChar);
@@ -57,32 +57,15 @@ namespace Microsoft.NET.Build.Tasks
         }
 
         // https://github.com/dotnet/corefx/issues/4208
-        // I need to copy it
+        // Basic copy paste from corefx. But Normalize to "/" instead of \
         private static string NormalizeDirectorySeparators(string path)
         {
             if (string.IsNullOrEmpty(path))
-                return path;
-
-            char current;
-
-            // Make a pass to see if we need to normalize so we can potentially skip allocating
-            bool normalized = true;
-
-            for (int i = 0; i < path.Length; i++)
             {
-                current = path[i];
-                if (IsDirectorySeparator(current)
-                    && (current != DirectorySeparatorChar
-                        // Check for sequential separators past the first position (we need to keep initial two for UNC/extended)
-                        || (i > 0 && i + 1 < path.Length && IsDirectorySeparator(path[i + 1]))))
-                {
-                    normalized = false;
-                    break;
-                }
+                return path;
             }
 
-            if (normalized)
-                return path;
+            char current;
 
             StringBuilder builder = new StringBuilder(path.Length);
 
@@ -90,7 +73,7 @@ namespace Microsoft.NET.Build.Tasks
             if (IsDirectorySeparator(path[start]))
             {
                 start++;
-                builder.Append(DirectorySeparatorChar);
+                builder.Append(AltDirectorySeparatorChar);
             }
 
             for (int i = start; i < path.Length; i++)
