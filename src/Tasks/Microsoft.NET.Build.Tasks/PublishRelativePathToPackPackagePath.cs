@@ -14,7 +14,10 @@ namespace Microsoft.NET.Build.Tasks
         [Required]
         public ITaskItem[] ResolvedFileToPublish { get; set; }
 
-        
+        [Required]
+        public string PublishDir { get; set; }
+
+
         [Output]
         public ITaskItem[] ResolvedFileToPublishWithPackagePath { get; private set; }
 
@@ -25,7 +28,7 @@ namespace Microsoft.NET.Build.Tasks
             {
                 string relativePath = r.GetMetadata("RelativePath");
                 var fullpath = Path.GetFullPath(
-                    Path.Combine(r.GetMetadata("PublishDir"),
+                    Path.Combine(PublishDir,
                     relativePath));
                 var i = new TaskItem(fullpath);
                 i.SetMetadata("PackagePath",AppleSauce(relativePath));
@@ -44,7 +47,7 @@ namespace Microsoft.NET.Build.Tasks
             }
             else
             {
-                return= publishRelativePath.Substring(0, index);
+                return publishRelativePath.Substring(0, index);
             }
 
         }

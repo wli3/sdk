@@ -36,11 +36,10 @@ Copyright (c) .NET Foundation. All rights reserved.
 
   </ItemGroup>
 
-  <Target Name="PackTool" DependsOnTargets="GenerateToolsSettingsFileFromBuildProperty;Publish" Condition=" '$(PackAsTool)' == 'true' ">
+  <UsingTask TaskName="Microsoft.NET.Build.Tasks.PublishRelativePathToPackPackagePath"
+     AssemblyFile="$(MicrosoftNETBuildTasksAssembly)" />
 
-    <UsingTask TaskName="Microsoft.NET.Build.Tasks.PublishRelativePathToPackPackagePath"
-        AssemblyFile="$(MicrosoftNETBuildTasksAssembly)" />
-
+  <Target Name="PackTool" DependsOnTargets="GenerateToolsSettingsFileFromBuildProperty;Publish" Condition=" '$(PackAsTool)' == 'true' "> 
     
     <NETSdkError Condition=" '$(SelfContained)' == 'true' "
                  ResourceName="PackAsToolCannotSupportSelfContained" />
@@ -58,7 +57,8 @@ Copyright (c) .NET Foundation. All rights reserved.
     </ItemGroup>
 
     <PublishRelativePathToPackPackagePath
-      ResolvedFileToPublish="@(ResolvedFileToPublish)">
+      ResolvedFileToPublish="@(ResolvedFileToPublish)"
+      PublishDir="$(PublishDir)">
 
       <Output TaskParameter="ResolvedFileToPublishWithPackagePath" ItemName="_ResolvedFileToPublishWithPackagePath" />
     </PublishRelativePathToPackPackagePath>
