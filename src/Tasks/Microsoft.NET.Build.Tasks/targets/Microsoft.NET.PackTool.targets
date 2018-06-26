@@ -62,9 +62,6 @@ Copyright (c) .NET Foundation. All rights reserved.
         <PackagePath>tools/$(TargetFramework)/any/%(ResolvedFileToPublish.RelativePath)</PackagePath>
       </TfmSpecificPackageFile>
 
-      <TfmSpecificPackageFile Include="@(_EmbeddedApphostPaths)">
-        <PackagePath>tools/$(TargetFramework)/any/shims/%(_EmbeddedApphostPaths.ShimRuntimeIdentifier)</PackagePath>
-      </TfmSpecificPackageFile>
     </ItemGroup>
   </Target>
 
