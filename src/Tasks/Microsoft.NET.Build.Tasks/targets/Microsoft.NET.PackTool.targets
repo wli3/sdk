@@ -38,8 +38,6 @@ Copyright (c) .NET Foundation. All rights reserved.
 
   <Target Name="PackTool" DependsOnTargets="GenerateToolsSettingsFileFromBuildProperty;Publish" Condition=" '$(PackAsTool)' == 'true' ">
 
-
-
     <UsingTask TaskName="Microsoft.NET.Build.Tasks.PublishRelativePathToPackPackagePath"
         AssemblyFile="$(MicrosoftNETBuildTasksAssembly)" />
 
@@ -59,19 +57,20 @@ Copyright (c) .NET Foundation. All rights reserved.
       <_GeneratedFiles Include="$(_ToolsSettingsFilePath)"/>
     </ItemGroup>
 
+    <PublishRelativePathToPackPackagePath
+      ResolvedFileToPublish="@(ResolvedFileToPublish)">
+
+      <Output TaskParameter="ResolvedFileToPublishWithPackagePath" ItemName="_ResolvedFileToPublishWithPackagePath" />
+    </PublishRelativePathToPackPackagePath>
+
+
     <ItemGroup>
       <TfmSpecificPackageFile Include="@(_GeneratedFiles)">
         <PackagePath>tools/$(TargetFramework)/any/%(_GeneratedFiles.RecursiveDir)%(_GeneratedFiles.Filename)%(_GeneratedFiles.Extension)</PackagePath>
       </TfmSpecificPackageFile>
 
-      <TfmSpecificPackageFile Include="@(ResolvedFileToPublish->'$([MSBuild]::NormalizeDirectory($(PublishDir)))%(RelativePath)')">
-        <PublishRelativePathToPackPackagePath
-          PublishRelativePath="%(ResolvedFileToPublish.RelativePath)">
-
-          <Output TaskParameter="PackPackagePath" ItemName="_PackPackagePath" />
-        </PublishRelativePathToPackPackagePath>
-
-        <PackagePath>tools/$(TargetFramework)/any/$(_PackPackagePath)/</PackagePath>
+      <TfmSpecificPackageFile Include="@(_ResolvedFileToPublishWithPackagePath)">
+        <PackagePath>%(_ResolvedFileToPublishWithPackagePath.PackagePath)</PackagePath>
       </TfmSpecificPackageFile>
     </ItemGroup>
   </Target>

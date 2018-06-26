@@ -20,11 +20,19 @@ namespace Microsoft.NET.Build.Tasks
 
         protected override void ExecuteCore()
         {
-            var result = new TaskItem();
+            var result = new List<TaskItem>();
             foreach (var r in ResolvedFileToPublish)
             {
-                result.Add(Item);
+                string relativePath = r.GetMetadata("RelativePath");
+                var fullpath = Path.GetFullPath(
+                    Path.Combine(r.GetMetadata("PublishDir"),
+                    relativePath));
+                var i = new TaskItem(fullpath);
+                i.SetMetadata("PackagePath",AppleSauce(relativePath));
+                result.Add(i);
             }
+
+            ResolvedFileToPublishWithPackagePath = result.ToArray();
         }
 
         private string AppleSauce(string publishRelativePath)
