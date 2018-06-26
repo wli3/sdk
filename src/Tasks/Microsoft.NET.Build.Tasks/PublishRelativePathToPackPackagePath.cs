@@ -4,6 +4,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
@@ -27,23 +28,24 @@ namespace Microsoft.NET.Build.Tasks
         protected override void ExecuteCore()
         {
             var result = new List<TaskItem>();
-            foreach (var r in ResolvedFileToPublish)
+            foreach (ITaskItem r in ResolvedFileToPublish)
             {
                 string relativePath = r.GetMetadata("RelativePath");
                 var fullpath = Path.GetFullPath(
                     Path.Combine(PublishDir,
                     relativePath));
                 var i = new TaskItem(fullpath);
-                i.SetMetadata("PackagePath",$"tools/{TargetFramework}/any/{AppleSauce(relativePath)}/");
+                i.SetMetadata("PackagePath", $"tools/{TargetFramework}/any/{GetDirectoryPathInRelativePath(relativePath)}/");
                 result.Add(i);
             }
 
             ResolvedFileToPublishWithPackagePath = result.ToArray();
         }
 
-        private string AppleSauce(string publishRelativePath)
+        private string GetDirectoryPathInRelativePath(string publishRelativePath)
         {
-            var index = publishRelativePath.LastIndexOf('/');
+            publishRelativePath = NormalizeDirectorySeparators(publishRelativePath);
+            var index = publishRelativePath.LastIndexOf(AltDirectorySeparatorChar);
             if (index == -1)
             {
                 return string.Empty;
@@ -52,10 +54,74 @@ namespace Microsoft.NET.Build.Tasks
             {
                 return publishRelativePath.Substring(0, index);
             }
-
         }
 
+        // https://github.com/dotnet/corefx/issues/4208
+        // I need to copy it
+        private static string NormalizeDirectorySeparators(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+                return path;
 
+            char current;
 
+            // Make a pass to see if we need to normalize so we can potentially skip allocating
+            bool normalized = true;
+
+            for (int i = 0; i < path.Length; i++)
+            {
+                current = path[i];
+                if (IsDirectorySeparator(current)
+                    && (current != DirectorySeparatorChar
+                        // Check for sequential separators past the first position (we need to keep initial two for UNC/extended)
+                        || (i > 0 && i + 1 < path.Length && IsDirectorySeparator(path[i + 1]))))
+                {
+                    normalized = false;
+                    break;
+                }
+            }
+
+            if (normalized)
+                return path;
+
+            StringBuilder builder = new StringBuilder(path.Length);
+
+            int start = 0;
+            if (IsDirectorySeparator(path[start]))
+            {
+                start++;
+                builder.Append(DirectorySeparatorChar);
+            }
+
+            for (int i = start; i < path.Length; i++)
+            {
+                current = path[i];
+
+                // If we have a separator
+                if (IsDirectorySeparator(current))
+                {
+                    // If the next is a separator, skip adding this
+                    if (i + 1 < path.Length && IsDirectorySeparator(path[i + 1]))
+                    {
+                        continue;
+                    }
+
+                    // Ensure it is the primary separator
+                    current = AltDirectorySeparatorChar;
+                }
+
+                builder.Append(current);
+            }
+
+            return builder.ToString();
+        }
+
+        private static bool IsDirectorySeparator(char c)
+        {
+            return c == DirectorySeparatorChar || c == AltDirectorySeparatorChar;
+        }
+
+        private const char DirectorySeparatorChar = '\\';
+        private const char AltDirectorySeparatorChar = '/';
     }
 }
