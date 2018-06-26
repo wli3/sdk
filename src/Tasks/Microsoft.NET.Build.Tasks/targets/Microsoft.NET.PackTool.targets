@@ -58,7 +58,8 @@ Copyright (c) .NET Foundation. All rights reserved.
 
     <PublishRelativePathToPackPackagePath
       ResolvedFileToPublish="@(ResolvedFileToPublish)"
-      PublishDir="$(PublishDir)">
+      PublishDir="$(PublishDir)"
+      TargetFramework="$(TargetFramework)">
 
       <Output TaskParameter="ResolvedFileToPublishWithPackagePath" ItemName="_ResolvedFileToPublishWithPackagePath" />
     </PublishRelativePathToPackPackagePath>

@@ -43,10 +43,10 @@ namespace Microsoft.NET.ToolPack.Tests
             return packCommand.GetNuGetPackage();
         }
 
-        private TestAsset CreateTestAsset(bool multiTarget, string callingMethod)
+        private TestAsset CreateTestAsset(bool multiTarget, string unqiueName)
         {
             return _testAssetsManager
-                .CopyTestAsset("PortableTool", callingMethod + multiTarget)
+                .CopyTestAsset("PortableTool", unqiueName)
                 .WithSource()
                 .WithProjectChanges(project =>
                 {
@@ -124,7 +124,7 @@ namespace Microsoft.NET.ToolPack.Tests
         [InlineData(false)]
         public void It_contains_shim_with_no_build(bool multiTarget)
         {
-            var testAsset = CreateTestAsset(multiTarget, "shim_with_no_build");
+            var testAsset = CreateTestAsset(multiTarget, "shim_with_no_build" + multiTarget);
 
             var buildCommand = new BuildCommand(Log, testAsset.TestRoot);
             buildCommand.Execute();
