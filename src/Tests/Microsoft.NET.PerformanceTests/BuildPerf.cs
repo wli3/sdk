@@ -76,6 +76,23 @@ namespace Microsoft.NET.Perf.Tests
             TestProject(testDir.Path, "ASP.NET Core MVC app", operation);
         }
 
+        [Theory]
+        [InlineData(ProjectPerfOperation.CleanBuild)]
+        [InlineData(ProjectPerfOperation.BuildWithNoChanges)]
+        public void BuildWebApp461WithNetstandard20(ProjectPerfOperation operation)
+        {
+
+            var testDir = _testAssetsManager
+                .CopyTestAsset("WebApplication5")
+                .WithSource()
+                .TestRoot;
+
+            NuGetConfigWriter.Write(testDir, NuGetConfigWriter.AspNetCoreDevFeed, NuGetConfigWriter.DotnetCoreBlobFeed);
+
+            TestProject(testDir, "ASP.NET Core Webapplication 4.6.1 with netstandard greater than 1.5", operation);
+        }
+
+
         [CoreMSBuildOnlyTheory(Skip = "The code for these scenarios needs to be acquired during the test run (instead of relying on hard-coded local path)")]
         [InlineData("SmallP2POldCsproj", ProjectPerfOperation.CleanBuild)]
         [InlineData("SmallP2POldCsproj", ProjectPerfOperation.BuildWithNoChanges)]
