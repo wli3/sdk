@@ -14,8 +14,6 @@ namespace Microsoft.NET.Build.Tasks
 {
     public sealed class GenerateShims : TaskBase
     {
-        private NuGetPackageResolver _packageResolver;
-
         /// <summary>
         /// Relative paths for Apphost for different ShimRuntimeIdentifiers with RuntimeIdentifier as meta data
         /// </summary>
@@ -110,7 +108,7 @@ namespace Microsoft.NET.Build.Tasks
                 );
 
                 var item = new TaskItem(appHostDestinationFilePath);
-                item.SetMetadata("ShimRuntimeIdentifier", runtimeIdentifier);
+                item.SetMetadata(MetadataKeys.ShimRuntimeIdentifier, runtimeIdentifier);
                 embeddedApphostPaths.Add(item);
             }
 
@@ -120,34 +118,6 @@ namespace Microsoft.NET.Build.Tasks
         private string GetApphostAsset(ITaskItem[] apphostsForShimRuntimeIdentifiers, string runtimeIdentifier)
         {
             return apphostsForShimRuntimeIdentifiers.Single(i => i.GetMetadata(MetadataKeys.RuntimeIdentifier) == runtimeIdentifier).ItemSpec;
-        }
-
-        private string FindApphostInRuntimeTarget(string apphostName, LockFileTarget runtimeTarget)
-        {
-            foreach (LockFileTargetLibrary library in runtimeTarget.Libraries)
-            {
-                if (!library.IsPackage())
-                {
-                    continue;
-                }
-
-                foreach (LockFileItem asset in library.NativeLibraries)
-                {
-                    if (asset.IsPlaceholderFile())
-                    {
-                        continue;
-                    }
-
-                    var resolvedPackageAssetPath = _packageResolver.ResolvePackageAssetPath(library, asset.Path);
-
-                    if (Path.GetFileName(resolvedPackageAssetPath) == apphostName)
-                    {
-                        return resolvedPackageAssetPath;
-                    }
-                }
-            }
-
-            throw new BuildErrorException(Strings.CannotFindApphostForRid, runtimeTarget.RuntimeIdentifier);
         }
     }
 }
