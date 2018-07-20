@@ -35,12 +35,6 @@ namespace Microsoft.NET.Build.Tasks
             var bytesToWrite = Encoding.UTF8.GetBytes(appBinaryFilePath);
             var destinationDirectory = new FileInfo(appHostDestinationFilePath).Directory.FullName;
 
-            if (File.Exists(appHostDestinationFilePath))
-            {
-                //We have already done the required modification to apphost.exe
-                return;
-            }
-
             if (bytesToWrite.Length > 1024)
             {
                 throw new BuildErrorException(Strings.FileNameIsTooLong, appBinaryFilePath);
@@ -52,11 +46,6 @@ namespace Microsoft.NET.Build.Tasks
             }
 
             // Copy AppHostSourcePath to ModifiedAppHostPath so it inherits the same attributes\permissions.
-            if (File.Exists(appHostDestinationFilePath))
-            {
-                File.Delete(appHostDestinationFilePath);
-            }
-
             File.Copy(appHostSourceFilePath, appHostDestinationFilePath, overwriteExisting);
 
             // Re-write ModifiedAppHostPath with the proper contents.
@@ -67,8 +56,6 @@ namespace Microsoft.NET.Build.Tasks
                     SearchAndReplace(accessor, _bytesToSearch, bytesToWrite, appHostSourceFilePath);
                 }
             }
-
-            File.SetLastWriteTime(appHostDestinationFilePath, DateTime.Now);
         }
 
         // See: https://en.wikipedia.org/wiki/Knuth%E2%80%93Morris%E2%80%93Pratt_algorithm
