@@ -35,6 +35,12 @@ namespace Microsoft.NET.Build.Tasks
         public string PackageVersion { get; set; }
 
         /// <summary>
+        /// TFM to use for compile-time assets.
+        /// </summary>
+        [Required]
+        public string TargetFrameworkMoniker { get; set; }
+
+        /// <summary>
         /// The command name of the dotnet tool.
         /// </summary>
         [Required]
@@ -92,7 +98,7 @@ namespace Microsoft.NET.Build.Tasks
                         PackageId.ToLowerInvariant(),
                         PackageVersion,
                         "tools",
-                        targetFramework.GetShortFolderName(),
+                        TargetFrameworkMoniker,
                         "any",
                         ToolEntryPoint});
 

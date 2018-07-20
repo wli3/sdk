@@ -102,6 +102,7 @@ Copyright (c) .NET Foundation. All rights reserved.
       PackageId="$(PackageId)"
       PackageVersion="$(Version)"
       ShimRuntimeIdentifiers="@(_PackAsToolShimRuntimeIdentifiers)"
+      TargetFrameworkMoniker="$(NuGetTargetMoniker)"
       ToolCommandName="$(ToolCommandName)"
       ToolEntryPoint="$(ToolEntryPoint)"
       >
