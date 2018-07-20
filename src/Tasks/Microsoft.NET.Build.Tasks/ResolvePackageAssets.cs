@@ -105,6 +105,17 @@ namespace Microsoft.NET.Build.Tasks
         public ITaskItem[] ExpectedPlatformPackages { get; set; }
 
         /// <summary>
+        /// The RuntimeIdentifiers that shims will be generated for.
+        /// </summary>
+        public ITaskItem[] ShimRuntimeIdentifiers { get; set; }
+
+        /// <summary>
+        /// The file name of Apphost asset.
+        /// </summary>
+        [Required]
+        public string DotNetAppHostExecutableNameWithoutExtension { get; set; }
+
+        /// <summary>
         /// Full paths to assemblies from packages to pass to compiler as analyzers.
         /// </summary>
         [Output]
@@ -160,6 +171,12 @@ namespace Microsoft.NET.Build.Tasks
         public ITaskItem[] TransitiveProjectReferences { get; private set; }
 
         /// <summary>
+        /// Relative paths for Apphost for different ShimRuntimeIdentifiers with RuntimeIdentifier as meta data
+        /// </summary>
+        [Output]
+        public ITaskItem[] ApphostsForShimRuntimeIdentifiers { get; private set; }
+
+        /// <summary>
         /// Messages from the assets file.
         /// These are logged directly and therefore not returned to the targets (note private here).
         /// However,they are still stored as ITaskItem[] so that the same cache reader/writer code
@@ -212,7 +229,7 @@ namespace Microsoft.NET.Build.Tasks
         ////////////////////////////////////////////////////////////////////////////////////////////////////
 
         private const int CacheFormatSignature = ('P' << 0) | ('K' << 8) | ('G' << 16) | ('A' << 24);
-        private const int CacheFormatVersion = 1;
+        private const int CacheFormatVersion = 2;
         private static readonly Encoding TextEncoding = Encoding.UTF8;
         private const int SettingsHashLength = 256 / 8;
         private HashAlgorithm CreateSettingsHash() => SHA256.Create();
@@ -236,6 +253,7 @@ namespace Microsoft.NET.Build.Tasks
             {
                 // NOTE: Order (alphabetical by group name followed by log messages) must match writer.
                 Analyzers = reader.ReadItemGroup();
+                ApphostsForShimRuntimeIdentifiers = reader.ReadItemGroup();
                 CompileTimeAssemblies = reader.ReadItemGroup();
                 ContentFilesToPreprocess = reader.ReadItemGroup();
                 FrameworkAssemblies = reader.ReadItemGroup();
@@ -601,6 +619,7 @@ namespace Microsoft.NET.Build.Tasks
             {
                 // NOTE: Order (alphabetical by group name followed by log messages) must match reader.
                 WriteItemGroup(WriteAnalyzers);
+                WriteItemGroup(WriteApphostsForShimRuntimeIdentifiers);
                 WriteItemGroup(WriteCompileTimeAssemblies);
                 WriteItemGroup(WriteContentFilesToPreprocess);
                 WriteItemGroup(WriteFrameworkAssemblies);
@@ -864,6 +883,53 @@ namespace Microsoft.NET.Build.Tasks
                 WriteItems(
                     _runtimeTarget,
                     package => package.NativeLibraries);
+            }
+
+            private void WriteApphostsForShimRuntimeIdentifiers()
+            {
+                if (_task.ShimRuntimeIdentifiers == null || _task.ShimRuntimeIdentifiers.Length == 0)
+                {
+                    return;
+                }
+
+                foreach (var runtimeIdentifier in _task.ShimRuntimeIdentifiers.Select(r => r.ItemSpec))
+                {
+                    var targetFramework = NuGetUtils.ParseFrameworkName(_task.TargetFrameworkMoniker);
+                    var runtimeTarget = _lockFile.GetTargetAndThrowIfNotFound(targetFramework, _task.RuntimeIdentifier);
+
+                    var apphostName = _task.DotNetAppHostExecutableNameWithoutExtension;
+
+                    if (runtimeIdentifier.StartsWith("win"))
+                    {
+                        apphostName += ".exe";
+                    }
+
+                    foreach (LockFileTargetLibrary library in runtimeTarget.Libraries)
+                    {
+                        if (!library.IsPackage())
+                        {
+                            continue;
+                        }
+
+                        foreach (LockFileItem asset in library.NativeLibraries)
+                        {
+                            if (asset.IsPlaceholderFile())
+                            {
+                                continue;
+                            }
+
+                            var resolvedPackageAssetPath = _packageResolver.ResolvePackageAssetPath(library, asset.Path);
+
+                            if (Path.GetFileName(resolvedPackageAssetPath) == apphostName)
+                            {
+                                WriteItem(resolvedPackageAssetPath, library);
+                                WriteMetadata(MetadataKeys.RuntimeIdentifier, runtimeIdentifier);
+                            }
+                        }
+                    }
+
+                    throw new BuildErrorException(Strings.CannotFindApphostForRid, runtimeTarget.RuntimeIdentifier);
+                }
             }
 
             private void WriteResourceAssemblies()

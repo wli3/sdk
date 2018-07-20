@@ -207,6 +207,8 @@ Copyright (c) .NET Foundation. All rights reserved.
       DisablePackageAssetsCache="$(DisablePackageAssetsCache)"
       DisableFrameworkAssemblies="$(DisableLockFileFrameworks)"
       DisableTransitiveProjectReferences="$(DisableTransitiveProjectReferences)"
+      DotNetAppHostExecutableNameWithoutExtension="$(_DotNetAppHostExecutableNameWithoutExtension)"
+      ShimRuntimeIdentifiers="@(_PackAsToolShimRuntimeIdentifiers)"
       EnsureRuntimePackageDependencies="$(EnsureRuntimePackageDependencies)"
       VerifyMatchingImplicitPackageVersion="$(VerifyMatchingImplicitPackageVersion)"
       ExpectedPlatformPackages="@(ExpectedPlatformPackages)"      
@@ -215,6 +217,7 @@ Copyright (c) .NET Foundation. All rights reserved.
       <!-- NOTE: items names here are inconsistent because they match prior implementation
           (that was spread across different tasks/targets) for backwards compatibility.  -->
       <Output TaskParameter="Analyzers" ItemName="ResolvedAnalyzers" />
+      <Output TaskParameter="ApphostsForShimRuntimeIdentifiers" ItemName="_ApphostsForShimRuntimeIdentifiers" />
       <Output TaskParameter="ContentFilesToPreprocess" ItemName="_ContentFilesToPreprocess" />
       <Output TaskParameter="FrameworkAssemblies" ItemName="ResolvedFrameworkAssemblies" />
       <Output TaskParameter="NativeLibraries" ItemName="NativeCopyLocalItems" />

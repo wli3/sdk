@@ -97,14 +97,11 @@ Copyright (c) .NET Foundation. All rights reserved.
     </PropertyGroup>
 
     <GenerateShims
-      DotNetAppHostExecutableNameWithoutExtension="$(_DotNetAppHostExecutableNameWithoutExtension)"
+      ApphostsForShimRuntimeIdentifiers="$(_ApphostsForShimRuntimeIdentifiers)"
       PackagedShimOutputDirectory="$(PackagedShimOutputRootDirectory)/shims/$(TargetFramework)"
       PackageId="$(PackageId)"
       PackageVersion="$(Version)"
-      ProjectAssetsFile="$(ProjectAssetsFile)"
-      ProjectPath="$(MSBuildProjectFullPath)"
       ShimRuntimeIdentifiers="@(_PackAsToolShimRuntimeIdentifiers)"
-      TargetFrameworkMoniker="$(NuGetTargetMoniker)"
       ToolCommandName="$(ToolCommandName)"
       ToolEntryPoint="$(ToolEntryPoint)"
       >
