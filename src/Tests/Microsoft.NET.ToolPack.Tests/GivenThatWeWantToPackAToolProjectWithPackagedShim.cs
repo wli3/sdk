@@ -285,37 +285,7 @@ namespace Microsoft.NET.ToolPack.Tests
             }
 
             var nugetPackage = SetupNuGetPackage(multiTarget);
-            using (var nupkgReader = new PackageArchiveReader(nugetPackage))
-            {
-                IEnumerable<NuGetFramework> supportedFrameworks = nupkgReader.GetSupportedFrameworks();
-                supportedFrameworks.Should().NotBeEmpty();
-                var simulateToolPathRoot = Path.Combine(_testRoot, "temp", Path.GetRandomFileName());
-
-                foreach (NuGetFramework framework in supportedFrameworks)
-                {
-                    string[] portableAppContent = {
-                        "consoledemo.runtimeconfig.json",
-                        "consoledemo.deps.json",
-                        "consoledemo.dll",
-                        "Newtonsoft.Json.dll"};
-                    CopyPackageAssetToToolLayout(portableAppContent, nupkgReader, simulateToolPathRoot, framework);
-
-                    string shimPath = Path.Combine(simulateToolPathRoot, $"{_customToolCommandName}.exe");
-                    nupkgReader.ExtractFile(
-                        $"tools/{framework.GetShortFolderName()}/any/shims/win-x64/{_customToolCommandName}.exe",
-                        shimPath,
-                        null);
-
-                    var command = new ShimCommand(Log, shimPath)
-                    {
-                        WorkingDirectory = simulateToolPathRoot
-                    };
-                    command.Execute().Should()
-                      .Pass()
-                      .And
-                      .HaveStdOutContaining("Hello World from Global Tool");
-                }
-            }
+            AssertValidShim(_testRoot, nugetPackage);
         }
 
         [WindowsOnlyTheory]
@@ -346,6 +316,11 @@ namespace Microsoft.NET.ToolPack.Tests
 
             _packageId = Path.GetFileNameWithoutExtension(packCommand.ProjectFile);
 
+            AssertValidShim(testRoot, nugetPackage);
+        }
+
+        private void AssertValidShim(string testRoot, string nugetPackage)
+        {
             using (var nupkgReader = new PackageArchiveReader(nugetPackage))
             {
                 IEnumerable<NuGetFramework> supportedFrameworks = nupkgReader.GetSupportedFrameworks();
