@@ -52,6 +52,11 @@ namespace Microsoft.NET.Build.Tasks
             }
 
             // Copy AppHostSourcePath to ModifiedAppHostPath so it inherits the same attributes\permissions.
+            if (File.Exists(appHostDestinationFilePath))
+            {
+                File.Delete(appHostDestinationFilePath);
+            }
+
             File.Copy(appHostSourceFilePath, appHostDestinationFilePath, overwriteExisting);
 
             // Re-write ModifiedAppHostPath with the proper contents.

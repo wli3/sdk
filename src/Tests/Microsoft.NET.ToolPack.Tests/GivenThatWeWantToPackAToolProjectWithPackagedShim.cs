@@ -323,8 +323,8 @@ namespace Microsoft.NET.ToolPack.Tests
         [InlineData(false)]
         public void It_produces_valid_shims_when_the_first_build_is_wrong(bool multiTarget)
         {
-            // The first build use wrong package id and should embed wrong shim. However, the pack should produce correct shim
-            // since it includes build target. And incremental build should consider the shim to be invalid and recreate that.
+            // The first build use wrong package id and should embed wrong string to shims. However, the pack should produce correct shim
+            // since it includes build target. And the incremental build should consider the shim to be invalid and recreate that.
 
             if (!Environment.Is64BitOperatingSystem)
             {
@@ -336,8 +336,8 @@ namespace Microsoft.NET.ToolPack.Tests
 
             var testRoot = helloWorldAsset.TestRoot;
 
-            var buildWithWrongPackageId = new BuildCommand(Log, helloWorldAsset.TestRoot);
-            buildWithWrongPackageId.Execute("/p:PackageId=wrongpackagefirstbuild");
+            var buildCommand = new BuildCommand(Log, helloWorldAsset.TestRoot);
+            buildCommand.Execute("/p:PackageId=wrongpackagefirstbuild");
 
             var packCommand = new PackCommand(Log, helloWorldAsset.TestRoot);
 
