@@ -221,6 +221,30 @@ namespace Microsoft.NET.ToolPack.Tests
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
+        public void Generate_shims_runs_incrementaly(bool multiTarget)
+        {
+            TestAsset helloWorldAsset = SetUpHelloWorld(multiTarget);
+
+            _testRoot = helloWorldAsset.TestRoot;
+
+            var buildCommand = new BuildCommand(Log, helloWorldAsset.TestRoot);
+            buildCommand.Execute().Should().Pass();
+
+            var outputDirectory = buildCommand.GetOutputDirectory("netcoreapp2.1");
+            string windowShimPath = Path.Combine(outputDirectory.FullName, $"shims/netcoreapp2.1/win-x64/{_customToolCommandName}.exe");
+
+            DateTime windowShimPathFirstModifiedTime = File.GetLastWriteTimeUtc(windowShimPath);
+
+            buildCommand.Execute().Should().Pass();
+
+            DateTime windowShimPathSecondModifiedTime = File.GetLastWriteTimeUtc(windowShimPath);
+
+            windowShimPathSecondModifiedTime.Should().Be(windowShimPathFirstModifiedTime);
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
         public void It_contains_shim_with_no_build(bool multiTarget)
         {
             var testAsset = CreateTestAsset(multiTarget, "shim_with_no_build" + multiTarget);
@@ -266,6 +290,67 @@ namespace Microsoft.NET.ToolPack.Tests
                 IEnumerable<NuGetFramework> supportedFrameworks = nupkgReader.GetSupportedFrameworks();
                 supportedFrameworks.Should().NotBeEmpty();
                 var simulateToolPathRoot = Path.Combine(_testRoot, "temp", Path.GetRandomFileName());
+
+                foreach (NuGetFramework framework in supportedFrameworks)
+                {
+                    string[] portableAppContent = {
+                        "consoledemo.runtimeconfig.json",
+                        "consoledemo.deps.json",
+                        "consoledemo.dll",
+                        "Newtonsoft.Json.dll"};
+                    CopyPackageAssetToToolLayout(portableAppContent, nupkgReader, simulateToolPathRoot, framework);
+
+                    string shimPath = Path.Combine(simulateToolPathRoot, $"{_customToolCommandName}.exe");
+                    nupkgReader.ExtractFile(
+                        $"tools/{framework.GetShortFolderName()}/any/shims/win-x64/{_customToolCommandName}.exe",
+                        shimPath,
+                        null);
+
+                    var command = new ShimCommand(Log, shimPath)
+                    {
+                        WorkingDirectory = simulateToolPathRoot
+                    };
+                    command.Execute().Should()
+                      .Pass()
+                      .And
+                      .HaveStdOutContaining("Hello World from Global Tool");
+                }
+            }
+        }
+
+        [WindowsOnlyTheory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void It_produces_valid_shims_when_the_first_build_is_wrong(bool multiTarget)
+        {
+            // The first build use wrong package id and should embed wrong shim. However, the pack should produce correct shim
+            // since it includes build target. And incremental build should consider the shim to be invalid and recreate that.
+
+            if (!Environment.Is64BitOperatingSystem)
+            {
+                // only sample test on win-x64 since shims are RID specific
+                return;
+            }
+
+            TestAsset helloWorldAsset = CreateTestAsset(multiTarget, "It_produces_valid_shims2" + multiTarget.ToString());
+
+            var testRoot = helloWorldAsset.TestRoot;
+
+            var buildWithWrongPackageId = new BuildCommand(Log, helloWorldAsset.TestRoot);
+            buildWithWrongPackageId.Execute("/p:PackageId=wrongpackagefirstbuild");
+
+            var packCommand = new PackCommand(Log, helloWorldAsset.TestRoot);
+
+            packCommand.Execute();
+            var nugetPackage = packCommand.GetNuGetPackage();
+
+            _packageId = Path.GetFileNameWithoutExtension(packCommand.ProjectFile);
+
+            using (var nupkgReader = new PackageArchiveReader(nugetPackage))
+            {
+                IEnumerable<NuGetFramework> supportedFrameworks = nupkgReader.GetSupportedFrameworks();
+                supportedFrameworks.Should().NotBeEmpty();
+                var simulateToolPathRoot = Path.Combine(testRoot, "temp", Path.GetRandomFileName());
 
                 foreach (NuGetFramework framework in supportedFrameworks)
                 {

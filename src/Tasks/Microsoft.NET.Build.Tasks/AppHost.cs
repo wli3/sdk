@@ -1,6 +1,7 @@
 ﻿// Copyright (c) .NET Foundation and contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Runtime.InteropServices;
@@ -61,6 +62,8 @@ namespace Microsoft.NET.Build.Tasks
                     SearchAndReplace(accessor, _bytesToSearch, bytesToWrite, appHostSourceFilePath);
                 }
             }
+
+            File.SetLastWriteTime(appHostDestinationFilePath, DateTime.Now);
         }
 
         // See: https://en.wikipedia.org/wiki/Knuth%E2%80%93Morris%E2%80%93Pratt_algorithm
