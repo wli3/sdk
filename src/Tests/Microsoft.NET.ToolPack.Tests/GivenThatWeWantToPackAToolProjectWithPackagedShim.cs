@@ -126,7 +126,7 @@ namespace Microsoft.NET.ToolPack.Tests
         {
             string shimoutputPath = Path.Combine(TestContext.Current.TestExecutionDirectory, "shimoutput");
             TestAsset helloWorldAsset = _testAssetsManager
-                .CopyTestAsset("PortableTool", "PackagedShimOutputRootDirectory" + multiTarget)
+                .CopyTestAsset("PortableTool", "PackagedShimOutputRootDirectory" + multiTarget.ToString())
                 .WithSource()
                 .WithProjectChanges(project =>
                 {
@@ -175,10 +175,10 @@ namespace Microsoft.NET.ToolPack.Tests
             File.Exists(osxShimPath).Should().BeTrue($"Shim {osxShimPath} should exist");
         }
 
-        private TestAsset SetUpHelloWorld(bool multiTarget)
+        private TestAsset SetUpHelloWorld(bool multiTarget, [CallerMemberName] string callingMethod = "")
         {
             return _testAssetsManager
-                .CopyTestAsset("PortableTool", "PackagedShimOutputRootDirectory" + multiTarget)
+                .CopyTestAsset("PortableTool", callingMethod + multiTarget)
                 .WithSource()
                 .WithProjectChanges(project =>
                 {

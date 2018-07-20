@@ -56,6 +56,8 @@ namespace Microsoft.NET.Build.Tasks
                     SearchAndReplace(accessor, _bytesToSearch, bytesToWrite, appHostSourceFilePath);
                 }
             }
+
+            File.SetLastWriteTime(appHostDestinationFilePath, DateTime.Now);
         }
 
         // See: https://en.wikipedia.org/wiki/Knuth%E2%80%93Morris%E2%80%93Pratt_algorithm
