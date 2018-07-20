@@ -195,6 +195,10 @@ Copyright (c) .NET Foundation. All rights reserved.
       <EnsureRuntimePackageDependencies>true</EnsureRuntimePackageDependencies>
     </PropertyGroup>
 
+    <ItemGroup>
+      <_PackAsToolShimRuntimeIdentifiers Include="$(PackAsToolShimRuntimeIdentifiers)"/>
+    </ItemGroup>
+
     <ResolvePackageAssets 
       ProjectAssetsFile="$(ProjectAssetsFile)"
       ProjectAssetsCacheFile="$(ProjectAssetsCacheFile)"

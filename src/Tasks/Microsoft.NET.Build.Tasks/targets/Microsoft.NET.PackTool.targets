@@ -85,19 +85,15 @@ Copyright (c) .NET Foundation. All rights reserved.
 
   <Target Name="GenerateShimsAssets"
           BeforeTargets="CopyFilesToOutputDirectory"
-          DependsOnTargets="ResolveReferences"
+          DependsOnTargets="ResolvePackageAssets"
           Condition="'$(PackAsTool)' == 'true'" >
-
-    <ItemGroup>
-      <_PackAsToolShimRuntimeIdentifiers Include="$(PackAsToolShimRuntimeIdentifiers)"/>
-    </ItemGroup>
 
     <PropertyGroup>
       <PackagedShimOutputRootDirectory Condition=" '$(PackagedShimOutputRootDirectory)' == '' ">$(OutDir)</PackagedShimOutputRootDirectory>
     </PropertyGroup>
 
     <GenerateShims
-      ApphostsForShimRuntimeIdentifiers="$(_ApphostsForShimRuntimeIdentifiers)"
+      ApphostsForShimRuntimeIdentifiers="@(_ApphostsForShimRuntimeIdentifiers)"
       PackagedShimOutputDirectory="$(PackagedShimOutputRootDirectory)/shims/$(TargetFramework)"
       PackageId="$(PackageId)"
       PackageVersion="$(Version)"

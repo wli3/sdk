@@ -68,7 +68,6 @@ namespace Microsoft.NET.Build.Tasks
         [Output]
         public ITaskItem[] EmbeddedApphostPaths { get; private set; }
 
-
         protected override void ExecuteCore()
         {
             var embeddedApphostPaths = new List<ITaskItem>();
@@ -96,7 +95,7 @@ namespace Microsoft.NET.Build.Tasks
                         PackageId.ToLowerInvariant(),
                         PackageVersion,
                         "tools",
-                        TargetFrameworkMoniker,
+                        NuGetUtils.ParseFrameworkName(TargetFrameworkMoniker).GetShortFolderName(),
                         "any",
                         ToolEntryPoint});
 

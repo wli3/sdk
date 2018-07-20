@@ -11,6 +11,7 @@ using System.Text;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 using NuGet.Common;
+using NuGet.Frameworks;
 using NuGet.ProjectModel;
 
 namespace Microsoft.NET.Build.Tasks
@@ -894,8 +895,8 @@ namespace Microsoft.NET.Build.Tasks
 
                 foreach (var runtimeIdentifier in _task.ShimRuntimeIdentifiers.Select(r => r.ItemSpec))
                 {
-                    var targetFramework = NuGetUtils.ParseFrameworkName(_task.TargetFrameworkMoniker);
-                    var runtimeTarget = _lockFile.GetTargetAndThrowIfNotFound(targetFramework, _task.RuntimeIdentifier);
+                    NuGetFramework targetFramework = NuGetUtils.ParseFrameworkName(_task.TargetFrameworkMoniker);
+                    LockFileTarget runtimeTarget = _lockFile.GetTargetAndThrowIfNotFound(targetFramework, runtimeIdentifier);
 
                     var apphostName = _task.DotNetAppHostExecutableNameWithoutExtension;
 
@@ -904,31 +905,10 @@ namespace Microsoft.NET.Build.Tasks
                         apphostName += ".exe";
                     }
 
-                    foreach (LockFileTargetLibrary library in runtimeTarget.Libraries)
-                    {
-                        if (!library.IsPackage())
-                        {
-                            continue;
-                        }
+                    Tuple<string, LockFileTargetLibrary> resolvedPackageAssetPathAndLibrary = FindApphostInRuntimeTarget(apphostName, runtimeTarget);
 
-                        foreach (LockFileItem asset in library.NativeLibraries)
-                        {
-                            if (asset.IsPlaceholderFile())
-                            {
-                                continue;
-                            }
-
-                            var resolvedPackageAssetPath = _packageResolver.ResolvePackageAssetPath(library, asset.Path);
-
-                            if (Path.GetFileName(resolvedPackageAssetPath) == apphostName)
-                            {
-                                WriteItem(resolvedPackageAssetPath, library);
-                                WriteMetadata(MetadataKeys.RuntimeIdentifier, runtimeIdentifier);
-                            }
-                        }
-                    }
-
-                    throw new BuildErrorException(Strings.CannotFindApphostForRid, runtimeTarget.RuntimeIdentifier);
+                    WriteItem(resolvedPackageAssetPathAndLibrary.Item1, resolvedPackageAssetPathAndLibrary.Item2);
+                    WriteMetadata(MetadataKeys.RuntimeIdentifier, runtimeIdentifier);
                 }
             }
 
@@ -1070,6 +1050,34 @@ namespace Microsoft.NET.Build.Tasks
                 }
 
                 return paths;
+            }
+
+            private Tuple<string, LockFileTargetLibrary> FindApphostInRuntimeTarget(string apphostName, LockFileTarget runtimeTarget)
+            {
+                foreach (LockFileTargetLibrary library in runtimeTarget.Libraries)
+                {
+                    if (!library.IsPackage())
+                    {
+                        continue;
+                    }
+
+                    foreach (LockFileItem asset in library.NativeLibraries)
+                    {
+                        if (asset.IsPlaceholderFile())
+                        {
+                            continue;
+                        }
+
+                        var resolvedPackageAssetPath = _packageResolver.ResolvePackageAssetPath(library, asset.Path);
+
+                        if (Path.GetFileName(resolvedPackageAssetPath) == apphostName)
+                        {
+                            return new Tuple<string, LockFileTargetLibrary>(resolvedPackageAssetPath, library);
+                        }
+                    }
+                }
+
+                throw new BuildErrorException(Strings.CannotFindApphostForRid, runtimeTarget.RuntimeIdentifier);
             }
         }
     }
