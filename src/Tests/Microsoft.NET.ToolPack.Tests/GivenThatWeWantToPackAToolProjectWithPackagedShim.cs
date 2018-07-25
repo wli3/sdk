@@ -228,14 +228,15 @@ namespace Microsoft.NET.ToolPack.Tests
             _testRoot = helloWorldAsset.TestRoot;
 
             var buildCommand = new BuildCommand(Log, helloWorldAsset.TestRoot);
-            buildCommand.Execute().Should().Pass();
+            buildCommand.WorkingDirectory = helloWorldAsset.TestRoot;
+            buildCommand.Execute($"/bl:build1.binlog").Should().Pass();
 
             var outputDirectory = buildCommand.GetOutputDirectory("netcoreapp2.1");
             string windowShimPath = Path.Combine(outputDirectory.FullName, $"shims/netcoreapp2.1/win-x64/{_customToolCommandName}.exe");
 
             DateTime windowShimPathFirstModifiedTime = File.GetLastWriteTimeUtc(windowShimPath);
 
-            buildCommand.Execute().Should().Pass();
+            buildCommand.Execute($"/bl:build2.binlog").Should().Pass();
 
             DateTime windowShimPathSecondModifiedTime = File.GetLastWriteTimeUtc(windowShimPath);
 
