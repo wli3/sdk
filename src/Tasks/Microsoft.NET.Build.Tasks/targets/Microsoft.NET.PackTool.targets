@@ -129,10 +129,6 @@ Copyright (c) .NET Foundation. All rights reserved.
   </Target>
 
   <Target Name="_ComputeExpectedEmbeddedApphostPaths">
-    <ItemGroup>
-      <_PackAsToolShimRuntimeIdentifiers Include="$(PackAsToolShimRuntimeIdentifiers)"/>
-    </ItemGroup>
-
     <GetEmbeddedApphostPaths
       PackagedShimOutputDirectory="$(OutDir)/shims/$(TargetFramework)"
       ShimRuntimeIdentifiers="@(_PackAsToolShimRuntimeIdentifiers)"
