@@ -175,6 +175,26 @@ namespace Microsoft.NET.ToolPack.Tests
             File.Exists(osxShimPath).Should().BeTrue($"Shim {osxShimPath} should exist");
         }
 
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void It_uses_outputs_correct_LastwriteTime(bool multiTarget)
+        {
+            TestAsset helloWorldAsset = SetUpHelloWorld(multiTarget);
+
+            _testRoot = helloWorldAsset.TestRoot;
+
+            var packCommand = new PackCommand(Log, helloWorldAsset.TestRoot);
+            var outputDirectory = packCommand.GetOutputDirectory("netcoreapp2.1");
+            var initialTime = DateTime.UtcNow;
+            packCommand.Execute();
+
+            string windowShimPath = Path.Combine(outputDirectory.FullName, $"shims/netcoreapp2.1/win-x64/{_customToolCommandName}.exe");
+            var lastwriteTime = File.GetLastWriteTimeUtc(windowShimPath);
+            lastwriteTime.Should().BeAfter(initialTime);
+            lastwriteTime.Should().BeBefore(DateTime.UtcNow);
+        }
+
         private TestAsset SetUpHelloWorld(bool multiTarget, [CallerMemberName] string callingMethod = "")
         {
             return _testAssetsManager
