@@ -10,12 +10,23 @@ Copyright (c) .NET Foundation. All rights reserved.
 ***********************************************************************************************
 -->
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
- 
+
+  <PropertyGroup>
+    <_GenerateAppConfigIntermediateAppConfig>$(IntermediateOutputPath)$(TargetFileName).withSupportedRuntime.config</_GenerateAppConfigIntermediateAppConfig>
+
+  </PropertyGroup>
   <Target Name="GenerateAppConfig"
           DependsOnTargets="PrepareForBuild"
           AfterTargets="GenerateBindingRedirects"
           Condition="'$(GenerateAppConfig)' == 'true'" >
 
-    
+    <GenerateAppConfig
+      AppConfigFile="@(AppConfigWithTargetPath)"
+      OutputAppConfigFile="$(_GenerateAppConfigIntermediateAppConfig)"
+      >
+
+      <Output TaskParameter="OutputAppConfigFile" ItemName="FileWrites" />
+    </GenerateAppConfig>
+
   </Target>
 </Project>
