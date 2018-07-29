@@ -1,0 +1,48 @@
+<!--
+***********************************************************************************************
+Microsoft.NET.GenerateAppConfig.targets
+
+WARNING:  DO NOT MODIFY this file unless you are knowledgeable about MSBuild and have
+          created a backup copy.  Incorrect changes to this file will make it
+          impossible to load or build your projects from the command-line or the IDE.
+
+Copyright (c) .NET Foundation. All rights reserved.
+***********************************************************************************************
+-->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <UsingTask TaskName="GenerateAppConfig" AssemblyFile="$(MicrosoftNETBuildTasksAssembly)" />
+
+  <PropertyGroup>
+    <_GenerateAppConfigIntermediateAppConfig>$(IntermediateOutputPath)$(TargetFileName).withSupportedRuntime.config</_GenerateAppConfigIntermediateAppConfig>
+  </PropertyGroup>
+
+  <Target Name="GenerateAppConfig"
+          Inputs="$(MSBuildAllProjects);@(AppConfigWithTargetPath);$(ResolveAssemblyReferencesStateFile);$(IntermediateOutputPath)"
+          Outputs="$(_GenerateAppConfigIntermediateAppConfig)"
+          DependsOnTargets="PrepareForBuild"
+          BeforeTargets="GenerateBindingRedirects"
+          Condition="'$(GenerateAppConfig)' != 'false' and '$(TargetFrameworkIdentifier)' == '.NETFramework'" >
+
+    <GenerateAppConfig
+      AppConfigFile="@(AppConfigWithTargetPath)"
+      TargetName="$(TargetFileName).config"
+      TargetFramework="$(TargetFramework)"
+      OutputAppConfigFile="$(_GenerateAppConfigIntermediateAppConfig)"
+      >
+
+      <Output TaskParameter="OutputAppConfigFile" ItemName="_GenerateAppConfigAppConfigWithTargetPath" />
+    </GenerateAppConfig>
+
+    <ItemGroup>
+      <FileWrites Include="@(_GenerateAppConfigAppConfigWithTargetPath)" Condition="Exists('$(_GenerateAppConfigAppConfigWithTargetPath)')"/>
+    </ItemGroup>
+
+    <!--Override the AppConfigWithTargetPath for downstream target-->
+    <ItemGroup>
+      <AppConfigWithTargetPath Remove="@(AppConfigWithTargetPath)" />
+      <AppConfigWithTargetPath Include="@(_GenerateAppConfigAppConfigWithTargetPath)" />
+    </ItemGroup>
+
+  </Target>
+</Project>
