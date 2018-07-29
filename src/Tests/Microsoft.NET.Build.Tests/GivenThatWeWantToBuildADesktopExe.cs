@@ -578,7 +578,7 @@ class Program
         }
 
         [WindowsOnlyFact]
-        public void It_generates_binding_redirects_if_needed2()
+        public void It_generates_appconfig_if_needed()
         {
             var testAsset = _testAssetsManager
                 .CopyTestAsset("DesktopNeedsBindingRedirects")
@@ -600,7 +600,7 @@ class Program
             });
 
             XElement root = XElement.Load(outputDirectory.GetFiles("DesktopNeedsBindingRedirects.exe.config").Single().FullName);
-            root.Elements("runtime").Single().Elements().Should().Contain(e => e.Name.LocalName == "assemblyBinding");
+            root.Elements("startup").Single().Elements().Should().Contain(e => e.Name.LocalName == "supportedRuntime");
         }
 
 
