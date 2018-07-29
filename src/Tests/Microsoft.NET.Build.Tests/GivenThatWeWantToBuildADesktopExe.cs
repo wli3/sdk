@@ -18,6 +18,7 @@ using Xunit;
 
 using Xunit.Abstractions;
 using System.Text.RegularExpressions;
+using System.Collections.Generic;
 
 namespace Microsoft.NET.Build.Tests
 {
@@ -571,7 +572,37 @@ class Program
                 "DesktopNeedsBindingRedirects.exe",
                 "DesktopNeedsBindingRedirects.exe.config"
             });
+
+            XElement root = XElement.Load(outputDirectory.GetFiles("DesktopNeedsBindingRedirects.exe.config").Single().FullName);
+            root.Elements("runtime").Single().Elements().Should().Contain(e => e.Name.LocalName == "assemblyBinding");
         }
+
+        [WindowsOnlyFact]
+        public void It_generates_binding_redirects_if_needed2()
+        {
+            var testAsset = _testAssetsManager
+                .CopyTestAsset("DesktopNeedsBindingRedirects")
+                .WithSource()
+                .Restore(Log);
+
+            var buildCommand = new BuildCommand(Log, testAsset.TestRoot);
+
+            buildCommand
+                .Execute()
+                .Should()
+                .Pass();
+
+            var outputDirectory = buildCommand.GetOutputDirectory("net452", runtimeIdentifier: "win7-x86");
+
+            outputDirectory.Should().HaveFiles(new[] {
+                "DesktopNeedsBindingRedirects.exe",
+                "DesktopNeedsBindingRedirects.exe.config"
+            });
+
+            XElement root = XElement.Load(outputDirectory.GetFiles("DesktopNeedsBindingRedirects.exe.config").Single().FullName);
+            root.Elements("runtime").Single().Elements().Should().Contain(e => e.Name.LocalName == "assemblyBinding");
+        }
+
 
         [WindowsOnlyTheory]
         [InlineData(true)]
