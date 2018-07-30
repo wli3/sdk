@@ -64,28 +64,70 @@ namespace Microsoft.NET.Build.Tasks
             }
         }
 
-        public static void AddSupportedRuntimeToAppconfigFile(XDocument doc, string targetFramework)
+        public static void AddSupportedRuntimeToAppconfigFile(XDocument doc, string targetframework)
         {
             XElement startupNode = doc.Root
                                       .Nodes()
                                       .OfType<XElement>()
                                       .FirstOrDefault(e => e.Name.LocalName == "startup");
 
-            if (startupNode == null)
+            string runtimeVersion = string.Empty;
+            if (!HasExistingSupportedRuntime(startupNode))
             {
-                startupNode = new XElement("startup");
-                doc.Root.Add(startupNode);
-            }
+                if (TryGetSupportRuntimeNode(
+                    targetframework,
+                    runtimeVersion,
+                    out XElement supportedRuntime))
+                {
+                    if (startupNode == null)
+                    {
+                        startupNode = new XElement("startup");
+                        doc.Root.Add(startupNode);
+                    }
 
-            if (!startupNode.Nodes().OfType<XElement>().Any(e => e.Name.LocalName == "supportedRuntime"))
+                    startupNode.Add(supportedRuntime);
+                }
+            }
+        }
+
+        private static bool HasExistingSupportedRuntime(XElement startupNode)
+        {
+            return startupNode != null
+                  && startupNode.Nodes().OfType<XElement>().Any(e => e.Name.LocalName == "supportedRuntime");
+        }
+
+        // https://github.com/dotnet/docs/blob/master/docs/framework/configure-apps/file-schema/startup/supportedruntime-element.md
+        private static bool TryGetSupportRuntimeNode(string targetframework, string runtimeVersion, out XElement supportedRuntime)
+        {
+            supportedRuntime = null;
+            var targetFrameworkParsed = NuGetFramework.Parse(targetframework);
+            if (targetFrameworkParsed.Framework == ".NETFramework")
             {
-                var supportedRuntime = new XElement(
-                    "supportedRuntime",
-                    new XAttribute("version", "v4.0"),
-                    new XAttribute("sku", ".NETFramework,Version=v4.6.1"));
-
-                startupNode.Add(supportedRuntime);
+                if (targetFrameworkParsed.Version.Major < 4)
+                {
+                    if (_targetFrameworkBelow40RuntimeVersionMap.TryGetValue(targetFrameworkParsed.GetShortFolderName(), out string value))
+                    {
+                        runtimeVersion = value;
+                        supportedRuntime = new XElement(
+                           "supportedRuntime",
+                           new XAttribute("version", value));
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+                else if (targetFrameworkParsed.Version.Major == 4)
+                {
+                    supportedRuntime = new XElement(
+                           "supportedRuntime",
+                           new XAttribute("version", "v4.0"),
+                           new XAttribute("sku", targetFrameworkParsed.DotNetFrameworkName));
+                    return true;
+                }
             }
+            return false;
         }
 
         /// <summary>
@@ -112,5 +154,12 @@ namespace Microsoft.NET.Build.Tasks
 
             return document;
         }
+
+        private static readonly Dictionary<string, string> _targetFrameworkBelow40RuntimeVersionMap = new Dictionary<string, string>()
+        {
+            ["net11"] = "v1.1.4322",
+            ["net20"] = "v2.0.50727",
+            ["net35"] = "v2.0.50727",
+        };
     }
 }

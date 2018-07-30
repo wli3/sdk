@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using FluentAssertions;
+using NuGet.Frameworks;
 using System.Linq;
 using System.Xml.Linq;
 using Xunit;
@@ -100,6 +101,10 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
         [InlineData("net472", "v4.0", ".NETFramework,Version=v4.7.2")]
         public void It_Generate_correct_version_and_sku_for_above40(string targetframework, string expectedVersion, string expectedSku)
         {
+
+            var targetFrameworkParsed = NuGetFramework.Parse(targetframework);
+
+
             var doc = new XDocument(
                     new XDeclaration("1.0", "utf-8", "true"),
                     new XElement("configuration"));
@@ -113,6 +118,26 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
 
             supportedRuntime.Should().HaveAttribute("version", expectedVersion);
             supportedRuntime.Should().HaveAttribute("sku", expectedSku);
+        }
+
+        [Theory]
+        [InlineData("net10")]
+        [InlineData("net30")]
+        [InlineData("net999")]
+        [InlineData("netstandard20")]
+        public void It_Generate_correct_version_and_sku_for_non_supported(string targetframework)
+        {
+            var targetFrameworkParsed = NuGetFramework.Parse(targetframework);
+
+
+            var doc = new XDocument(
+                    new XDeclaration("1.0", "utf-8", "true"),
+                    new XElement("configuration"));
+
+            GenerateAppConfig.AddSupportedRuntimeToAppconfigFile(doc, targetframework);
+
+            doc.Element("configuration")
+                .Elements("startup").Should().BeNullOrEmpty();
         }
     }
 }
