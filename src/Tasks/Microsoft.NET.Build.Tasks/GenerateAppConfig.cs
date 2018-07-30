@@ -25,6 +25,8 @@ namespace Microsoft.NET.Build.Tasks
         /// </summary>
         public string TargetName { get; set; }
 
+        public string TargetFramework { get; set; }
+
         /// <summary>
         /// Path to an intermediate file where we can write the input app.config plus the generated startup supportedRuntime
         /// </summary>
@@ -35,26 +37,7 @@ namespace Microsoft.NET.Build.Tasks
         {
             XDocument doc = LoadAppConfig(AppConfigFile);
 
-            XElement startupNode = doc.Root
-                                      .Nodes()
-                                      .OfType<XElement>()
-                                      .FirstOrDefault(e => e.Name.LocalName == "startup");
-
-            if (startupNode == null)
-            {
-                startupNode = new XElement("startup");
-                doc.Root.Add(startupNode);
-            }
-
-            if (!startupNode.Nodes().OfType<XElement>().Any(e => e.Name.LocalName == "supportedRuntime"))
-            {
-                var supportedRuntime = new XElement(
-                    "supportedRuntime",
-                    new XAttribute("version", "v4.0"),
-                    new XAttribute("sku", ".NETFramework,Version=v4.6.1"));
-
-                startupNode.Add(supportedRuntime);
-            }
+            AddSupportedRuntimeToAppconfigFile(doc, TargetFramework);
 
             if (File.Exists(OutputAppConfigFile.ItemSpec))
             {
@@ -78,6 +61,30 @@ namespace Microsoft.NET.Build.Tasks
             using (var stream = new StreamWriter(fileStream))
             {
                 doc.Save(stream);
+            }
+        }
+
+        public static void AddSupportedRuntimeToAppconfigFile(XDocument doc, string targetFramework)
+        {
+            XElement startupNode = doc.Root
+                                      .Nodes()
+                                      .OfType<XElement>()
+                                      .FirstOrDefault(e => e.Name.LocalName == "startup");
+
+            if (startupNode == null)
+            {
+                startupNode = new XElement("startup");
+                doc.Root.Add(startupNode);
+            }
+
+            if (!startupNode.Nodes().OfType<XElement>().Any(e => e.Name.LocalName == "supportedRuntime"))
+            {
+                var supportedRuntime = new XElement(
+                    "supportedRuntime",
+                    new XAttribute("version", "v4.0"),
+                    new XAttribute("sku", ".NETFramework,Version=v4.6.1"));
+
+                startupNode.Add(supportedRuntime);
             }
         }
 

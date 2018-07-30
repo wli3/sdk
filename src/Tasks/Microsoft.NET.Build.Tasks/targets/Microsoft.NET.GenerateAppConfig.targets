@@ -25,6 +25,7 @@ Copyright (c) .NET Foundation. All rights reserved.
     <GenerateAppConfig
       AppConfigFile="@(AppConfigWithTargetPath)"
       TargetName="$(TargetFileName).config"
+      TargetFramework="$(TargetFramework)"
       OutputAppConfigFile="$(_GenerateAppConfigIntermediateAppConfig)"
       >
 
