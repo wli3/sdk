@@ -11,21 +11,26 @@ Copyright (c) .NET Foundation. All rights reserved.
 -->
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
+  <UsingTask TaskName="GenerateAppConfig" AssemblyFile="$(MicrosoftNETBuildTasksAssembly)" />
+
   <PropertyGroup>
     <_GenerateAppConfigIntermediateAppConfig>$(IntermediateOutputPath)$(TargetFileName).withSupportedRuntime.config</_GenerateAppConfigIntermediateAppConfig>
-
   </PropertyGroup>
   <Target Name="GenerateAppConfig"
           DependsOnTargets="PrepareForBuild"
-          AfterTargets="GenerateBindingRedirects"
-          Condition="'$(GenerateAppConfig)' == 'true'" >
+          BeforeTargets="GenerateBindingRedirects"
+          Condition="'$(GenerateAppConfig)' != 'false'" >
 
+    <!--TODO wul incremental build-->
     <GenerateAppConfig
       AppConfigFile="@(AppConfigWithTargetPath)"
+      TargetName="$(TargetFileName).config"
       OutputAppConfigFile="$(_GenerateAppConfigIntermediateAppConfig)"
       >
 
       <Output TaskParameter="OutputAppConfigFile" ItemName="FileWrites" />
+      <!--Override the AppConfigWithTargetPath for downstream target-->
+      <Output TaskParameter="OutputAppConfigFile" ItemName="AppConfigWithTargetPath" />
     </GenerateAppConfig>
 
   </Target>

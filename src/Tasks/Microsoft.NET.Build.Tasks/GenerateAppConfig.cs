@@ -21,6 +21,11 @@ namespace Microsoft.NET.Build.Tasks
         public ITaskItem AppConfigFile { get; set; }
 
         /// <summary>
+        /// Name of the output application config file: $(TargetFileName).config
+        /// </summary>
+        public string TargetName { get; set; }
+
+        /// <summary>
         /// Path to an intermediate file where we can write the input app.config plus the generated startup supportedRuntime
         /// </summary>
         [Output]
@@ -28,17 +33,27 @@ namespace Microsoft.NET.Build.Tasks
 
         protected override void ExecuteCore()
         {
-            var doc = LoadAppConfig(AppConfigFile);
+            XDocument doc = LoadAppConfig(AppConfigFile);
 
-            XElement runtimeNode = doc.Root
+            XElement startupNode = doc.Root
                                       .Nodes()
                                       .OfType<XElement>()
-                                      .FirstOrDefault(e => e.Name.LocalName == "runtime");
+                                      .FirstOrDefault(e => e.Name.LocalName == "startup");
 
-            if (runtimeNode == null)
+            if (startupNode == null)
             {
-                runtimeNode = new XElement("runtime");
-                doc.Root.Add(runtimeNode);
+                startupNode = new XElement("startup");
+                doc.Root.Add(startupNode);
+            }
+
+            if (!startupNode.Nodes().OfType<XElement>().Any(e => e.Name.LocalName == "supportedRuntime"))
+            {
+                var supportedRuntime = new XElement(
+                    "supportedRuntime",
+                    new XAttribute("version", "v4.0"),
+                    new XAttribute("sku", ".NETFramework,Version=v4.6.1"));
+
+                startupNode.Add(supportedRuntime);
             }
 
             if (File.Exists(OutputAppConfigFile.ItemSpec))
@@ -50,8 +65,16 @@ namespace Microsoft.NET.Build.Tasks
             {
                 AppConfigFile.CopyMetadataTo(OutputAppConfigFile);
             }
+            else
+            {
+                OutputAppConfigFile.SetMetadata(MetadataKeys.TargetPath, TargetName);
+            }
 
-            var fileStream = new FileStream(OutputAppConfigFile.ItemSpec, FileMode.Create, FileAccess.Write, FileShare.Read, 4096, FileOptions.SequentialScan);
+            var fileStream = new FileStream(
+                OutputAppConfigFile.ItemSpec,
+                FileMode.Create,
+                FileAccess.Write,
+                FileShare.Read);
             using (var stream = new StreamWriter(fileStream))
             {
                 doc.Save(stream);
@@ -75,7 +98,7 @@ namespace Microsoft.NET.Build.Tasks
                 document = XDocument.Load(appConfigItem.ItemSpec);
                 if (document.Root == null || document.Root.Name != "configuration")
                 {
-                    // TODO loc
+                    // TODO wul loc
                     throw new BuildErrorException("The application configuration file must have root configuration element.");
                 }
             }
