@@ -578,13 +578,38 @@ class Program
         }
 
         [WindowsOnlyFact]
-        public void It_generates_appconfig_if_needed()
+        public void It_generates_supportedRuntime_when_no_appconfig_in_source_require_binding_redirect()
         {
             var testAsset = _testAssetsManager
                 .CopyTestAsset("DesktopNeedsBindingRedirects")
                 .WithSource()
                 .Restore(Log);
 
+            XElement root = BuildTestAssetGetAppConfig(testAsset);
+            root.Elements("startup").Single().Elements().Should().Contain(e => e.Name.LocalName == "supportedRuntime");
+        }
+
+        [WindowsOnlyFact]
+        public void It_generates_supportedRuntime_when_no_appconfig_in_source_does_not_require_binding_redirect()
+        {
+            var testAsset = _testAssetsManager
+                .CopyTestAsset("DesktopNeedsBindingRedirects")
+                .WithSource()
+                .WithProjectChanges(project =>
+                {
+                    var ns = project.Root.Name.Namespace;
+                    var propertyGroup = project.Root.Elements(ns + "ItemGroup").First();
+
+                    propertyGroup.Elements(ns + "PackageReference").Remove();
+                })
+                .Restore(Log);
+
+            XElement root = BuildTestAssetGetAppConfig(testAsset);
+            root.Elements("startup").Single().Elements().Should().Contain(e => e.Name.LocalName == "supportedRuntime");
+        }
+
+        private XElement BuildTestAssetGetAppConfig(TestAsset testAsset)
+        {
             var buildCommand = new BuildCommand(Log, testAsset.TestRoot);
 
             buildCommand
@@ -592,17 +617,11 @@ class Program
                 .Should()
                 .Pass();
 
-            var outputDirectory = buildCommand.GetOutputDirectory("net452", runtimeIdentifier: "win7-x86");
-
-            outputDirectory.Should().HaveFiles(new[] {
-                "DesktopNeedsBindingRedirects.exe",
-                "DesktopNeedsBindingRedirects.exe.config"
-            });
+            DirectoryInfo outputDirectory = buildCommand.GetOutputDirectory("net452", runtimeIdentifier: "win7-x86");
 
             XElement root = XElement.Load(outputDirectory.GetFiles("DesktopNeedsBindingRedirects.exe.config").Single().FullName);
-            root.Elements("startup").Single().Elements().Should().Contain(e => e.Name.LocalName == "supportedRuntime");
+            return root;
         }
-
 
         [WindowsOnlyTheory]
         [InlineData(true)]
