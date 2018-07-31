@@ -605,7 +605,33 @@ class Program
                 .Restore(Log);
 
             XElement root = BuildTestAssetGetAppConfig(testAsset);
-            root.Elements("startup").Single().Elements().Should().Contain(e => e.Name.LocalName == "supportedRuntime");
+            root.Elements("startup").Single()
+                .Elements().Should()
+                .Contain(e => e.Name.LocalName == "supportedRuntime");
+        }
+
+        [WindowsOnlyFact]
+        public void It_generates_supportedRuntime_when_there_is_appconfig_with_supportedRuntime_in_source_require_binding_redirect()
+        {
+            var testAsset = _testAssetsManager
+                .CopyTestAsset("DesktopNeedsBindingRedirects")
+                .WithSource()
+                .Restore(Log);
+
+            var appconfigWithoutSupportedRuntime = new XDocument(
+                    new XDeclaration("1.0", "utf-8", "true"),
+                    new XElement("configuration",
+                        new XElement("startup",
+                             new XElement("supportedRuntime",
+                           new XAttribute("version", "v999")))));
+
+            appconfigWithoutSupportedRuntime.Save(
+                Path.Combine(testAsset.TestRoot, "App.Config"));
+
+            XElement root = BuildTestAssetGetAppConfig(testAsset);
+            root.Elements("startup").Single()
+                .Elements("supportedRuntime").Single()
+                .Should().HaveAttribute("version", "v999", "It should keep existing supoortedRuntime");
         }
 
         [WindowsOnlyFact]
@@ -641,8 +667,7 @@ class Program
 
             DirectoryInfo outputDirectory = buildCommand.GetOutputDirectory("net452", runtimeIdentifier: "win7-x86");
 
-            XElement root = XElement.Load(outputDirectory.GetFiles("DesktopNeedsBindingRedirects.exe.config").Single().FullName);
-            return root;
+            return XElement.Load(outputDirectory.GetFiles("DesktopNeedsBindingRedirects.exe.config").Single().FullName);
         }
 
         [WindowsOnlyTheory]
