@@ -105,9 +105,10 @@ namespace Microsoft.NET.Build.Tasks
                     if (_targetFrameworkBelow40RuntimeVersionMap.TryGetValue(targetFrameworkParsed.GetShortFolderName(), out string value))
                     {
                         runtimeVersion = value;
-                        supportedRuntime = new XElement(
-                           "supportedRuntime",
-                           new XAttribute("version", value));
+                        supportedRuntime =
+                            new XElement(
+                                "supportedRuntime",
+                                new XAttribute("version", value));
 
                         return true;
                     }
@@ -118,10 +119,12 @@ namespace Microsoft.NET.Build.Tasks
                 }
                 else if (targetFrameworkParsed.Version.Major == 4)
                 {
-                    supportedRuntime = new XElement(
-                           "supportedRuntime",
-                           new XAttribute("version", "v4.0"),
-                           new XAttribute("sku", targetFrameworkParsed.DotNetFrameworkName));
+                    supportedRuntime =
+                        new XElement(
+                            "supportedRuntime",
+                            new XAttribute("version", "v4.0"),
+                                new XAttribute("sku", targetFrameworkParsed.DotNetFrameworkName));
+
                     return true;
                 }
             }
@@ -136,9 +139,10 @@ namespace Microsoft.NET.Build.Tasks
             XDocument document;
             if (appConfigItem == null)
             {
-                document = new XDocument(
-                    new XDeclaration("1.0", "utf-8", "true"),
-                    new XElement("configuration"));
+                document =
+                    new XDocument(
+                        new XDeclaration("1.0", "utf-8", "true"),
+                            new XElement("configuration"));
             }
             else
             {
