@@ -662,7 +662,7 @@ class Program
             XElement root = BuildTestAssetGetAppConfig(testAsset);
             root.Elements("startup").Single()
                 .Elements("supportedRuntime").Single()
-                .Should().HaveAttribute("version", "v999", "It should keep existing supoortedRuntime");
+                .Should().HaveAttribute("version", "v999", "It should keep existing supportedRuntime");
         }
 
         [WindowsOnlyFact]

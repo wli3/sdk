@@ -63,14 +63,14 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
             supportedRuntime.Should().HaveAttribute("sku", ".NETFramework,Version=v4.7.2");
         }
 
+        // intersection of https://docs.microsoft.com/en-us/nuget/reference/target-frameworks
+        // and https://docs.microsoft.com/en-us/dotnet/framework/configure-apps/file-schema/startup/supportedruntime-element#version
         [Theory]
         [InlineData("net11", "v1.1.4322")]
         [InlineData("net20", "v2.0.50727")]
         [InlineData("net35", "v2.0.50727")]
         public void It_Generate_correct_version_and_sku_for_below40(string targetframework, string expectedVersion)
         {
-            // intersection of https://docs.microsoft.com/en-us/nuget/reference/target-frameworks
-            // and https://docs.microsoft.com/en-us/dotnet/framework/configure-apps/file-schema/startup/supportedruntime-element#version
             var doc = new XDocument(
                     new XDeclaration("1.0", "utf-8", "true"),
                     new XElement("configuration"));
