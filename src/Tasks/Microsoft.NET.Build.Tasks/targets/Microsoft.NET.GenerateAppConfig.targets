@@ -16,6 +16,7 @@ Copyright (c) .NET Foundation. All rights reserved.
   <PropertyGroup>
     <_GenerateAppConfigIntermediateAppConfig>$(IntermediateOutputPath)$(TargetFileName).withSupportedRuntime.config</_GenerateAppConfigIntermediateAppConfig>
   </PropertyGroup>
+
   <Target Name="GenerateAppConfig"
           Inputs="$(MSBuildAllProjects);@(AppConfigWithTargetPath);$(ResolveAssemblyReferencesStateFile);$(IntermediateOutputPath)"
           Outputs="$(_GenerateAppConfigIntermediateAppConfig)"

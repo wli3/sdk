@@ -12,7 +12,6 @@ namespace Microsoft.NET.Build.Tasks
 {
     public sealed class GenerateAppConfig : TaskBase
     {
-
         /// <summary>
         /// Path to the app.config source file.
         /// </summary>
@@ -109,6 +108,7 @@ namespace Microsoft.NET.Build.Tasks
                         supportedRuntime = new XElement(
                            "supportedRuntime",
                            new XAttribute("version", value));
+
                         return true;
                     }
                     else

@@ -14,7 +14,6 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
         [Fact]
         public void It_creates_startup_and_supportedRuntime_nod_when_there_is_not_any()
         {
-
             var doc = new XDocument(
                     new XDeclaration("1.0", "utf-8", "true"),
                     new XElement("configuration"));
@@ -30,7 +29,6 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
         [Fact]
         public void It_creates_supportedRuntime_nod_when_there_is_startup()
         {
-
             var doc = new XDocument(
                     new XDeclaration("1.0", "utf-8", "true"),
                     new XElement("configuration", new XElement("startup")));
@@ -46,7 +44,6 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
         [Fact]
         public void It_does_not_change_supportedRuntime_nod_when_there_is_supportedRuntime()
         {
-
             var doc = new XDocument(
                     new XDeclaration("1.0", "utf-8", "true"),
                     new XElement("configuration",
@@ -101,9 +98,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
         [InlineData("net472", "v4.0", ".NETFramework,Version=v4.7.2")]
         public void It_Generate_correct_version_and_sku_for_above40(string targetframework, string expectedVersion, string expectedSku)
         {
-
             var targetFrameworkParsed = NuGetFramework.Parse(targetframework);
-
 
             var doc = new XDocument(
                     new XDeclaration("1.0", "utf-8", "true"),
@@ -125,10 +120,9 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
         [InlineData("net30")]
         [InlineData("net999")]
         [InlineData("netstandard20")]
-        public void It_Generate_correct_version_and_sku_for_non_supported(string targetframework)
+        public void It_does_not_generate_version_and_sku_for_non_supported(string targetframework)
         {
             var targetFrameworkParsed = NuGetFramework.Parse(targetframework);
-
 
             var doc = new XDocument(
                     new XDeclaration("1.0", "utf-8", "true"),
