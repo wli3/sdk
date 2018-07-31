@@ -17,6 +17,8 @@ Copyright (c) .NET Foundation. All rights reserved.
     <_GenerateAppConfigIntermediateAppConfig>$(IntermediateOutputPath)$(TargetFileName).withSupportedRuntime.config</_GenerateAppConfigIntermediateAppConfig>
   </PropertyGroup>
   <Target Name="GenerateAppConfig"
+          Inputs="$(MSBuildAllProjects);@(AppConfigWithTargetPath);$(ResolveAssemblyReferencesStateFile);$(IntermediateOutputPath)"
+          Outputs="$(_GenerateAppConfigIntermediateAppConfig)"
           DependsOnTargets="PrepareForBuild"
           BeforeTargets="GenerateBindingRedirects"
           Condition="'$(GenerateAppConfig)' != 'false'" >
@@ -29,9 +31,12 @@ Copyright (c) .NET Foundation. All rights reserved.
       OutputAppConfigFile="$(_GenerateAppConfigIntermediateAppConfig)"
       >
 
-      <Output TaskParameter="OutputAppConfigFile" ItemName="FileWrites" />
       <Output TaskParameter="OutputAppConfigFile" ItemName="_GenerateAppConfigAppConfigWithTargetPath" />
     </GenerateAppConfig>
+
+    <ItemGroup>
+      <FileWrites Include="@(_GenerateAppConfigAppConfigWithTargetPath)" Condition="Exists('$(_GenerateAppConfigAppConfigWithTargetPath)')"/>
+    </ItemGroup>
 
     <!--Override the AppConfigWithTargetPath for downstream target-->
     <ItemGroup>

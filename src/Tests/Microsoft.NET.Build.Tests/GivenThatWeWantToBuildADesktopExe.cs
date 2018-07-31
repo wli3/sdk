@@ -590,6 +590,37 @@ class Program
         }
 
         [WindowsOnlyFact]
+        public void It_generates_supportedRuntime_incrementally()
+        {
+            var testAsset = _testAssetsManager
+                .CopyTestAsset("DesktopNeedsBindingRedirects")
+                .WithSource()
+                .Restore(Log);
+
+            var buildCommand = new BuildCommand(Log, testAsset.TestRoot);
+
+            buildCommand
+                .Execute()
+                .Should()
+                .Pass();
+
+            FileInfo outputfile = buildCommand
+                .GetOutputDirectory("net452", runtimeIdentifier: "win7-x86")
+                .GetFiles("DesktopNeedsBindingRedirects.exe.config").Single();
+
+            DateTime firstBuildWriteTime = File.GetLastWriteTimeUtc(outputfile.FullName);
+
+            buildCommand
+               .Execute()
+               .Should()
+               .Pass();
+
+            DateTime secondBuildBuildWriteTime = File.GetLastWriteTimeUtc(outputfile.FullName);
+
+            secondBuildBuildWriteTime.Should().Be(firstBuildWriteTime);
+        }
+
+        [WindowsOnlyFact]
         public void It_generates_supportedRuntime_when_no_appconfig_in_source_does_not_require_binding_redirect()
         {
             var testAsset = _testAssetsManager
