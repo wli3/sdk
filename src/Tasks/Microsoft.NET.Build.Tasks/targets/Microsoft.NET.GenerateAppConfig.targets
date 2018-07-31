@@ -21,7 +21,7 @@ Copyright (c) .NET Foundation. All rights reserved.
           Outputs="$(_GenerateAppConfigIntermediateAppConfig)"
           DependsOnTargets="PrepareForBuild"
           BeforeTargets="GenerateBindingRedirects"
-          Condition="'$(GenerateAppConfig)' != 'false'" >
+          Condition="'$(GenerateAppConfig)' != 'false' and '$(TargetFrameworkIdentifier)' == '.NETFramework'" >
 
     <GenerateAppConfig
       AppConfigFile="@(AppConfigWithTargetPath)"
