@@ -608,6 +608,28 @@ class Program
             root.Elements("startup").Single().Elements().Should().Contain(e => e.Name.LocalName == "supportedRuntime");
         }
 
+        [WindowsOnlyFact]
+        public void It_generates_supportedRuntime_when_there_is_appconfig_without_supportedRuntime_in_source_require_binding_redirect()
+        {
+            var testAsset = _testAssetsManager
+                .CopyTestAsset("DesktopNeedsBindingRedirects")
+                .WithSource()
+                .Restore(Log);
+
+            var appconfigWithoutSupportedRuntime = new XDocument(
+                    new XDeclaration("1.0", "utf-8", "true"),
+                        new XElement("configuration",
+                            new XElement("appSettings")));
+
+            appconfigWithoutSupportedRuntime.Save(
+                Path.Combine(testAsset.TestRoot, "App.Config"));
+
+            XElement root = BuildTestAssetGetAppConfig(testAsset);
+            root.Elements("startup").Single().Elements().Should().Contain(e => e.Name.LocalName == "supportedRuntime");
+            root.Should().HaveElement("appSettings",
+                "It should keep existing appconfig's setting");
+        }
+
         private XElement BuildTestAssetGetAppConfig(TestAsset testAsset)
         {
             var buildCommand = new BuildCommand(Log, testAsset.TestRoot);
