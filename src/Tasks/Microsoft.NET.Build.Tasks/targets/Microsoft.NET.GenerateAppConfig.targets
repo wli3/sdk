@@ -30,9 +30,14 @@ Copyright (c) .NET Foundation. All rights reserved.
       >
 
       <Output TaskParameter="OutputAppConfigFile" ItemName="FileWrites" />
-      <!--Override the AppConfigWithTargetPath for downstream target-->
-      <Output TaskParameter="OutputAppConfigFile" ItemName="AppConfigWithTargetPath" />
+      <Output TaskParameter="OutputAppConfigFile" ItemName="_GenerateAppConfigAppConfigWithTargetPath" />
     </GenerateAppConfig>
+
+    <!--Override the AppConfigWithTargetPath for downstream target-->
+    <ItemGroup>
+      <AppConfigWithTargetPath Remove="@(AppConfigWithTargetPath)" />
+      <AppConfigWithTargetPath Include="@(_GenerateAppConfigAppConfigWithTargetPath)" />
+    </ItemGroup>
 
   </Target>
 </Project>
