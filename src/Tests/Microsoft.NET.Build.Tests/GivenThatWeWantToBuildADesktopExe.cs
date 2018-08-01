@@ -54,6 +54,7 @@ namespace Microsoft.NET.Build.Tests
             outputDirectory.Should().OnlyHaveFiles(new[] {
                 "HelloWorld.exe",
                 "HelloWorld.pdb",
+                "HelloWorld.exe.config"
             });
         }
 
