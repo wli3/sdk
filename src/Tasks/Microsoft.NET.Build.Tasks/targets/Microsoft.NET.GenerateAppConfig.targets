@@ -18,11 +18,11 @@ Copyright (c) .NET Foundation. All rights reserved.
   </PropertyGroup>
 
   <Target Name="GenerateAppConfig"
+          Condition="'$(GenerateAppConfig)' != 'false' and '$(TargetFrameworkIdentifier)' == '.NETFramework' and '$(HasRuntimeOutput)' == 'true'"
           Inputs="$(MSBuildAllProjects);@(AppConfigWithTargetPath);$(ResolveAssemblyReferencesStateFile);$(IntermediateOutputPath)"
           Outputs="$(_GenerateAppConfigIntermediateAppConfig)"
           DependsOnTargets="PrepareForBuild"
-          BeforeTargets="GenerateBindingRedirects"
-          Condition="'$(GenerateAppConfig)' != 'false' and '$(TargetFrameworkIdentifier)' == '.NETFramework'" >
+          BeforeTargets="GenerateBindingRedirects">
 
     <GenerateAppConfig
       AppConfigFile="@(AppConfigWithTargetPath)"
