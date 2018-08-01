@@ -19,7 +19,7 @@ Copyright (c) .NET Foundation. All rights reserved.
 
   <Target Name="GenerateAppConfig"
           Condition="'$(GenerateAppConfig)' != 'false' and '$(TargetFrameworkIdentifier)' == '.NETFramework' and '$(HasRuntimeOutput)' == 'true'"
-          Inputs="$(MSBuildAllProjects);@(AppConfigWithTargetPath);$(ResolveAssemblyReferencesStateFile);$(IntermediateOutputPath)"
+          Inputs="$(MSBuildAllProjects);@(AppConfigWithTargetPath);$(ResolveAssemblyReferencesStateFile)"
           Outputs="$(_GenerateAppConfigIntermediateAppConfig)"
           DependsOnTargets="PrepareForBuild"
           BeforeTargets="GenerateBindingRedirects">
