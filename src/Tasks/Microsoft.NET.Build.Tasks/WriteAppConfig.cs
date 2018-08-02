@@ -7,6 +7,7 @@ using System.Linq;
 using System.Xml.Linq;
 using Microsoft.Build.Framework;
 using NuGet.Frameworks;
+using NuGet.Versioning;
 
 namespace Microsoft.NET.Build.Tasks
 {
@@ -18,7 +19,10 @@ namespace Microsoft.NET.Build.Tasks
         public ITaskItem AppConfigFile { get; set; }
 
         [Required]
-        public string TargetFramework { get; set; }
+        public string TargetFrameworkIdentifier { get; set; }
+
+        [Required]
+        public string TargetFrameworkVersion { get; set; }
 
         /// <summary>
         /// Path to an intermediate file where we can write the input app.config plus the generated startup supportedRuntime
@@ -30,7 +34,7 @@ namespace Microsoft.NET.Build.Tasks
         {
             XDocument doc = LoadAppConfig(AppConfigFile);
 
-            AddSupportedRuntimeToAppconfigFile(doc, TargetFramework);
+            AddSupportedRuntimeToAppconfigFile(doc, TargetFrameworkIdentifier, TargetFrameworkVersion);
 
             if (File.Exists(OutputAppConfigFile.ItemSpec))
             {
@@ -48,7 +52,10 @@ namespace Microsoft.NET.Build.Tasks
             }
         }
 
-        public static void AddSupportedRuntimeToAppconfigFile(XDocument doc, string targetframework)
+        public static void AddSupportedRuntimeToAppconfigFile(
+            XDocument doc,
+            string targetFrameworkIdentifier,
+            string targetFrameworkVersion)
         {
             XElement startupNode = doc.Root
                                       .Nodes()
@@ -59,7 +66,8 @@ namespace Microsoft.NET.Build.Tasks
             if (!HasExistingSupportedRuntime(startupNode))
             {
                 if (TryGetSupportRuntimeNode(
-                    targetframework,
+                    targetFrameworkIdentifier,
+                    targetFrameworkVersion,
                     runtimeVersion,
                     out XElement supportedRuntime))
                 {
@@ -81,36 +89,53 @@ namespace Microsoft.NET.Build.Tasks
         }
 
         //https://github.com/dotnet/docs/blob/master/docs/framework/configure-apps/file-schema/startup/supportedruntime-element.md
-        private static bool TryGetSupportRuntimeNode(string targetframework, string runtimeVersion, out XElement supportedRuntime)
+        private static bool TryGetSupportRuntimeNode(
+            string targetFrameworkIdentifier,
+            string targetFrameworkVersion,
+            string runtimeVersion,
+            out XElement supportedRuntime)
         {
             supportedRuntime = null;
-            var targetFrameworkParsed = NuGetFramework.Parse(targetframework);
-            if (targetFrameworkParsed.Framework == ".NETFramework")
-            {
-                if (targetFrameworkParsed.Version.Major < 4)
-                {
-                    if (_targetFrameworkBelow40RuntimeVersionMap.TryGetValue(targetFrameworkParsed.GetShortFolderName(), out string value))
-                    {
-                        runtimeVersion = value;
-                        supportedRuntime =
-                            new XElement(
-                                "supportedRuntime",
-                                new XAttribute("version", value));
 
-                        return true;
+            if (targetFrameworkIdentifier == ".NETFramework"
+                && NuGetVersion.TryParse(targetFrameworkVersion.TrimStart('v', 'V'), out NuGetVersion parsedVersion))
+            {
+                if (parsedVersion.Version.Major < 4)
+                {
+                    string supportedRuntimeVersion = null;
+
+                    if (parsedVersion.Version.Major == 1 && parsedVersion.Version.Minor >= 0 && parsedVersion.Version.Minor > 1)
+                    {
+                        supportedRuntimeVersion = "v1.0.3705";
                     }
-                    else
+                    else if (parsedVersion.Version.Major == 1 && parsedVersion.Version.Minor >= 1)
+                    {
+                        supportedRuntimeVersion = "v1.1.4322";
+                    }
+                    else if (parsedVersion.Version.Major >= 2 && parsedVersion.Version.Major < 4)
+                    {
+                        supportedRuntimeVersion = "v2.0.50727";
+                    }
+
+                    if (supportedRuntimeVersion == null)
                     {
                         return false;
                     }
+
+                    supportedRuntime =
+                           new XElement(
+                               "supportedRuntime",
+                               new XAttribute("version", supportedRuntimeVersion));
+
+                    return true;
                 }
-                else if (targetFrameworkParsed.Version.Major == 4)
+                else if (parsedVersion.Version.Major == 4)
                 {
                     supportedRuntime =
                         new XElement(
                             "supportedRuntime",
                             new XAttribute("version", "v4.0"),
-                                new XAttribute("sku", targetFrameworkParsed.DotNetFrameworkName));
+                                new XAttribute("sku", $"{targetFrameworkIdentifier},Version={targetFrameworkVersion}"));
 
                     return true;
                 }
@@ -142,12 +167,5 @@ namespace Microsoft.NET.Build.Tasks
 
             return document;
         }
-
-        private static readonly Dictionary<string, string> _targetFrameworkBelow40RuntimeVersionMap = new Dictionary<string, string>()
-        {
-            ["net11"] = "v1.1.4322",
-            ["net20"] = "v2.0.50727",
-            ["net35"] = "v2.0.50727",
-        };
     }
 }
