@@ -19,7 +19,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                         new XDeclaration("1.0", "utf-8", "true"),
                         new XElement("configuration"));
 
-            GenerateAppConfig.AddSupportedRuntimeToAppconfigFile(doc, "net452");
+            WriteAppConfig.AddSupportedRuntimeToAppconfigFile(doc, "net452");
 
             doc.Element("configuration")
                 .Elements("startup")
@@ -35,7 +35,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                         new XDeclaration("1.0", "utf-8", "true"),
                         new XElement("configuration", new XElement("startup")));
 
-            GenerateAppConfig.AddSupportedRuntimeToAppconfigFile(doc, "net452");
+            WriteAppConfig.AddSupportedRuntimeToAppconfigFile(doc, "net452");
 
             doc.Element("configuration")
                 .Elements("startup")
@@ -55,7 +55,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                                     new XAttribute("version", "v4.0"),
                                     new XAttribute("sku", ".NETFramework,Version=v4.7.2")))));
 
-            GenerateAppConfig.AddSupportedRuntimeToAppconfigFile(doc, "net461");
+            WriteAppConfig.AddSupportedRuntimeToAppconfigFile(doc, "net461");
 
             XElement supportedRuntime = doc.Element("configuration")
                 .Elements("startup")
@@ -79,7 +79,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                         new XDeclaration("1.0", "utf-8", "true"),
                         new XElement("configuration"));
 
-            GenerateAppConfig.AddSupportedRuntimeToAppconfigFile(doc, targetframework);
+            WriteAppConfig.AddSupportedRuntimeToAppconfigFile(doc, targetframework);
 
             XElement supportedRuntime = doc.Element("configuration")
                 .Elements("startup")
@@ -109,7 +109,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                     new XDeclaration("1.0", "utf-8", "true"),
                     new XElement("configuration"));
 
-            GenerateAppConfig.AddSupportedRuntimeToAppconfigFile(doc, targetframework);
+            WriteAppConfig.AddSupportedRuntimeToAppconfigFile(doc, targetframework);
 
             XElement supportedRuntime = doc.Element("configuration")
                 .Elements("startup")
@@ -134,7 +134,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                     new XDeclaration("1.0", "utf-8", "true"),
                     new XElement("configuration"));
 
-            GenerateAppConfig.AddSupportedRuntimeToAppconfigFile(doc, targetframework);
+            WriteAppConfig.AddSupportedRuntimeToAppconfigFile(doc, targetframework);
 
             doc.Element("configuration")
                 .Elements("startup").Should().BeNullOrEmpty();

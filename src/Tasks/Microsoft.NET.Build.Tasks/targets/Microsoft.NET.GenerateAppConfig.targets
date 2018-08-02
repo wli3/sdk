@@ -11,7 +11,8 @@ Copyright (c) .NET Foundation. All rights reserved.
 -->
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-  <UsingTask TaskName="GenerateAppConfig" AssemblyFile="$(MicrosoftNETBuildTasksAssembly)" />
+  <UsingTask TaskName="WriteAppConfig" AssemblyFile="$(MicrosoftNETBuildTasksAssembly)" />
+  <UsingTask TaskName="SetGeneratedAppConfigMetadata" AssemblyFile="$(MicrosoftNETBuildTasksAssembly)" />
 
   <PropertyGroup>
     <_GenerateAppConfigIntermediateAppConfig>$(IntermediateOutputPath)$(TargetFileName).withSupportedRuntime.config</_GenerateAppConfigIntermediateAppConfig>
@@ -19,24 +20,17 @@ Copyright (c) .NET Foundation. All rights reserved.
 
   <Target Name="GenerateAppConfig"
           Condition="'$(GenerateAppConfig)' != 'false' and '$(TargetFrameworkIdentifier)' == '.NETFramework' and '$(HasRuntimeOutput)' == 'true'"
-          Inputs="$(MSBuildAllProjects);@(AppConfigWithTargetPath);$(ResolveAssemblyReferencesStateFile)"
-          Outputs="$(_GenerateAppConfigIntermediateAppConfig)"
-          DependsOnTargets="PrepareForBuild"
+          DependsOnTargets="_WriteAppConfig"
           BeforeTargets="GenerateBindingRedirects">
 
-    <GenerateAppConfig
-      AppConfigFile="@(AppConfigWithTargetPath)"
-      TargetName="$(TargetFileName).config"
-      TargetFramework="$(TargetFramework)"
-      OutputAppConfigFile="$(_GenerateAppConfigIntermediateAppConfig)"
+    <SetGeneratedAppConfigMetadata
+     AppConfigFile="@(AppConfigWithTargetPath)"
+     TargetName="$(TargetFileName).config"
+     GeneratedAppConfigFile="$(_GenerateAppConfigIntermediateAppConfig)"
       >
 
-      <Output TaskParameter="OutputAppConfigFile" ItemName="_GenerateAppConfigAppConfigWithTargetPath" />
-    </GenerateAppConfig>
-
-    <ItemGroup>
-      <FileWrites Include="@(_GenerateAppConfigAppConfigWithTargetPath)" Condition="Exists('$(_GenerateAppConfigAppConfigWithTargetPath)')"/>
-    </ItemGroup>
+      <Output TaskParameter="OutputAppConfigFileWithMetadata" ItemName="_GenerateAppConfigAppConfigWithTargetPath" />
+    </SetGeneratedAppConfigMetadata>
 
     <!--Override the AppConfigWithTargetPath for downstream target-->
     <ItemGroup>
@@ -45,4 +39,23 @@ Copyright (c) .NET Foundation. All rights reserved.
     </ItemGroup>
 
   </Target>
+
+  <Target Name="_WriteAppConfig"
+          Inputs="$(MSBuildAllProjects);@(AppConfigWithTargetPath);$(ResolveAssemblyReferencesStateFile)"
+          Outputs="$(_GenerateAppConfigIntermediateAppConfig)"
+          DependsOnTargets="PrepareForBuild">
+
+    <WriteAppConfig
+      AppConfigFile="@(AppConfigWithTargetPath)"
+      TargetFramework="$(TargetFramework)"
+      OutputAppConfigFile="$(_GenerateAppConfigIntermediateAppConfig)"
+      >
+    </WriteAppConfig>
+
+    <ItemGroup>
+      <FileWrites Include="@(_GenerateAppConfigAppConfigWithTargetPath)"/>
+    </ItemGroup>
+
+  </Target>
+
 </Project>

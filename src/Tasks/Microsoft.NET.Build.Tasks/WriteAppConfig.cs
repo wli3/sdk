@@ -10,24 +10,20 @@ using NuGet.Frameworks;
 
 namespace Microsoft.NET.Build.Tasks
 {
-    public sealed class GenerateAppConfig : TaskBase
+    public sealed class WriteAppConfig : TaskBase
     {
         /// <summary>
         /// Path to the app.config source file.
         /// </summary>
         public ITaskItem AppConfigFile { get; set; }
 
-        /// <summary>
-        /// Name of the output application config file: $(TargetFileName).config
-        /// </summary>
-        public string TargetName { get; set; }
-
+        [Required]
         public string TargetFramework { get; set; }
 
         /// <summary>
         /// Path to an intermediate file where we can write the input app.config plus the generated startup supportedRuntime
         /// </summary>
-        [Output]
+        [Required]
         public ITaskItem OutputAppConfigFile { get; set; }
 
         protected override void ExecuteCore()
@@ -39,15 +35,6 @@ namespace Microsoft.NET.Build.Tasks
             if (File.Exists(OutputAppConfigFile.ItemSpec))
             {
                 File.Delete(OutputAppConfigFile.ItemSpec);
-            }
-
-            if (AppConfigFile != null)
-            {
-                AppConfigFile.CopyMetadataTo(OutputAppConfigFile);
-            }
-            else
-            {
-                OutputAppConfigFile.SetMetadata(MetadataKeys.TargetPath, TargetName);
             }
 
             var fileStream = new FileStream(
