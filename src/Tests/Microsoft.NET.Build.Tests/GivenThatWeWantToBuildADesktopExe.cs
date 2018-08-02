@@ -591,7 +591,7 @@ class Program
         }
 
         [WindowsOnlyFact]
-        public void It_generates_supportedRuntime_incrementally()
+        public void It_generates_appconfig_incrementally()
         {
             var testAsset = _testAssetsManager
                 .CopyTestAsset("DesktopNeedsBindingRedirects")
@@ -606,8 +606,8 @@ class Program
                 .Pass();
 
             FileInfo outputfile = buildCommand
-                .GetOutputDirectory("net452", runtimeIdentifier: "win7-x86")
-                .GetFiles("DesktopNeedsBindingRedirects.exe.config").Single();
+                .GetIntermediateDirectory("net452", runtimeIdentifier: "win7-x86")
+                .GetFiles("DesktopNeedsBindingRedirects.exe.withSupportedRuntime.config").Single();
 
             DateTime firstBuildWriteTime = File.GetLastWriteTimeUtc(outputfile.FullName);
 
