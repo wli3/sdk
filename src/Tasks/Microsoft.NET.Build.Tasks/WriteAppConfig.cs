@@ -1,13 +1,11 @@
 ﻿// Copyright (c) .NET Foundation and contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Collections.Generic;
+using System;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 using Microsoft.Build.Framework;
-using NuGet.Frameworks;
-using NuGet.Versioning;
 
 namespace Microsoft.NET.Build.Tasks
 {
@@ -38,16 +36,12 @@ namespace Microsoft.NET.Build.Tasks
 
             AddSupportedRuntimeToAppconfigFile(doc, TargetFrameworkIdentifier, TargetFrameworkVersion, TargetFrameworkProfile);
 
-            if (File.Exists(OutputAppConfigFile.ItemSpec))
-            {
-                File.Delete(OutputAppConfigFile.ItemSpec);
-            }
-
             var fileStream = new FileStream(
                 OutputAppConfigFile.ItemSpec,
                 FileMode.Create,
                 FileAccess.Write,
                 FileShare.Read);
+
             using (var stream = new StreamWriter(fileStream))
             {
                 doc.Save(stream);
@@ -103,21 +97,21 @@ namespace Microsoft.NET.Build.Tasks
             supportedRuntime = null;
 
             if (targetFrameworkIdentifier == ".NETFramework"
-                && NuGetVersion.TryParse(targetFrameworkVersion.TrimStart('v', 'V'), out NuGetVersion parsedVersion))
+                && Version.TryParse(targetFrameworkVersion.TrimStart('v', 'V'), out Version parsedVersion))
             {
-                if (parsedVersion.Version.Major < 4)
+                if (parsedVersion.Major < 4)
                 {
                     string supportedRuntimeVersion = null;
 
-                    if (parsedVersion.Version.Major == 1 && parsedVersion.Version.Minor >= 0 && parsedVersion.Version.Minor > 1)
+                    if (parsedVersion.Major == 1 && parsedVersion.Minor >= 0 && parsedVersion.Minor > 1)
                     {
                         supportedRuntimeVersion = "v1.0.3705";
                     }
-                    else if (parsedVersion.Version.Major == 1 && parsedVersion.Version.Minor >= 1)
+                    else if (parsedVersion.Major == 1 && parsedVersion.Minor >= 1)
                     {
                         supportedRuntimeVersion = "v1.1.4322";
                     }
-                    else if (parsedVersion.Version.Major >= 2 && parsedVersion.Version.Major < 4)
+                    else if (parsedVersion.Major >= 2 && parsedVersion.Major < 4)
                     {
                         supportedRuntimeVersion = "v2.0.50727";
                     }
@@ -134,7 +128,7 @@ namespace Microsoft.NET.Build.Tasks
 
                     return true;
                 }
-                else if (parsedVersion.Version.Major == 4)
+                else if (parsedVersion.Major == 4)
                 {
                     string profileInSku = targetFrameworkProfile != null ? $",Profile={targetFrameworkProfile}" : string.Empty;
                     supportedRuntime =
