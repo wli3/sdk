@@ -24,6 +24,8 @@ namespace Microsoft.NET.Build.Tasks
         [Required]
         public string TargetFrameworkVersion { get; set; }
 
+        public string TargetFrameworkProfile { get; set; }
+
         /// <summary>
         /// Path to an intermediate file where we can write the input app.config plus the generated startup supportedRuntime
         /// </summary>
@@ -34,7 +36,7 @@ namespace Microsoft.NET.Build.Tasks
         {
             XDocument doc = LoadAppConfig(AppConfigFile);
 
-            AddSupportedRuntimeToAppconfigFile(doc, TargetFrameworkIdentifier, TargetFrameworkVersion);
+            AddSupportedRuntimeToAppconfigFile(doc, TargetFrameworkIdentifier, TargetFrameworkVersion, TargetFrameworkProfile);
 
             if (File.Exists(OutputAppConfigFile.ItemSpec))
             {
@@ -55,7 +57,8 @@ namespace Microsoft.NET.Build.Tasks
         public static void AddSupportedRuntimeToAppconfigFile(
             XDocument doc,
             string targetFrameworkIdentifier,
-            string targetFrameworkVersion)
+            string targetFrameworkVersion,
+            string targetFrameworkProfile = null)
         {
             XElement startupNode = doc.Root
                                       .Nodes()
@@ -68,6 +71,7 @@ namespace Microsoft.NET.Build.Tasks
                 if (TryGetSupportRuntimeNode(
                     targetFrameworkIdentifier,
                     targetFrameworkVersion,
+                    targetFrameworkProfile,
                     runtimeVersion,
                     out XElement supportedRuntime))
                 {
@@ -92,6 +96,7 @@ namespace Microsoft.NET.Build.Tasks
         private static bool TryGetSupportRuntimeNode(
             string targetFrameworkIdentifier,
             string targetFrameworkVersion,
+            string targetFrameworkProfile,
             string runtimeVersion,
             out XElement supportedRuntime)
         {
@@ -131,11 +136,12 @@ namespace Microsoft.NET.Build.Tasks
                 }
                 else if (parsedVersion.Version.Major == 4)
                 {
+                    string profileInSku = targetFrameworkProfile != null ? $",Profile={targetFrameworkProfile}" : string.Empty;
                     supportedRuntime =
                         new XElement(
                             "supportedRuntime",
                             new XAttribute("version", "v4.0"),
-                                new XAttribute("sku", $"{targetFrameworkIdentifier},Version={targetFrameworkVersion}"));
+                                new XAttribute("sku", $"{targetFrameworkIdentifier},Version={targetFrameworkVersion}{profileInSku}"));
 
                     return true;
                 }

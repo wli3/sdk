@@ -126,6 +126,34 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
         }
 
         [Theory]
+        [InlineData(".NETFramework", "v4.0", "Client", "v4.0", ".NETFramework,Version=v4.0,Profile=Client")]
+        public void It_Generate_correct_version_and_sku_and_profile(
+            string targetFrameworkIdentifier,
+            string targetFrameworkVersion,
+            string targetFrameworkProfile,
+            string expectedVersion,
+            string expectedSku)
+        {
+            var doc =
+                new XDocument(
+                    new XDeclaration("1.0", "utf-8", "true"),
+                    new XElement("configuration"));
+
+            WriteAppConfig.AddSupportedRuntimeToAppconfigFile(doc,
+                targetFrameworkIdentifier,
+                targetFrameworkVersion,
+                targetFrameworkProfile);
+
+            XElement supportedRuntime = doc.Element("configuration")
+                .Elements("startup")
+                .Single().Elements("supportedRuntime")
+                .Single();
+
+            supportedRuntime.Should().HaveAttribute("version", expectedVersion);
+            supportedRuntime.Should().HaveAttribute("sku", expectedSku);
+        }
+
+        [Theory]
         [InlineData("net999")]
         [InlineData("netstandard20")]
         public void It_does_not_generate_version_and_sku_for_non_supported(string targetframework)

@@ -49,6 +49,7 @@ Copyright (c) .NET Foundation. All rights reserved.
       AppConfigFile="@(AppConfigWithTargetPath)"
       TargetFrameworkIdentifier="$(TargetFrameworkIdentifier)"
       TargetFrameworkVersion="$(TargetFrameworkVersion)"
+      TargetFrameworkProfile="$(TargetFrameworkProfile)"
       OutputAppConfigFile="$(_GenerateAppConfigIntermediateAppConfig)"
       >
     </WriteAppConfig>
