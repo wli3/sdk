@@ -9,7 +9,7 @@ using Microsoft.Build.Framework;
 
 namespace Microsoft.NET.Build.Tasks
 {
-    public sealed class WriteAppConfig : TaskBase
+    public sealed class WriteAppConfigWithSupportedRuntime : TaskBase
     {
         /// <summary>
         /// Path to the app.config source file.
@@ -34,7 +34,7 @@ namespace Microsoft.NET.Build.Tasks
         {
             XDocument doc = LoadAppConfig(AppConfigFile);
 
-            AddSupportedRuntimeToAppconfigFile(doc, TargetFrameworkIdentifier, TargetFrameworkVersion, TargetFrameworkProfile);
+            AddSupportedRuntimeToAppconfig(doc, TargetFrameworkIdentifier, TargetFrameworkVersion, TargetFrameworkProfile);
 
             var fileStream = new FileStream(
                 OutputAppConfigFile.ItemSpec,
@@ -48,7 +48,7 @@ namespace Microsoft.NET.Build.Tasks
             }
         }
 
-        public static void AddSupportedRuntimeToAppconfigFile(
+        public static void AddSupportedRuntimeToAppconfig(
             XDocument doc,
             string targetFrameworkIdentifier,
             string targetFrameworkVersion,

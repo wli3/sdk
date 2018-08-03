@@ -1,6 +1,6 @@
 <!--
 ***********************************************************************************************
-Microsoft.NET.GenerateAppConfig.targets
+Microsoft.NET.GenerateSupportedRuntime.targets
 
 WARNING:  DO NOT MODIFY this file unless you are knowledgeable about MSBuild and have
           created a backup copy.  Incorrect changes to this file will make it
@@ -11,51 +11,51 @@ Copyright (c) .NET Foundation. All rights reserved.
 -->
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-  <UsingTask TaskName="WriteAppConfig" AssemblyFile="$(MicrosoftNETBuildTasksAssembly)" />
+  <UsingTask TaskName="WriteAppConfigWithSupportedRuntime" AssemblyFile="$(MicrosoftNETBuildTasksAssembly)" />
   <UsingTask TaskName="SetGeneratedAppConfigMetadata" AssemblyFile="$(MicrosoftNETBuildTasksAssembly)" />
 
   <PropertyGroup>
-    <_GenerateAppConfigIntermediateAppConfig>$(IntermediateOutputPath)$(TargetFileName).withSupportedRuntime.config</_GenerateAppConfigIntermediateAppConfig>
+    <_GenerateSupportedRuntimeIntermediateAppConfig>$(IntermediateOutputPath)$(TargetFileName).withSupportedRuntime.config</_GenerateSupportedRuntimeIntermediateAppConfig>
   </PropertyGroup>
 
-  <Target Name="GenerateAppConfig"
-          Condition="'$(GenerateAppConfig)' != 'false' and '$(TargetFrameworkIdentifier)' == '.NETFramework' and '$(HasRuntimeOutput)' == 'true'"
-          DependsOnTargets="_WriteAppConfig"
-          BeforeTargets="GenerateBindingRedirects">
+  <Target Name="GenerateSupportedRuntime"
+          Condition="'$(GenerateSupportedRuntime)' != 'false' and '$(TargetFrameworkIdentifier)' == '.NETFramework' and '$(HasRuntimeOutput)' == 'true'"
+          DependsOnTargets="_WriteAppConfigWithSupportedRuntime"
+          BeforeTargets="ResolveReferences">
 
     <SetGeneratedAppConfigMetadata
      AppConfigFile="@(AppConfigWithTargetPath)"
      TargetName="$(TargetFileName).config"
-     GeneratedAppConfigFile="$(_GenerateAppConfigIntermediateAppConfig)"
+     GeneratedAppConfigFile="$(_GenerateSupportedRuntimeIntermediateAppConfig)"
       >
 
-      <Output TaskParameter="OutputAppConfigFileWithMetadata" ItemName="_GenerateAppConfigAppConfigWithTargetPath" />
+      <Output TaskParameter="OutputAppConfigFileWithMetadata" ItemName="_GenerateSupportedRuntimeAppConfigWithTargetPath" />
     </SetGeneratedAppConfigMetadata>
 
     <!--Override the AppConfigWithTargetPath for downstream target-->
     <ItemGroup>
       <AppConfigWithTargetPath Remove="@(AppConfigWithTargetPath)" />
-      <AppConfigWithTargetPath Include="@(_GenerateAppConfigAppConfigWithTargetPath)" />
+      <AppConfigWithTargetPath Include="@(_GenerateSupportedRuntimeAppConfigWithTargetPath)" />
     </ItemGroup>
 
   </Target>
 
-  <Target Name="_WriteAppConfig"
+  <Target Name="_WriteAppConfigWithSupportedRuntime"
           Inputs="$(MSBuildAllProjects);@(AppConfigWithTargetPath);$(ResolveAssemblyReferencesStateFile)"
-          Outputs="$(_GenerateAppConfigIntermediateAppConfig)"
+          Outputs="$(_GenerateSupportedRuntimeIntermediateAppConfig)"
           DependsOnTargets="PrepareForBuild">
 
-    <WriteAppConfig
+    <WriteAppConfigWithSupportedRuntime
       AppConfigFile="@(AppConfigWithTargetPath)"
       TargetFrameworkIdentifier="$(TargetFrameworkIdentifier)"
       TargetFrameworkVersion="$(TargetFrameworkVersion)"
       TargetFrameworkProfile="$(TargetFrameworkProfile)"
-      OutputAppConfigFile="$(_GenerateAppConfigIntermediateAppConfig)"
+      OutputAppConfigFile="$(_GenerateSupportedRuntimeIntermediateAppConfig)"
       >
-    </WriteAppConfig>
+    </WriteAppConfigWithSupportedRuntime>
 
     <ItemGroup>
-      <FileWrites Include="@(_GenerateAppConfigAppConfigWithTargetPath)"/>
+      <FileWrites Include="@(_GenerateSupportedRuntimeAppConfigWithTargetPath)"/>
     </ItemGroup>
 
   </Target>

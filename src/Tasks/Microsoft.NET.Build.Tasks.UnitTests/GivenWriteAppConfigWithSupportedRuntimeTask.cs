@@ -9,7 +9,7 @@ using Xunit;
 
 namespace Microsoft.NET.Build.Tasks.UnitTests
 {
-    public class GivenAGeneratedAppConfig
+    public class GivenWriteAppConfigWithSupportedRuntimeTask
     {
         [Fact]
         public void It_creates_startup_and_supportedRuntime_node_when_there_is_not_any()
@@ -19,7 +19,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                         new XDeclaration("1.0", "utf-8", "true"),
                         new XElement("configuration"));
 
-            WriteAppConfig.AddSupportedRuntimeToAppconfigFile(doc, ".NETFramework", "v4.5.2");
+            WriteAppConfigWithSupportedRuntime.AddSupportedRuntimeToAppconfig(doc, ".NETFramework", "v4.5.2");
 
             doc.Element("configuration")
                 .Elements("startup")
@@ -35,7 +35,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                         new XDeclaration("1.0", "utf-8", "true"),
                         new XElement("configuration", new XElement("startup")));
 
-            WriteAppConfig.AddSupportedRuntimeToAppconfigFile(doc, ".NETFramework", "v4.5.2");
+            WriteAppConfigWithSupportedRuntime.AddSupportedRuntimeToAppconfig(doc, ".NETFramework", "v4.5.2");
 
             doc.Element("configuration")
                 .Elements("startup")
@@ -55,7 +55,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                                     new XAttribute("version", "v4.0"),
                                     new XAttribute("sku", ".NETFramework,Version=v4.7.2")))));
 
-            WriteAppConfig.AddSupportedRuntimeToAppconfigFile(doc, ".NETFramework", "v4.6.1");
+            WriteAppConfigWithSupportedRuntime.AddSupportedRuntimeToAppconfig(doc, ".NETFramework", "v4.6.1");
 
             XElement supportedRuntime = doc.Element("configuration")
                 .Elements("startup")
@@ -72,7 +72,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
         [InlineData(".NETFramework", "v1.1", "v1.1.4322")]
         [InlineData(".NETFramework", "v2.0", "v2.0.50727")]
         [InlineData(".NETFramework", "v3.5", "v2.0.50727")]
-        public void It_Generate_correct_version_and_sku_for_below40(
+        public void It_generate_correct_version_and_sku_for_below40(
             string targetFrameworkIdentifier,
             string targetFrameworkVersion,
             string expectedVersion)
@@ -82,7 +82,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                         new XDeclaration("1.0", "utf-8", "true"),
                         new XElement("configuration"));
 
-            WriteAppConfig.AddSupportedRuntimeToAppconfigFile(doc, targetFrameworkIdentifier, targetFrameworkVersion);
+            WriteAppConfigWithSupportedRuntime.AddSupportedRuntimeToAppconfig(doc, targetFrameworkIdentifier, targetFrameworkVersion);
 
             XElement supportedRuntime = doc.Element("configuration")
                 .Elements("startup")
@@ -103,7 +103,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
         [InlineData(".NETFramework", "v4.7", "v4.0", ".NETFramework,Version=v4.7")]
         [InlineData(".NETFramework", "v4.7.1", "v4.0", ".NETFramework,Version=v4.7.1")]
         [InlineData(".NETFramework", "v4.7.2", "v4.0", ".NETFramework,Version=v4.7.2")]
-        public void It_Generate_correct_version_and_sku_for_above40(
+        public void It_generate_correct_version_and_sku_for_above40(
             string targetFrameworkIdentifier,
             string targetFrameworkVersion,
             string expectedVersion,
@@ -114,7 +114,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                     new XDeclaration("1.0", "utf-8", "true"),
                     new XElement("configuration"));
 
-            WriteAppConfig.AddSupportedRuntimeToAppconfigFile(doc, targetFrameworkIdentifier, targetFrameworkVersion);
+            WriteAppConfigWithSupportedRuntime.AddSupportedRuntimeToAppconfig(doc, targetFrameworkIdentifier, targetFrameworkVersion);
 
             XElement supportedRuntime = doc.Element("configuration")
                 .Elements("startup")
@@ -127,7 +127,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
 
         [Theory]
         [InlineData(".NETFramework", "v4.0", "Client", "v4.0", ".NETFramework,Version=v4.0,Profile=Client")]
-        public void It_Generate_correct_version_and_sku_and_profile(
+        public void It_generate_correct_version_and_sku_and_profile(
             string targetFrameworkIdentifier,
             string targetFrameworkVersion,
             string targetFrameworkProfile,
@@ -139,7 +139,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                     new XDeclaration("1.0", "utf-8", "true"),
                     new XElement("configuration"));
 
-            WriteAppConfig.AddSupportedRuntimeToAppconfigFile(doc,
+            WriteAppConfigWithSupportedRuntime.AddSupportedRuntimeToAppconfig(doc,
                 targetFrameworkIdentifier,
                 targetFrameworkVersion,
                 targetFrameworkProfile);
@@ -166,7 +166,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                     new XElement("configuration"));
 
             var parserdFramework = NuGetFramework.ParseFolder(targetframework);
-            WriteAppConfig.AddSupportedRuntimeToAppconfigFile(doc, parserdFramework.Framework, parserdFramework.Version.ToString());
+            WriteAppConfigWithSupportedRuntime.AddSupportedRuntimeToAppconfig(doc, parserdFramework.Framework, parserdFramework.Version.ToString());
 
             doc.Element("configuration")
                 .Elements("startup").Should().BeNullOrEmpty();
