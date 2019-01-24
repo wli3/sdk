@@ -72,6 +72,11 @@ namespace Microsoft.NET.TestFramework
                 command.Environment["MSBuildSDKsPath"] = SdksPath;
                 command.Environment["DOTNET_MSBUILD_SDK_RESOLVER_SDKS_DIR"] = SdksPath;
 
+                string coreTargetsDir = Path.Combine(SdksPath, "Microsoft.NET.Sdk", "targets,", "core");
+
+                command.Environment["CustomBeforeMicrosoftCommonTargets"] = Path.Combine(coreTargetsDir, "Microsoft.NET.Sdk.Core.BeforeCommon.targets");
+                command.Environment["CustomAfterMicrosoftCommonTargets"] = Path.Combine(coreTargetsDir, "Microsoft.NET.Sdk.Core.AfterCommon.targets");
+
                 //  OK to pass in null as the logger here because SdksPath is set so it won't go down the code path
                 //  that uses the logger
                 var microsoftNETBuildExtensionsPath = GetMicrosoftNETBuildExtensionsPath(null);
