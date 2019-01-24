@@ -81,6 +81,10 @@
     <None Include="..\Common\Resources\xlf\**\*" LinkBase="Resources\xlf" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="targets\core\" />
+  </ItemGroup>
+
   <Target Name="PrepareAdditionalFilesToLayout" BeforeTargets="AssignTargetPaths">
     <PropertyGroup>
       <_NugetBuildTasksPackPath>$(NuGetPackageRoot)nuget.build.tasks.pack\$(NuGetBuildTasksPackVersion)</_NugetBuildTasksPackPath>
