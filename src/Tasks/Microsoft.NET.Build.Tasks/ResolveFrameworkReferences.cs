@@ -64,6 +64,12 @@ namespace Microsoft.NET.Build.Tasks
         [Output]
         public ITaskItem[] PackAsToolShimAppHosts { get; set; }
 
+        // out of framework refrernce with apphost
+
+        // make a separate task for resolve app host
+
+        // 2.0 will use the old code to resolve, when it is bigger than 3.0.
+
         [Output]
         public string[] UnresolvedFrameworkReferences { get; set; }
 
@@ -193,14 +199,18 @@ namespace Microsoft.NET.Build.Tasks
                 List<ITaskItem> packAsToolShimAppHostsList = new List<ITaskItem>();
                 foreach (var packAsToolShimAppHostRuntimeIdentifier in PackAsToolShimAppHostRuntimeIdentifiers)
                 {
-                    packAsToolShimAppHostsList.AddRange(
-                        GetAppHostItem(
+                    var PackAsToolShimAppHosts = GetAppHostItem(
                             appHostPackPattern,
                             appHostRuntimeIdentifiers,
                             appHostPackVersion,
                             packagesToDownload,
                             packAsToolShimAppHostRuntimeIdentifier.ItemSpec,
-                            "PackAsToolShimAppHost"));
+                            "PackAsToolShimAppHost");
+
+                    if (PackAsToolShimAppHosts != null)
+                    {
+                        packAsToolShimAppHostsList.AddRange(PackAsToolShimAppHosts);
+                    }
                 }
                 PackAsToolShimAppHosts = packAsToolShimAppHostsList.ToArray();
             }
