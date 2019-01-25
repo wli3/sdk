@@ -948,23 +948,42 @@ namespace Microsoft.NET.Build.Tasks
 
             private void WriteApphostsForShimRuntimeIdentifiers()
             {
-                //if (_task.ShimRuntimeIdentifiers == null || _task.ShimRuntimeIdentifiers.Length == 0)
-                //{
-                //    return;
-                //}
+                NuGetFramework targetFramework = NuGetUtils.ParseFrameworkName(_task.TargetFrameworkMoniker);
 
-                //foreach (var runtimeIdentifier in _task.ShimRuntimeIdentifiers.Select(r => r.ItemSpec))
-                //{
-                //    NuGetFramework targetFramework = NuGetUtils.ParseFrameworkName(_task.TargetFrameworkMoniker);
-                //    LockFileTarget runtimeTarget = _lockFile.GetTargetAndThrowIfNotFound(targetFramework, runtimeIdentifier);
+                if (CannotResolveApphostFromAssetFile(targetFramework))
+                {
+                    return;
+                }
 
-                //    var apphostName = _task.DotNetAppHostExecutableNameWithoutExtension + ExecutableExtension.ForRuntimeIdentifier(runtimeIdentifier);
+                if (_task.ShimRuntimeIdentifiers == null || _task.ShimRuntimeIdentifiers.Length == 0)
+                {
+                    return;
+                }
 
-                //    Tuple<string, LockFileTargetLibrary> resolvedPackageAssetPathAndLibrary = FindApphostInRuntimeTarget(apphostName, runtimeTarget);
+                foreach (var runtimeIdentifier in _task.ShimRuntimeIdentifiers.Select(r => r.ItemSpec))
+                {
+                    LockFileTarget runtimeTarget = _lockFile.GetTargetAndThrowIfNotFound(targetFramework, runtimeIdentifier);
 
-                //    WriteItem(resolvedPackageAssetPathAndLibrary.Item1, resolvedPackageAssetPathAndLibrary.Item2);
-                //    WriteMetadata(MetadataKeys.RuntimeIdentifier, runtimeIdentifier);
-                //}
+                    var apphostName = _task.DotNetAppHostExecutableNameWithoutExtension + ExecutableExtension.ForRuntimeIdentifier(runtimeIdentifier);
+
+                    Tuple<string, LockFileTargetLibrary> resolvedPackageAssetPathAndLibrary = FindApphostInRuntimeTarget(apphostName, runtimeTarget);
+
+                    WriteItem(resolvedPackageAssetPathAndLibrary.Item1, resolvedPackageAssetPathAndLibrary.Item2);
+                    WriteMetadata(MetadataKeys.RuntimeIdentifier, runtimeIdentifier);
+                }
+            }
+
+            /// <summary>
+            /// After netcoreapp3.0 apphost is resolved during ResolveFrameworkReferences. It should return nothing here
+            /// </summary>
+            private static bool CannotResolveApphostFromAssetFile(NuGetFramework targetFramework)
+            {
+                if (targetFramework.Version.Major >= 3)
+                {
+                    return true;
+                }
+
+                return false;
             }
 
             private void WritePackageFolders()
