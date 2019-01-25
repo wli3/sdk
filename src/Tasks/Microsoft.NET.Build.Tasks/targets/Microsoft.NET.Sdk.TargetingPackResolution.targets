@@ -33,6 +33,14 @@ Copyright (c) .NET Foundation. All rights reserved.
       <AssemblyInFramework Include="System.Data" FrameworkName="Microsoft.NETCore.App" />
       <AssemblyInFramework Include="System.Net.Http" FrameworkName="Microsoft.NETCore.App" />
       <AssemblyInFramework Include="System.Xml" FrameworkName="Microsoft.NETCore.App" />
+      <AssemblyInFramework Include="System.Drawing" FrameworkName="Microsoft.NETCore.App" />
+
+      <AssemblyInFramework Include="System.Xaml" FrameworkName="Microsoft.WindowsDesktop.App" />
+      <AssemblyInFramework Include="WindowsBase" FrameworkName="Microsoft.WindowsDesktop.App" />
+      <AssemblyInFramework Include="PresentationCore" FrameworkName="Microsoft.WindowsDesktop.App" />
+      <AssemblyInFramework Include="PresentationFramework" FrameworkName="Microsoft.WindowsDesktop.App" />
+
+      <AssemblyInFramework Include="System.Windows.Forms" FrameworkName="Microsoft.WindowsDesktop.App" />
     </ItemGroup>
 
     <ConvertReferencesToFrameworkReferences References="@(Reference)"

@@ -14,4 +14,7 @@ Copyright (c) .NET Foundation. All rights reserved.
        define a TargetFramework. -->
   <Import Project="$(MSBuildThisFileDirectory)..\Microsoft.NET.Sdk.targets"
           Condition="'$(UsingMicrosoftNETSdk)' != 'true' And '$(TargetFramework)' != ''"/>
+
+  <Import Project="$(MSBuildThisFileDirectory)..\..\..\Microsoft.NET.Sdk.WindowsDesktop\targets\Microsoft.NET.Sdk.WindowsDesktop.targets"
+          Condition="'$(UsingMicrosoftNETSdk)' != 'true' And '$(TargetFramework)' != ''"/>
 </Project>
