@@ -35,7 +35,11 @@ namespace Microsoft.NET.ToolPack.Tests
             Dictionary<string, string> additionalProperty = null,
             string targetFramework = null)
         {
-            TestAsset helloWorldAsset = CreateTestAsset(multiTarget, callingMethod, additionalProperty, targetFramework);
+            TestAsset helloWorldAsset = CreateTestAsset(
+                multiTarget,
+                callingMethod + multiTarget + targetFramework,
+                targetFramework,
+                additionalProperty);
 
             _testRoot = helloWorldAsset.TestRoot;
 
@@ -50,8 +54,8 @@ namespace Microsoft.NET.ToolPack.Tests
         private TestAsset CreateTestAsset(
             bool multiTarget,
             string uniqueName,
-            Dictionary<string, string> additionalProperty = null,
-            string targetFramework = null)
+            string targetFramework,
+            Dictionary<string, string> additionalProperty = null)
         {
             return _testAssetsManager
                 .CopyTestAsset("PortableTool", uniqueName)
@@ -71,15 +75,8 @@ namespace Microsoft.NET.ToolPack.Tests
                         }
                     }
 
-                    if (targetFramework == null)
-                    {
-                        targetFramework = "netcoreapp2.1";
-                    }
-                    else
-                    {
-                        propertyGroup.Element(ns + "TargetFramework").Remove();
-                        propertyGroup.Add(new XElement(ns + "TargetFramework", targetFramework));
-                    }
+                    propertyGroup.Element(ns + "TargetFramework").Remove();
+                    propertyGroup.Add(new XElement(ns + "TargetFramework", targetFramework));
 
                     if (multiTarget)
                     {
@@ -170,6 +167,9 @@ namespace Microsoft.NET.ToolPack.Tests
                     propertyGroup.Add(new XElement(ns + "ToolCommandName", _customToolCommandName));
                     propertyGroup.Add(new XElement(ns + "PackagedShimOutputRootDirectory", shimoutputPath));
 
+                    propertyGroup.Element(ns + "TargetFramework").Remove();
+                    propertyGroup.Add(new XElement(ns + "TargetFramework", targetFramework));
+
                     if (multiTarget)
                     {
                         propertyGroup.Element(ns + "TargetFramework").Remove();
@@ -207,7 +207,7 @@ namespace Microsoft.NET.ToolPack.Tests
             _testRoot = helloWorldAsset.TestRoot;
 
             var packCommand = new PackCommand(Log, helloWorldAsset.TestRoot);
-            var outputDirectory = packCommand.GetOutputDirectory("netcoreapp2.1");
+            var outputDirectory = packCommand.GetOutputDirectory(targetFramework);
             packCommand.Execute().Should().Pass();
 
             string windowShimPath = Path.Combine(outputDirectory.FullName, $"shims/{targetFramework}/win-x64/{_customToolCommandName}.exe");
@@ -283,7 +283,7 @@ namespace Microsoft.NET.ToolPack.Tests
         [InlineData(false, "netcoreapp3.0")]
         public void It_contains_shim_with_no_build(bool multiTarget, string targetFramework)
         {
-            var testAsset = CreateTestAsset(multiTarget, nameof(It_contains_shim_with_no_build) + multiTarget + targetFramework);
+            var testAsset = CreateTestAsset(multiTarget, nameof(It_contains_shim_with_no_build) + multiTarget + targetFramework, targetFramework);
 
             var buildCommand = new BuildCommand(Log, testAsset.TestRoot);
             buildCommand.Execute().Should().Pass();
