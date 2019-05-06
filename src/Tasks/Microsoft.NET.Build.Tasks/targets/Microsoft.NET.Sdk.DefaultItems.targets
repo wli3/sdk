@@ -44,7 +44,7 @@ Copyright (c) .NET Foundation. All rights reserved.
   <!-- Set the default versions of the NETStandard.Library or Microsoft.NETCore.App packages to reference.
        The implicit package references themselves are defined in Microsoft.NET.Sdk.props, so that they can be overridden
        in the project file. -->
-  <PropertyGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETStandard'">
+  <PropertyGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETStandard' And '$(_TargetFrameworkVersionWithoutV)' &lt; '2.1'">
     <!-- If targeting the same release that is bundled with the .NET Core SDK, use the bundled package version provided by Microsoft.NETCoreSdk.BundledVersions.props -->
     <!-- This is disabled due to https://github.com/dotnet/sdk/issues/2410
     <NETStandardImplicitPackageVersion Condition="'$(NETStandardImplicitPackageVersion)' =='' And '$(_TargetFrameworkVersionWithoutV)' == '$(BundledNETStandardTargetFrameworkVersion)'">$(BundledNETStandardPackageVersion)</NETStandardImplicitPackageVersion>
@@ -156,9 +156,12 @@ Copyright (c) .NET Foundation. All rights reserved.
                    ResourceName="AspNetCoreUsesFrameworkReference" />
     
   </Target>
-  
-  <Target Name="ApplyImplicitVersions" BeforeTargets="_CheckForInvalidConfigurationAndPlatform;CollectPackageReferences"
-          DependsOnTargets="UpdateAspNetToFrameworkReference;CheckForImplicitPackageReferenceOverrides">
+
+  <Target Name="ApplyImplicitVersions" 
+          BeforeTargets="_CheckForInvalidConfigurationAndPlatform;CollectPackageReferences;ResolveFrameworkReferences"
+          DependsOnTargets="UpdateAspNetToFrameworkReference;CheckForImplicitPackageReferenceOverrides"
+          Condition="'@(PackageReference)' != ''">
+    
     <ApplyImplicitVersions TargetFrameworkVersion="$(_TargetFrameworkVersionWithoutV)"
                            TargetLatestRuntimePatch="$(TargetLatestRuntimePatch)"
                            PackageReferences="@(PackageReference)"

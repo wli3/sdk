@@ -114,7 +114,7 @@ namespace Microsoft.NET.Publish.Tests
                 }
 
                 dependencyContext.CompilationOptions.Defines.Should().BeEquivalentTo(expectedDefines);
-                dependencyContext.CompilationOptions.LanguageVersion.Should().Be("");
+                dependencyContext.CompilationOptions.LanguageVersion.Should().BeOneOf("", "preview");
                 dependencyContext.CompilationOptions.Platform.Should().Be("x86");
                 dependencyContext.CompilationOptions.Optimize.Should().Be(false);
                 dependencyContext.CompilationOptions.KeyFile.Should().Be("");
@@ -373,19 +373,16 @@ System.Runtime.InteropServices.dll
 System.Runtime.InteropServices.RuntimeInformation.dll
 System.Runtime.Numerics.dll
 System.Runtime.Serialization.Primitives.dll
-System.Security.Claims.dll
 System.Security.Cryptography.Algorithms.dll
 System.Security.Cryptography.Encoding.dll
 System.Security.Cryptography.OpenSsl.dll
 System.Security.Cryptography.Primitives.dll
 System.Security.Cryptography.X509Certificates.dll
 System.Security.Principal.dll
-System.Security.Principal.Windows.dll
 System.Text.Encoding.dll
 System.Text.Encoding.Extensions.dll
 System.Text.RegularExpressions.dll
 System.Threading.dll
-System.Threading.Overlapped.dll
 System.Threading.Tasks.dll
 System.Threading.Tasks.Dataflow.dll
 System.Threading.Tasks.Extensions.dll
@@ -551,6 +548,7 @@ TestLibrary.dll"
 @"TestApp.dll
 Microsoft.CSharp.dll
 Microsoft.VisualBasic.dll
+Microsoft.VisualBasic.Core.dll
 Microsoft.Win32.Primitives.dll
 mscorlib.dll
 netstandard.dll
@@ -573,6 +571,7 @@ System.Console.dll
 System.Core.dll
 System.Data.Common.dll
 System.Data.dll
+System.Data.DataSetExtensions.dll
 System.Data.SqlClient.dll
 System.Diagnostics.Contracts.dll
 System.Diagnostics.Debug.dll
@@ -641,6 +640,7 @@ System.Resources.ResourceManager.dll
 System.Resources.Writer.dll
 System.Runtime.CompilerServices.VisualC.dll
 System.Runtime.dll
+System.Runtime.CompilerServices.Unsafe.dll
 System.Runtime.Extensions.dll
 System.Runtime.Handles.dll
 System.Runtime.InteropServices.dll

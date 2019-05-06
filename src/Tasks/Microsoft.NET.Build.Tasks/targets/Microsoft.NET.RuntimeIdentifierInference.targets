@@ -113,8 +113,8 @@ Copyright (c) .NET Foundation. All rights reserved.
   <!-- Only use the default apphost if building without a RID and without a deps file path (used by GenerateDeps.proj for CLI tools). -->
   <PropertyGroup Condition="'$(DefaultAppHostRuntimeIdentifier)' == '' and
                             '$(RuntimeIdentifier)' == '' and
-                            '$(UseAppHost)' == 'true' and
-                            '$(ProjectDepsFilePath)' == ''">
+                            (('$(UseAppHost)' == 'true' and '$(ProjectDepsFilePath)' == '') or
+                            ('$(UseComHost)' == 'true' and '$(_IsExecutable)' != 'true'))">
     <DefaultAppHostRuntimeIdentifier>$(NETCoreSdkRuntimeIdentifier)</DefaultAppHostRuntimeIdentifier>
     <DefaultAppHostRuntimeIdentifier Condition="$(DefaultAppHostRuntimeIdentifier.StartsWith('win')) and '$(PlatformTarget)' == 'x64'">win-x64</DefaultAppHostRuntimeIdentifier>
     <DefaultAppHostRuntimeIdentifier Condition="$(DefaultAppHostRuntimeIdentifier.StartsWith('win')) and '$(PlatformTarget)' == 'x86'">win-x86</DefaultAppHostRuntimeIdentifier>
@@ -129,6 +129,12 @@ Copyright (c) .NET Foundation. All rights reserved.
 
     <NETSdkError Condition="'$(SelfContained)' == 'true' and '$(UseAppHost)' != 'true'"
                  ResourceName="CannotUseSelfContainedWithoutAppHost" />
+
+    <NETSdkError Condition="'$(PublishSingleFile)' == 'true' and '$(RuntimeIdentifier)' == ''"
+                 ResourceName="CannotHaveSingleFileWithoutRuntimeIdentifier" />
+
+    <NETSdkError Condition="'$(PublishSingleFile)' == 'true' and '$(UseAppHost)' != 'true'"
+                 ResourceName="CannotHaveSingleFileWithoutAppHost" />
 
     <NETSdkError Condition="'$(SelfContained)' != 'true' and '$(UseAppHost)' == 'true' and '$(_TargetFrameworkVersionWithoutV)' &lt; '2.1'"
                  ResourceName="FrameworkDependentAppHostRequiresVersion21" />

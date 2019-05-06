@@ -255,6 +255,7 @@ Copyright (c) .NET Foundation. All rights reserved.
   <Target Name="_RestoreCrossgen"
           DependsOnTargets="PrepforRestoreForComposeStore;
                            _SetupStageForCrossgen;
+                           ResolveFrameworkReferences;
                            ApplyImplicitVersions"
           Condition="$(SkipOptimization) != 'true' ">
 
@@ -271,8 +272,7 @@ Copyright (c) .NET Foundation. All rights reserved.
                              StorePackageName=$(MicrosoftNETPlatformLibrary);
                              StorePackageVersion=%(PackageReferenceForCrossGen.Version);"/>
 
-    <ResolveCopyLocalAssets ProjectPath="$(MSBuildProjectFullPath)"
-                            AssetsFilePath="$(_CrossProjAssetsFile)"
+    <ResolveCopyLocalAssets AssetsFilePath="$(_CrossProjAssetsFile)"
                             TargetFramework="$(_TFM)"
                             RuntimeIdentifier="$(RuntimeIdentifier)"
                             PlatformLibraryName="$(MicrosoftNETPlatformLibrary)"

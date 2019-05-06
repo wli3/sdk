@@ -17,6 +17,7 @@ namespace Microsoft.NET.Build.Tasks
         public const string IsImplicitlyDefined = "IsImplicitlyDefined";
         public const string IsTopLevelDependency = "IsTopLevelDependency";
         public const string AllowExplicitVersion = "AllowExplicitVersion";
+        public const string RelativePath = "RelativePath";
 
         // Target Metadata
         public const string RuntimeIdentifier = "RuntimeIdentifier";
@@ -61,7 +62,7 @@ namespace Microsoft.NET.Build.Tasks
         public const string NuGetPackageId = "NuGetPackageId";
         public const string NuGetPackageVersion = "NuGetPackageVersion";
         public const string NuGetSourceType = "NuGetSourceType";
-        public const string RelativePath = "RelativePath";
+        public const string PathInPackage = "PathInPackage";
         public const string PackageDirectory = "PackageDirectory";
 
         // References
@@ -80,6 +81,7 @@ namespace Microsoft.NET.Build.Tasks
         public const string CopyToOutput = "CopyToOutput";
         public const string BuildAction = "BuildAction";
         public const string OutputPath = "OutputPath";
+        public const string CopyToPublishDirectory = "CopyToPublishDirectory";
 
         // Resource assemblies
         public const string Culture = "Culture";

@@ -56,10 +56,10 @@ namespace Microsoft.NET.Build.Tests
         //  Test behavior when implicit version differs for framework-dependent and self-contained apps
         [Theory]
         [InlineData("netcoreapp1.0", false, true, "1.0.5")]
-        [InlineData("netcoreapp1.0", true, true, "1.0.13")]
+        [InlineData("netcoreapp1.0", true, true, "1.0.15")]
         [InlineData("netcoreapp1.0", false, false, "1.0.5")]
         [InlineData("netcoreapp1.1", false, true, "1.1.2")]
-        [InlineData("netcoreapp1.1", true, true, "1.1.10")]
+        [InlineData("netcoreapp1.1", true, true, "1.1.12")]
         [InlineData("netcoreapp1.1", false, false, "1.1.2")]
         [InlineData("netcoreapp2.0", false, true, "2.0.0")]
         [InlineData("netcoreapp2.0", true, true, TestContext.LatestRuntimePatchForNetCoreApp2_0)]
@@ -251,113 +251,6 @@ namespace Microsoft.NET.Build.Tests
             var targetDefs = getValuesCommand.GetValues();
             targetDefs.Count.Should().Be(1);
             targetDefs.Should().Contain(".NETCoreApp,Version=v1.1");
-        }
-
-        [Theory]
-        [InlineData("netcoreapp3.0")]
-        public void It_builds_a_runnable_apphost_by_default(string targetFramework)
-        {
-            var testAsset = _testAssetsManager
-                .CopyTestAsset("HelloWorld", identifier: targetFramework)
-                .WithSource()
-                .WithTargetFramework(targetFramework);
-
-            var buildCommand = new BuildCommand(Log, testAsset.TestRoot);
-            buildCommand
-                .Execute(new string[] {
-                    "/restore",
-                })
-                .Should()
-                .Pass();
-
-            var outputDirectory = buildCommand.GetOutputDirectory(targetFramework);
-            var hostExecutable = $"HelloWorld{Constants.ExeSuffix}";
-
-            outputDirectory.Should().OnlyHaveFiles(new[] {
-                hostExecutable,
-                "HelloWorld.dll",
-                "HelloWorld.pdb",
-                "HelloWorld.deps.json",
-                "HelloWorld.runtimeconfig.dev.json",
-                "HelloWorld.runtimeconfig.json",
-            });
-
-            Command.Create(Path.Combine(outputDirectory.FullName, hostExecutable), new string[] {})
-                .EnvironmentVariable(
-                    Environment.Is64BitProcess ? "DOTNET_ROOT" : "DOTNET_ROOT(x86)",
-                    Path.GetDirectoryName(TestContext.Current.ToolsetUnderTest.DotNetHostPath))
-                .CaptureStdOut()
-                .Execute()
-                .Should()
-                .Pass()
-                .And
-                .HaveStdOutContaining("Hello World!");
-        }
-
-        [Theory]
-        [InlineData("netcoreapp2.1")]
-        [InlineData("netcoreapp2.2")]
-        public void It_does_not_build_with_an_apphost_by_default_before_netcoreapp_3(string targetFramework)
-        {
-            var testAsset = _testAssetsManager
-                .CopyTestAsset("HelloWorld", identifier: targetFramework)
-                .WithSource()
-                .WithTargetFramework(targetFramework);
-
-            var buildCommand = new BuildCommand(Log, testAsset.TestRoot);
-            buildCommand
-                .Execute(new string[] { "/restore" })
-                .Should()
-                .Pass();
-
-            var outputDirectory = buildCommand.GetOutputDirectory(targetFramework);
-
-            outputDirectory.Should().OnlyHaveFiles(new[] {
-                "HelloWorld.dll",
-                "HelloWorld.pdb",
-                "HelloWorld.deps.json",
-                "HelloWorld.runtimeconfig.dev.json",
-                "HelloWorld.runtimeconfig.json",
-            });
-        }
-
-        [WindowsOnlyTheory]
-        [InlineData("x86")]
-        [InlineData("x64")]
-        [InlineData("AnyCPU")]
-        [InlineData("")]
-        public void It_uses_an_apphost_based_on_platform_target(string target)
-        {
-            var targetFramework = "netcoreapp3.0";
-
-            var testAsset = _testAssetsManager
-                .CopyTestAsset("HelloWorld")
-                .WithSource();
-
-            var buildCommand = new BuildCommand(Log, testAsset.TestRoot);
-            buildCommand
-                .Execute(new string[] {
-                    "/restore",
-                    $"/p:TargetFramework={targetFramework}",
-                    $"/p:PlatformTarget={target}",
-                    $"/p:NETCoreSdkRuntimeIdentifier={EnvironmentInfo.GetCompatibleRid(targetFramework)}"
-                })
-                .Should()
-                .Pass();
-
-            var apphostPath = Path.Combine(buildCommand.GetOutputDirectory(targetFramework).FullName, "HelloWorld.exe");
-            if (target == "x86")
-            {
-                IsPE32(apphostPath).Should().BeTrue();
-            }
-            else if (target == "x64")
-            {
-                IsPE32(apphostPath).Should().BeFalse();
-            }
-            else
-            {
-                IsPE32(apphostPath).Should().Be(!Environment.Is64BitProcess);
-            }
         }
 
         [Theory]
@@ -638,12 +531,153 @@ public static class Program
                 .BeEquivalentTo("netcoreapp1.1");
         }
 
-        private static bool IsPE32(string path)
+        [Fact]
+        public void BuildWithTransitiveReferenceToNetCoreAppPackage()
         {
-            using (var reader = new PEReader(File.OpenRead(path)))
+            var testProject = new TestProject()
             {
-                return reader.PEHeaders.PEHeader.Magic == PEMagic.PE32;
-            }
+                Name = "NetCoreAppPackageReference",
+                TargetFrameworks = "netcoreapp3.0",
+                IsSdkProject = true,
+                IsExe = true
+            };
+
+            var referencedProject = new TestProject()
+            {
+                Name = "NetStandardProject",
+                TargetFrameworks = "netstandard2.0",
+                IsSdkProject = true,
+                IsExe = false
+            };
+
+            //  The SharpDX package depends on the Microsoft.NETCore.App package
+            referencedProject.PackageReferences.Add(new TestPackageReference("SharpDX", "4.0.1"));
+
+            testProject.ReferencedProjects.Add(referencedProject);
+
+            var testAsset = _testAssetsManager.CreateTestProject(testProject, testProject.Name)
+                .Restore(Log, testProject.Name);
+
+            var buildCommand = new BuildCommand(Log, Path.Combine(testAsset.TestRoot, testProject.Name));
+
+            buildCommand
+                .Execute()
+                .Should()
+                .Pass();
+        }
+
+        [WindowsOnlyFact]
+        public void It_escapes_resolved_package_assets_paths()
+        {
+            var testProject = new TestProject()
+            {
+                Name = "ProjectWithPackageThatNeedsEscapes",
+                TargetFrameworks = "net462",
+                IsSdkProject = true,
+                IsExe = true,
+            };
+
+            testProject.SourceFiles["ExampleReader.cs"] = @"
+using System;
+using System.Threading.Tasks;
+
+namespace ContentFilesExample
+{
+    internal static class ExampleInternals
+    {
+        internal static Task<string> GetFileText(string fileName)
+        {
+            throw new NotImplementedException();
+        }
+    }
+}
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        Console.WriteLine(""Hello World!"");
+    }
+}";
+
+            // ContentFilesExample is an existing package that demonstrates the problem.
+            // It contains assets with paths that have '%2B', which MSBuild will unescape to '+'.
+            // Without the change to escape the asset paths, the asset will not be found inside the package.
+            testProject.PackageReferences.Add(new TestPackageReference("ContentFilesExample", "1.0.2"));
+
+            var testAsset = _testAssetsManager
+                .CreateTestProject(testProject)
+                .Restore(Log, testProject.Name);
+
+            var buildCommand = new BuildCommand(Log, Path.Combine(testAsset.TestRoot, testProject.Name));
+
+            buildCommand
+                .Execute()
+                .Should()
+                .Pass();
+        }
+
+        [Fact(Skip = "https://github.com/dotnet/sdk/issues/3044")]
+        public void ReferenceLegacyContracts()
+        {
+            var testProject = new TestProject()
+            {
+                Name = "ReferencesLegacyContracts",
+                TargetFrameworks = "netcoreapp3.0",
+                IsSdkProject = true,
+                IsExe = true,
+                RuntimeIdentifier = EnvironmentInfo.GetCompatibleRid("netcoreapp3.0")
+            };
+
+            //  Dependencies on contracts from different 1.x "bands" can cause downgrades when building
+            //  with a RuntimeIdentifier.
+            testProject.PackageReferences.Add(new TestPackageReference("System.IO.FileSystem", "4.0.1"));
+            testProject.PackageReferences.Add(new TestPackageReference("System.Reflection", "4.3.0"));
+
+
+            var testAsset = _testAssetsManager.CreateTestProject(testProject, testProject.Name)
+                .Restore(Log, testProject.Name);
+
+            var buildCommand = new BuildCommand(Log, Path.Combine(testAsset.TestRoot, testProject.Name));
+
+            buildCommand
+                .Execute()
+                .Should()
+                .Pass();
+        }
+
+        [Fact]
+        public void ItHasNoPackageReferences()
+        {
+            var testProject = new TestProject()
+            {
+                Name = "NoPackageReferences",
+                TargetFrameworks = "netcoreapp3.0",
+                IsSdkProject = true,
+                IsExe = true
+            };
+
+            var testAsset = _testAssetsManager.CreateTestProject(testProject, testProject.Name)
+                .Restore(Log, testProject.Name);
+
+            string testDirectory = Path.Combine(testAsset.TestRoot, testProject.Name);
+
+            var getPackageReferences = new GetValuesCommand(
+               Log,
+               testDirectory,
+               testProject.TargetFrameworks,
+               "PackageReference",
+               GetValuesCommand.ValueType.Item);
+
+            getPackageReferences.Execute().Should().Pass();
+
+            List<string> packageReferences = getPackageReferences.GetValues();
+
+            packageReferences
+                .Should()
+                .BeEmpty();
+
+
         }
     }
 }

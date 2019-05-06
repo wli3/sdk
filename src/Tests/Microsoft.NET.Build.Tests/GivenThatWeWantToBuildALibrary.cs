@@ -38,14 +38,13 @@ namespace Microsoft.NET.Build.Tests
             var testAsset = _testAssetsManager
                 .CopyTestAsset("AppWithLibrary", identifier: targetFramework)
                 .WithSource()
-                .WithTargetFramework(targetFramework, "TestLibrary")
-                .Restore(Log, relativePath: "TestLibrary");
+                .WithTargetFramework(targetFramework, "TestLibrary");
 
             var libraryProjectDirectory = Path.Combine(testAsset.TestRoot, "TestLibrary");
 
             var buildCommand = new BuildCommand(Log, libraryProjectDirectory);
             buildCommand
-                .Execute()
+                .Execute("/restore", "/bl:" + Path.Combine(libraryProjectDirectory, "build.binlog"))
                 .Should()
                 .Pass();
 
@@ -516,7 +515,7 @@ namespace Microsoft.NET.Build.Tests
 
         [Theory]
         [InlineData("netcoreapp3.1")]
-        [InlineData("netstandard2.1")]
+        [InlineData("netstandard2.2")]
         public void It_fails_to_build_if_targeting_a_higher_framework_than_is_supported(string targetFramework)
         {
             var testProject = new TestProject()

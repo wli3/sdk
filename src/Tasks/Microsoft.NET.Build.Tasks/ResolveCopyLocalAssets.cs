@@ -18,9 +18,6 @@ namespace Microsoft.NET.Build.Tasks
     {
         private readonly List<ITaskItem> _resolvedAssets = new List<ITaskItem>();
 
-        [Required]
-        public string ProjectPath { get; set; }
-
         public string AssetsFilePath { get; set; }
 
         [Required]
@@ -39,6 +36,8 @@ namespace Microsoft.NET.Build.Tasks
         public ITaskItem[] RuntimeStorePackages { get; set; }
 
         public bool IsSelfContained { get; set; }
+
+        public bool DisableRuntimeTargets { get; set; }
 
         [Output]
         public ITaskItem[] ResolvedAssets => _resolvedAssets.ToArray();
@@ -68,19 +67,19 @@ namespace Microsoft.NET.Build.Tasks
             projectContext.PackagesToBeFiltered = packagestoBeFiltered;
 
             var assetsFileResolver =
-                new AssetsFileResolver(NuGetPackageResolver.CreateResolver(lockFile, ProjectPath))
+                new AssetsFileResolver(NuGetPackageResolver.CreateResolver(lockFile))
                     .WithExcludedPackages(PackageReferenceConverter.GetPackageIds(ExcludedPackageReferences))
                     .WithPreserveStoreLayout(PreserveStoreLayout);
 
-            foreach (var resolvedFile in assetsFileResolver.Resolve(projectContext))
+            foreach (var resolvedFile in assetsFileResolver.Resolve(projectContext, resolveRuntimeTargets: !DisableRuntimeTargets))
             {
                 TaskItem item = new TaskItem(resolvedFile.SourcePath);
 
                 item.SetMetadata(MetadataKeys.DestinationSubPath, resolvedFile.DestinationSubPath);
                 item.SetMetadata(MetadataKeys.DestinationSubDirectory, resolvedFile.DestinationSubDirectory);
                 item.SetMetadata(MetadataKeys.AssetType, resolvedFile.Asset.ToString().ToLowerInvariant());
-                item.SetMetadata(MetadataKeys.PackageName, resolvedFile.Package.Id.ToString());
-                item.SetMetadata(MetadataKeys.PackageVersion, resolvedFile.Package.Version.ToString().ToLowerInvariant());
+                item.SetMetadata(MetadataKeys.PackageName, resolvedFile.PackageName);
+                item.SetMetadata(MetadataKeys.PackageVersion, resolvedFile.PackageVersion.ToLowerInvariant());
 
                 if (resolvedFile.Asset == AssetType.Resources)
                 {

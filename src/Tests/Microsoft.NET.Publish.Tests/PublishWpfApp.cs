@@ -23,7 +23,7 @@ namespace Microsoft.NET.Publish.Tests
         }
 
         [WindowsOnlyFact]
-        public void It_publishes_and_runs_self_contained_app()
+        public void It_publishes_and_runs_self_contained_wpf_app()
         {
             var testDir = _testAssetsManager.CreateTestDirectory();
 
@@ -63,10 +63,14 @@ namespace Microsoft.NET.Publish.Tests
                 FileName = Path.Combine(publishDirectory.FullName, Path.GetFileName(testDir.Path) + ".exe")
             };
 
-            runAppCommand.Environment["DOTNET_HOME"] = Path.GetDirectoryName(TestContext.Current.ToolsetUnderTest.DotNetHostPath);
+            runAppCommand.Environment["DOTNET_ROOT"] = Path.GetDirectoryName(TestContext.Current.ToolsetUnderTest.DotNetHostPath);
 
-            runAppCommand.ToCommand().Execute()
-                .ExitCode.Should().Be(42);
+            var result = runAppCommand.ToCommand()
+                .CaptureStdErr()
+                .CaptureStdOut()
+                .Execute();
+
+            result.ExitCode.Should().Be(42);
 
 
         }

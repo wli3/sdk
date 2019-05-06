@@ -70,6 +70,10 @@ namespace Microsoft.NET.TestFramework
         {
             Environment.SetEnvironmentVariable("DOTNET_MULTILEVEL_LOOKUP", "0");
 
+            //  Reset this environment variable so that if the dotnet under test is different than the
+            //  one running the tests, it won't interfere
+            Environment.SetEnvironmentVariable("MSBuildSdksPath", null);
+
             TestContext testContext = new TestContext();
             
             bool runAsTool = false;
@@ -89,7 +93,7 @@ namespace Microsoft.NET.TestFramework
             }
 
             string repoRoot = null;
-            string repoConfiguration = null;
+            string repoConfiguration = "Debug";
 
             if (commandLine.SDKRepoPath != null)
             {
@@ -106,7 +110,11 @@ namespace Microsoft.NET.TestFramework
                 }
             }
 
-            if (runAsTool)
+            if (!string.IsNullOrEmpty(commandLine.TestExecutionDirectory))
+            {
+                testContext.TestExecutionDirectory = commandLine.TestExecutionDirectory;
+            }
+            else if (runAsTool)
             {
                 testContext.TestExecutionDirectory = Path.Combine(Path.GetTempPath(), "dotnetSdkTests");
             }
@@ -159,7 +167,7 @@ namespace Microsoft.NET.TestFramework
 
             while (!Directory.Exists(Path.Combine(directory, ".git")) && directory != null)
             {
-                directory = Directory.GetParent(directory).FullName;
+                directory = Directory.GetParent(directory)?.FullName;
             }
 
             if (directory == null)
@@ -202,6 +210,24 @@ namespace Microsoft.NET.TestFramework
                     }
                 }
                 currentPath = parent.FullName;
+            }
+        }
+
+        public void WriteGlobalJson(string path)
+        {
+            WriteGlobalJson(path, this.SdkVersion);
+        }
+
+        public static void WriteGlobalJson(string path, string sdkVersion)
+        {
+            if (!string.IsNullOrEmpty(sdkVersion))
+            {
+                string globalJsonPath = System.IO.Path.Combine(path, "global.json");
+                File.WriteAllText(globalJsonPath, @"{
+  ""sdk"": {
+    ""version"": """ + sdkVersion + @"""
+  }
+}");
             }
         }
     }

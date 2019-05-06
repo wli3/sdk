@@ -438,5 +438,190 @@ public static class Program
 
             publishResult.Should().Pass();
         }
+
+        [Fact]
+        public void It_preserves_newest_files_on_publish()
+        {
+            var helloWorldAsset = _testAssetsManager
+                .CopyTestAsset("HelloWorld")
+                .WithSource()
+                .Restore(Log);
+
+            var publishCommand = new PublishCommand(Log, helloWorldAsset.TestRoot);
+
+            publishCommand
+                .Execute("-v:n")
+                .Should()
+                .Pass()
+                .And
+                .HaveStdOutContaining("Copying");
+
+            publishCommand
+                .Execute("-v:n")
+                .Should()
+                .Pass()
+                .And
+                .NotHaveStdOutContaining("Copying");
+        }
+
+        [Fact]
+        public void It_fails_if_nobuild_was_requested_but_build_was_invoked()
+        {
+            var testProject = new TestProject()
+            {
+                Name = "InvokeBuildOnPublish",
+                IsSdkProject = true,
+                TargetFrameworks = "netcoreapp3.0",
+                IsExe = true
+            };
+
+            var testAsset = _testAssetsManager.CreateTestProject(testProject, testProject.Name)
+                .WithProjectChanges(project =>
+                {
+                    project.Root.Add(XElement.Parse(@"<Target Name=""InvokeBuild"" DependsOnTargets=""Build"" BeforeTargets=""Publish"" />"));
+                })
+                .Restore(Log, testProject.Name);
+
+            new BuildCommand(Log, Path.Combine(testAsset.TestRoot, testProject.Name))
+                .Execute()
+                .Should()
+                .Pass();
+
+            new PublishCommand(Log, Path.Combine(testAsset.TestRoot, testProject.Name))
+                .Execute("/p:NoBuild=true")
+                .Should()
+                .Fail()
+                .And
+                .HaveStdOutContaining("NETSDK1085");
+        }
+
+        [Fact]
+        public void It_contains_no_duplicates_in_resolved_publish_assets()
+        {
+            // Use a specific RID to guarantee a consistent set of assets
+            var testProject = new TestProject()
+            {
+                Name = "NoDuplicatesInResolvedPublishAssets",
+                IsSdkProject = true,
+                TargetFrameworks = "netcoreapp3.0",
+                RuntimeIdentifier = "win-x64",
+                IsExe = true
+            };
+
+            testProject.PackageReferences.Add(new TestPackageReference("NewtonSoft.Json", "9.0.1"));
+
+            var testAsset = _testAssetsManager.CreateTestProject(testProject, testProject.Name)
+                .WithProjectChanges(project =>
+                {
+                    project.Root.Add(XElement.Parse(@"
+<Target Name=""VerifyNoDuplicatesInPublishAssets"" AfterTargets=""Publish"">
+    <RemoveDuplicates Inputs=""@(_ResolvedCopyLocalPublishAssets)"">
+        <Output TaskParameter=""Filtered"" ItemName=""FilteredAssets""/>
+    </RemoveDuplicates>
+    <Message Condition=""'@(_ResolvedCopyLocalPublishAssets)' != '@(FilteredAssets)'"" Importance=""High"" Text=""Duplicate items are present in: @(_ResolvedCopyLocalPublishAssets)!"" />
+    <ItemGroup>
+        <AssetFilenames Include=""@(_ResolvedCopyLocalPublishAssets->'%(Filename)%(Extension)')"" />
+    </ItemGroup>
+    <RemoveDuplicates Inputs=""@(AssetFilenames)"">
+        <Output TaskParameter=""Filtered"" ItemName=""FilteredAssetFilenames""/>
+    </RemoveDuplicates>
+    <Message Condition=""'@(AssetFilenames)' != '@(FilteredAssetFilenames)'"" Importance=""High"" Text=""Duplicate filenames are present in: @(_ResolvedCopyLocalPublishAssets)!"" />
+</Target>"));
+                })
+                .Restore(Log, testProject.Name);
+
+            new PublishCommand(Log, Path.Combine(testAsset.TestRoot, testProject.Name))
+                .Execute()
+                .Should()
+                .Pass()
+                .And
+                .NotHaveStdOutContaining("Duplicate items are present")
+                .And
+                .NotHaveStdOutContaining("Duplicate filenames are present");
+        }
+
+        [Theory]
+        [InlineData(null, null)]
+        [InlineData(false, null)]
+        [InlineData(true, null)]
+        [InlineData(null, false)]
+        [InlineData(null, true)]
+        [InlineData(false, false)]
+        [InlineData(true, false)]
+        [InlineData(false, true)]
+        [InlineData(true, true)]
+        public void It_publishes_with_a_publish_profile(bool? selfContained, bool? useAppHost)
+        {
+            var tfm = "netcoreapp2.2";
+            var rid = EnvironmentInfo.GetCompatibleRid(tfm);
+
+            var testProject = new TestProject()
+            {
+                Name = "ConsoleWithPublishProfile",
+                TargetFrameworks = tfm,
+                IsSdkProject = true,
+                IsExe = true,
+            };
+
+            var testProjectInstance = _testAssetsManager.CreateTestProject(testProject)
+                .WithProjectChanges(
+                    (filename, project) =>
+                    {
+                        project.Root.Attribute("Sdk").Value = "Microsoft.NET.Sdk;Microsoft.NET.Sdk.Publish";
+                    });
+
+            var projectDirectory = Path.Combine(testProjectInstance.Path, testProject.Name);
+            var publishProfilesDirectory = Path.Combine(projectDirectory, "Properties", "PublishProfiles");
+            Directory.CreateDirectory(publishProfilesDirectory);
+
+            File.WriteAllText(Path.Combine(publishProfilesDirectory, "test.pubxml"), $@"
+<Project>
+  <PropertyGroup>
+    <RuntimeIdentifier>{rid}</RuntimeIdentifier>
+    {(selfContained.HasValue ? $"<SelfContained>{selfContained}</SelfContained>" : "")}
+    {((!(selfContained ?? true) && useAppHost.HasValue) ? $"<UseAppHost>{useAppHost}</UseAppHost>" : "")}
+  </PropertyGroup>
+</Project>
+");
+
+            var command = new PublishCommand(Log, projectDirectory);
+            command
+                .Execute("/restore", "/p:PublishProfile=test")
+                .Should()
+                .Pass();
+
+            var output = command.GetOutputDirectory(targetFramework: tfm, runtimeIdentifier: rid);
+
+            output.Should().HaveFiles(new[] {
+                $"{testProject.Name}.dll",
+                $"{testProject.Name}.pdb",
+                $"{testProject.Name}.deps.json",
+                $"{testProject.Name}.runtimeconfig.json",
+            });
+
+            if (selfContained ?? true)
+            {
+                output.Should().HaveFiles(new[] {
+                    $"{FileConstants.DynamicLibPrefix}hostfxr{FileConstants.DynamicLibSuffix}",
+                    $"{FileConstants.DynamicLibPrefix}hostpolicy{FileConstants.DynamicLibSuffix}",
+                });
+            }
+            else
+            {
+                output.Should().NotHaveFiles(new[] {
+                    $"{FileConstants.DynamicLibPrefix}hostfxr{FileConstants.DynamicLibSuffix}",
+                    $"{FileConstants.DynamicLibPrefix}hostpolicy{FileConstants.DynamicLibSuffix}",
+                });
+            }
+
+            if ((selfContained ?? true) || (useAppHost ?? true))
+            {
+                output.Should().HaveFile($"{testProject.Name}{Constants.ExeSuffix}");
+            }
+            else
+            {
+                output.Should().NotHaveFile($"{testProject.Name}{Constants.ExeSuffix}");
+            }
+        }
     }
 }

@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.Build.Evaluation;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 using NuGet.Common;
@@ -88,6 +89,11 @@ namespace Microsoft.NET.Build.Tasks
         /// Do not add references to framework assemblies as specified by packages.
         /// </summary>
         public bool DisableFrameworkAssemblies { get; set; }
+
+        /// <summary>
+        /// Do not resolve runtime targets.
+        /// </summary>
+        public bool DisableRuntimeTargets { get; set; }
 
         /// <summary>
         /// Log messages from assets log to build error/warning/message.
@@ -256,7 +262,7 @@ namespace Microsoft.NET.Build.Tasks
         ////////////////////////////////////////////////////////////////////////////////////////////////////
 
         private const int CacheFormatSignature = ('P' << 0) | ('K' << 8) | ('G' << 16) | ('A' << 24);
-        private const int CacheFormatVersion = 5;
+        private const int CacheFormatVersion = 7;
         private static readonly Encoding TextEncoding = Encoding.UTF8;
         private const int SettingsHashLength = 256 / 8;
         private HashAlgorithm CreateSettingsHash() => SHA256.Create();
@@ -358,6 +364,7 @@ namespace Microsoft.NET.Build.Tasks
                 {
                     writer.Write(DisablePackageAssetsCache);
                     writer.Write(DisableFrameworkAssemblies);
+                    writer.Write(DisableRuntimeTargets);
                     writer.Write(DisableTransitiveProjectReferences);
                     writer.Write(DotNetAppHostExecutableNameWithoutExtension);
                     writer.Write(EmitAssetsLogMessages);
@@ -593,17 +600,18 @@ namespace Microsoft.NET.Build.Tasks
             private List<int> _bufferedMetadata;
             private HashSet<string> _platformPackageExclusions;
             private Placeholder _metadataStringTablePosition;
+            private NuGetFramework _targetFramework;
             private int _itemCount;
 
             public CacheWriter(ResolvePackageAssets task, Stream stream = null)
             {
-                var targetFramework = NuGetUtils.ParseFrameworkName(task.TargetFrameworkMoniker);
+                _targetFramework = NuGetUtils.ParseFrameworkName(task.TargetFrameworkMoniker);
 
                 _task = task;
                 _lockFile = new LockFileCache(task).GetLockFile(task.ProjectAssetsFile);
-                _packageResolver = NuGetPackageResolver.CreateResolver(_lockFile, _task.ProjectPath);
-                _compileTimeTarget = _lockFile.GetTargetAndThrowIfNotFound(targetFramework, runtime: null);
-                _runtimeTarget = _lockFile.GetTargetAndThrowIfNotFound(targetFramework, _task.RuntimeIdentifier);
+                _packageResolver = NuGetPackageResolver.CreateResolver(_lockFile);
+                _compileTimeTarget = _lockFile.GetTargetAndThrowIfNotFound(_targetFramework, runtime: null);
+                _runtimeTarget = _lockFile.GetTargetAndThrowIfNotFound(_targetFramework, _task.RuntimeIdentifier);
                 _stringTable = new Dictionary<string, int>(InitialStringTableCapacity, StringComparer.Ordinal);
                 _metadataStrings = new List<string>(InitialStringTableCapacity);
                 _bufferedMetadata = new List<int>();
@@ -939,6 +947,7 @@ namespace Microsoft.NET.Build.Tasks
                     package => package.NativeLibraries,
                     writeMetadata: (package, asset) =>
                     {
+                        WriteMetadata(MetadataKeys.AssetType, "native");
                         if (ShouldCopyLocalPackageAssets(package))
                         {
                             WriteCopyLocalMetadata(package, Path.GetFileName(asset.Path), "native");
@@ -948,6 +957,11 @@ namespace Microsoft.NET.Build.Tasks
 
             private void WriteApphostsForShimRuntimeIdentifiers()
             {
+                if (!CanResolveApphostFromFrameworkReference())
+                {
+                    return;
+                }
+
                 if (_task.ShimRuntimeIdentifiers == null || _task.ShimRuntimeIdentifiers.Length == 0)
                 {
                     return;
@@ -955,8 +969,7 @@ namespace Microsoft.NET.Build.Tasks
 
                 foreach (var runtimeIdentifier in _task.ShimRuntimeIdentifiers.Select(r => r.ItemSpec))
                 {
-                    NuGetFramework targetFramework = NuGetUtils.ParseFrameworkName(_task.TargetFrameworkMoniker);
-                    LockFileTarget runtimeTarget = _lockFile.GetTargetAndThrowIfNotFound(targetFramework, runtimeIdentifier);
+                    LockFileTarget runtimeTarget = _lockFile.GetTargetAndThrowIfNotFound(_targetFramework, runtimeIdentifier);
 
                     var apphostName = _task.DotNetAppHostExecutableNameWithoutExtension + ExecutableExtension.ForRuntimeIdentifier(runtimeIdentifier);
 
@@ -965,6 +978,20 @@ namespace Microsoft.NET.Build.Tasks
                     WriteItem(resolvedPackageAssetPathAndLibrary.Item1, resolvedPackageAssetPathAndLibrary.Item2);
                     WriteMetadata(MetadataKeys.RuntimeIdentifier, runtimeIdentifier);
                 }
+            }
+
+            /// <summary>
+            /// After netcoreapp3.0 apphost is resolved during ResolveFrameworkReferences. It should return nothing here
+            /// </summary>
+            private bool CanResolveApphostFromFrameworkReference()
+            {
+                if (_targetFramework.Version.Major >= 3
+                    && _targetFramework.Framework.Equals(".NETCoreApp", StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+
+                return true;
             }
 
             private void WritePackageFolders()
@@ -985,6 +1012,7 @@ namespace Microsoft.NET.Build.Tasks
                             string.Equals(asset.Properties["locale"], lang.ItemSpec, StringComparison.OrdinalIgnoreCase))),
                     writeMetadata: (package, asset) =>
                     {
+                        WriteMetadata(MetadataKeys.AssetType, "resources");
                         string locale = asset.Properties["locale"];
                         if (ShouldCopyLocalPackageAssets(package))
                         {
@@ -1009,6 +1037,7 @@ namespace Microsoft.NET.Build.Tasks
                     package => package.RuntimeAssemblies,
                     writeMetadata: (package, asset) =>
                     {
+                        WriteMetadata(MetadataKeys.AssetType, "runtime");
                         if (ShouldCopyLocalPackageAssets(package))
                         {
                             WriteCopyLocalMetadata(package, Path.GetFileName(asset.Path), "runtime");
@@ -1018,11 +1047,17 @@ namespace Microsoft.NET.Build.Tasks
 
             private void WriteRuntimeTargets()
             {
+                if (_task.DisableRuntimeTargets)
+                {
+                    return;
+                }
+
                 WriteItems(
                     _runtimeTarget,
                     package => package.RuntimeTargets,
                     writeMetadata: (package, asset) =>
                     {
+                        WriteMetadata(MetadataKeys.AssetType, asset.AssetType.ToLowerInvariant());
                         if (ShouldCopyLocalPackageAssets(package))
                         {
                             WriteCopyLocalMetadata(
@@ -1035,6 +1070,7 @@ namespace Microsoft.NET.Build.Tasks
                         {
                             WriteMetadata(MetadataKeys.DestinationSubDirectory, Path.GetDirectoryName(asset.Path) + Path.DirectorySeparatorChar);
                         }
+                        WriteMetadata(MetadataKeys.RuntimeIdentifier, asset.Runtime);
                     });
             }
 
@@ -1090,6 +1126,10 @@ namespace Microsoft.NET.Build.Tasks
 
                         string itemSpec = _packageResolver.ResolvePackageAssetPath(library, asset.Path);
                         WriteItem(itemSpec, library);
+                        WriteMetadata(MetadataKeys.PathInPackage, asset.Path);
+                        WriteMetadata(MetadataKeys.PackageName, library.Name);
+                        WriteMetadata(MetadataKeys.PackageVersion, library.Version.ToString().ToLowerInvariant());
+
                         writeMetadata?.Invoke(library, asset);
                     }
                 }
@@ -1099,8 +1139,7 @@ namespace Microsoft.NET.Build.Tasks
             {
                 FlushMetadata();
                 _itemCount++;
-                _writer.Write(itemSpec);
-
+                _writer.Write(ProjectCollection.Escape(itemSpec));
             }
 
             private void WriteItem(string itemSpec, LockFileTargetLibrary package)
@@ -1131,9 +1170,6 @@ namespace Microsoft.NET.Build.Tasks
                 {
                     WriteMetadata(MetadataKeys.DestinationSubDirectory, destinationSubDirectory);
                 }
-                WriteMetadata(MetadataKeys.AssetType, assetType);
-                WriteMetadata(MetadataKeys.PackageName, package.Name);
-                WriteMetadata(MetadataKeys.PackageVersion, package.Version.ToString().ToLowerInvariant());
             }
 
             private int GetMetadataIndex(string value)
@@ -1171,19 +1207,6 @@ namespace Microsoft.NET.Build.Tasks
                     if (platformLibrary != null)
                     {
                         packageExclusions.UnionWith(_runtimeTarget.GetPlatformExclusionList(platformLibrary, libraryLookup));
-                    }
-                }
-
-                // Exclude any runtime frameworks
-                if (_task.RuntimeFrameworks != null)
-                {
-                    foreach (var framework in _task.RuntimeFrameworks)
-                    {
-                        var frameworkLibrary = _runtimeTarget.GetLibrary(framework.ItemSpec);
-                        if (frameworkLibrary != null)
-                        {
-                            packageExclusions.UnionWith(_runtimeTarget.GetPlatformExclusionList(frameworkLibrary, libraryLookup));
-                        }
                     }
                 }
 

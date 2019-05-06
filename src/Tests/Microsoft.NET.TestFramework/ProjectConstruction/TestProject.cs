@@ -36,12 +36,16 @@ namespace Microsoft.NET.TestFramework.ProjectConstruction
         public List<TestPackageReference> PackageReferences { get; } = new List<TestPackageReference>();
 
         public List<TestPackageReference> DotNetCliToolReferences { get; } = new List<TestPackageReference>();
+        
+        public List<CopyFilesTarget> CopyFilesTargets { get; } = new List<CopyFilesTarget>();
 
         public Dictionary<string, string> SourceFiles { get; } = new Dictionary<string, string>();
 
         public Dictionary<string, string> EmbeddedResources { get; } = new Dictionary<string, string>();
 
         public Dictionary<string, string> AdditionalProperties { get; } = new Dictionary<string, string>();
+
+        public Dictionary<string, string> AdditionalItems { get; } = new Dictionary<string, string>();
 
         private static string GetShortTargetFrameworkIdentifier(string targetFramework)
         {
@@ -151,6 +155,10 @@ namespace Microsoft.NET.TestFramework.ProjectConstruction
                 {
                     packageReferenceElement.Add(new XAttribute("Version", packageReference.Version));
                 }
+                if (packageReference.PrivateAssets != null)
+                {
+                    packageReferenceElement.Add(new XAttribute("PrivateAssets", packageReference.PrivateAssets));
+                }
                 packageReferenceItemGroup.Add(packageReferenceElement);
             }
 
@@ -168,6 +176,8 @@ namespace Microsoft.NET.TestFramework.ProjectConstruction
                 packageReferenceItemGroup.Add(new XElement(ns + "PackageReference",
                     new XAttribute("Include", $"Microsoft.NETFramework.ReferenceAssemblies"),
                     new XAttribute("Version", $"1.0.0-alpha-5")));
+
+                propertyGroup.Add(new XElement(ns + "RestoreAdditionalProjectSources", "$(RestoreAdditionalProjectSources);https://dotnet.myget.org/F/roslyn-tools/api/v3/index.json"));
             }
 
             var targetFrameworks = IsSdkProject ? TargetFrameworks.Split(';') : new[] { "net" };
@@ -213,6 +223,22 @@ namespace Microsoft.NET.TestFramework.ProjectConstruction
                 propertyGroup.Add(new XElement(ns + additionalProperty.Key, additionalProperty.Value));
             }
 
+            if (AdditionalItems.Any())
+            {
+                foreach (var additionalItem in AdditionalItems)
+                {
+                    var additionalItemGroup = projectXml.Root.Elements(ns + "ItemGroup").FirstOrDefault();
+                    if (additionalItemGroup == null)
+                    {
+                        additionalItemGroup = new XElement(ns + "ItemGroup");
+                        projectXml.Root.Add(packageReferenceItemGroup);
+                    }
+                    additionalItemGroup.Add(new XElement(
+                        ns + additionalItem.Key, 
+                        new XAttribute("Include", additionalItem.Value)));
+                }
+            }
+
             if (this.IsExe)
             {
                 propertyGroup.Element(ns + "OutputType").SetValue("Exe");
@@ -248,6 +274,22 @@ namespace Microsoft.NET.TestFramework.ProjectConstruction
                 {
                     referenceItemGroup.Add(new XElement(ns + "Reference",
                         new XAttribute("Include", reference)));
+                }
+            }
+            
+            if (this.CopyFilesTargets.Any())
+            {
+                foreach (var copyFilesTarget in CopyFilesTargets)
+                {
+                    var target = new XElement(ns + "Target",
+                        new XAttribute("Name", copyFilesTarget.TargetName),
+                        new XAttribute("AfterTargets", copyFilesTarget.TargetToRunAfter));
+
+                    target.Add(new XElement(ns + "Copy",
+                        new XAttribute("SourceFiles", copyFilesTarget.SourceFiles),
+                        new XAttribute("DestinationFolder", copyFilesTarget.Destination)));
+
+                    projectXml.Root.Add(target);
                 }
             }
 

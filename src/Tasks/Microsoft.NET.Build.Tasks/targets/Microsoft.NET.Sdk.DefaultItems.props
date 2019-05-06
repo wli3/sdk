@@ -36,7 +36,7 @@ Copyright (c) .NET Foundation. All rights reserved.
   <!-- Automatically reference NETStandard.Library or Microsoft.NETCore.App package if targeting the corresponding target framework.
       We can refer here in the .props file to properties set in the .targets files because items and their conditions are
       evaluated in the second pass of evaluation, after all properties have been evaluated. -->
-  <ItemGroup Condition=" '$(DisableImplicitFrameworkReferences)' != 'true' and '$(TargetFrameworkIdentifier)' == '.NETStandard'">
+  <ItemGroup Condition=" '$(DisableImplicitFrameworkReferences)' != 'true' and '$(TargetFrameworkIdentifier)' == '.NETStandard' And '$(_TargetFrameworkVersionWithoutV)' &lt; '2.1'">
     <PackageReference Include="NETStandard.Library" Version="$(NETStandardImplicitPackageVersion)" IsImplicitlyDefined="true" />
 
     <!-- If targeting .NET Standard 2.0 or higher, then don't include a dependency on NETStandard.Library in the package produced by pack -->
@@ -44,6 +44,9 @@ Copyright (c) .NET Foundation. All rights reserved.
                       Condition=" ('$(_TargetFrameworkVersionWithoutV)' != '') And ('$(_TargetFrameworkVersionWithoutV)' >= '2.0') "
                       PrivateAssets="All" 
                       Publish="true" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(DisableImplicitFrameworkReferences)' != 'true' and '$(TargetFrameworkIdentifier)' == '.NETStandard' And '$(_TargetFrameworkVersionWithoutV)' >= '2.1'">
+    <FrameworkReference Include="NETStandard.Library" IsImplicitlyDefined="true" Pack="false"/>
   </ItemGroup>
 
   <ItemGroup Condition=" '$(DisableImplicitFrameworkReferences)' != 'true' and '$(TargetFrameworkIdentifier)' == '.NETCoreApp'">
@@ -62,15 +65,9 @@ Copyright (c) .NET Foundation. All rights reserved.
                       Publish="true" />
 
     <FrameworkReference Include="Microsoft.NETCore.App" IsImplicitlyDefined="true"
+                        Pack="false"
                     Condition="('$(_TargetFrameworkVersionWithoutV)' != '') And ('$(_TargetFrameworkVersionWithoutV)' >= '3.0')"/>
 
-    <!-- Reference the Platforms package in order to supply the RID graph to NuGet.
-         This can be removed once we do https://github.com/dotnet/cli/issues/10528 or
-         https://github.com/NuGet/Home/issues/7351 -->
-    <PackageReference Include="Microsoft.NETCore.Platforms" 
-                      Version="$(BundledNETCorePlatformsPackageVersion)"
-                      IsImplicitlyDefined="true"
-                      Condition="('$(_TargetFrameworkVersionWithoutV)' != '') And ('$(_TargetFrameworkVersionWithoutV)' >= '3.0')"/>
   </ItemGroup>
 
 </Project>

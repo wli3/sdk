@@ -27,6 +27,7 @@ namespace Microsoft.NET.Build.Tasks
             }
         }
 
+        private const string NetCorePlatformLibrary = "Microsoft.NETCore.App";
         private readonly LockFile _lockFile;
         private readonly LockFileTarget _lockFileTarget;
         internal HashSet<PackageIdentity> PackagesToBeFiltered { get; set; }
@@ -48,10 +49,12 @@ namespace Microsoft.NET.Build.Tasks
 
         public LockFileTargetLibrary PlatformLibrary { get; }
 
-        public RuntimeFramework [] RuntimeFrameworks { get; }
+        public RuntimeFramework[] RuntimeFrameworks { get; }
 
         public LockFile LockFile => _lockFile;
         public LockFileTarget LockFileTarget => _lockFileTarget;
+
+        public LockFileTarget CompilationLockFileTarget { get; }
 
         public ProjectContext(LockFile lockFile, LockFileTarget lockFileTarget,
             //  Trimmed from publish output, and if there are no runtimeFrameworks, written to runtimeconfig.json
@@ -70,6 +73,14 @@ namespace Microsoft.NET.Build.Tasks
 
             _lockFile = lockFile;
             _lockFileTarget = lockFileTarget;
+            if (string.IsNullOrEmpty(lockFileTarget.RuntimeIdentifier))
+            {
+                CompilationLockFileTarget = lockFileTarget;
+            }
+            else
+            {
+                CompilationLockFileTarget = lockFile.GetTargetAndThrowIfNotFound(lockFileTarget.TargetFramework, null);
+            }
 
             PlatformLibrary = platformLibrary;
             RuntimeFrameworks = runtimeFrameworks;
@@ -84,11 +95,19 @@ namespace Microsoft.NET.Build.Tasks
 
             HashSet<string> allExclusionList = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            if (IsFrameworkDependent)
+            if (IsFrameworkDependent && PlatformLibrary != null)
             {
-                if (PlatformLibrary != null)
+                allExclusionList.UnionWith(_lockFileTarget.GetPlatformExclusionList(PlatformLibrary, libraryLookup));
+
+                // If the platform library is not Microsoft.NETCore.App, treat it as an implicit dependency.
+                // This makes it so Microsoft.AspNet.* 2.x platforms also exclude Microsoft.NETCore.App files.
+                if (PlatformLibrary.Name.Length > 0 && !String.Equals(PlatformLibrary.Name, NetCorePlatformLibrary, StringComparison.OrdinalIgnoreCase))
                 {
-                    allExclusionList.UnionWith(_lockFileTarget.GetPlatformExclusionList(PlatformLibrary, libraryLookup));
+                    var library = _lockFileTarget.GetLibrary(NetCorePlatformLibrary);
+                    if (library != null)
+                    {
+                        allExclusionList.UnionWith(_lockFileTarget.GetPlatformExclusionList(library, libraryLookup));
+                    }
                 }
             }
 
