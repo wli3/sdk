@@ -17,6 +17,7 @@ Copyright (c) .NET Foundation. All rights reserved.
     </ResolveAssemblyReferencesDependsOn>
   </PropertyGroup>
 
+  <UsingTask TaskName="CheckForDuplicateFrameworkReferences" AssemblyFile="$(MicrosoftNETBuildTasksAssembly)" />
   <UsingTask TaskName="ConvertReferencesToFrameworkReferences" AssemblyFile="$(MicrosoftNETBuildTasksAssembly)" />
   
   <Target Name="ConvertReferenceToFrameworkReference"
