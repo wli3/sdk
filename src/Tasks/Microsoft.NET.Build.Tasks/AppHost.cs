@@ -7,7 +7,7 @@ using System.IO.MemoryMappedFiles;
 using System.Text;
 using System.Runtime.InteropServices;
 
-namespace Microsoft.NET.Build.Tasks
+namespace Microsoft.NET.HostModel.EmbedApphost
 {
     /// <summary>
     /// Embeds the App Name into the AppHost.exe
@@ -29,13 +29,12 @@ namespace Microsoft.NET.Build.Tasks
         /// <param name="windowsGraphicalUserInterface">Specify whether to set the subsystem to GUI. Only valid for PE apphosts.</param>
         /// <param name="intermediateAssembly">Path to the intermediate assembly, used for copying resources to PE apphosts.</param>
         /// <param name="log">Specify the logger used to log warnings and messages. If null, no logging is done.</param>
-        public static void Create(
+        public CreateApphostWarnings void Create(
             string appHostSourceFilePath,
             string appHostDestinationFilePath,
             string appBinaryFilePath,
             bool windowsGraphicalUserInterface = false,
-            string intermediateAssembly = null,
-            Logger log = null)
+            string intermediateAssembly = null)
         {
             var bytesToWrite = Encoding.UTF8.GetBytes(appBinaryFilePath);
             if (bytesToWrite.Length > 1024)
