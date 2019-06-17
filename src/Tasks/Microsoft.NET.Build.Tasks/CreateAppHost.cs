@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Microsoft.Build.Framework;
+using Microsoft.DotNet.PlatformAbstractions;
+using System.ComponentModel;
 using System.IO;
 
 namespace Microsoft.NET.Build.Tasks
@@ -28,13 +30,28 @@ namespace Microsoft.NET.Build.Tasks
 
         protected override void ExecuteCore()
         {
-            AppHost.Create(
+            if (platfrom == "windows")
+            {
+                AppHost.Create(
                 AppHostSourcePath,
                 AppHostDestinationPath,
                 AppBinaryName,
-                windowsGraphicalUserInterface : WindowsGraphicalUserInterface,
+                windowsGraphicalUserInterface: WindowsGraphicalUserInterface,
                 intermediateAssembly: IntermediateAssembly,
                 log: Log);
+            }
+            else
+            {
+                Log.LogWarning
+                    AppHost.Create(
+                AppHostSourcePath,
+                AppHostDestinationPath,
+                AppBinaryName,
+                windowsGraphicalUserInterface: WindowsGraphicalUserInterface,
+                intermediateAssembly: null,
+                log: Log);
+            }
+            
         }
     }
 }
