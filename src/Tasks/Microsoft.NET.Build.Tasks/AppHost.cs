@@ -40,7 +40,7 @@ namespace Microsoft.NET.Build.Tasks
             var bytesToWrite = Encoding.UTF8.GetBytes(appBinaryFilePath);
             if (bytesToWrite.Length > 1024)
             {
-                throw new BuildErrorException(Strings.FileNameIsTooLong, appBinaryFilePath);
+                throw new BuildErrorException(Strings.FileNameIsTooLong, appBinaryFilePath); // TODO wul make this a throw
             }
 
             var destinationDirectory = new FileInfo(appHostDestinationFilePath).Directory.FullName;
@@ -74,7 +74,7 @@ namespace Microsoft.NET.Build.Tasks
                 }
             }
 
-            if (intermediateAssembly != null && appHostIsPEImage)
+            if (intermediateAssembly != null && appHostIsPEImage)   // TODO wul make this a different method, and throw if not on windows SDK should be in charge of issue the warning. and it shoud pass null if not on windows
             {
                 if (ResourceUpdater.IsSupportedOS())
                 {

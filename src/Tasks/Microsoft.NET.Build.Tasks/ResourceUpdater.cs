@@ -398,7 +398,7 @@ namespace Microsoft.NET.Build.Tasks
                 if (failedToLockResource)
                 {
                     Debug.Assert(hResult == 0);
-                    throw new ResourceNotAvailableException(Strings.FailedToLockResource);
+                    throw new ResourceNotAvailableException(Strings.FailedToLockResource); // TODO wul just make them inline english. only developer should see them
                 }
 
                 Debug.Assert(hResult != 0);
