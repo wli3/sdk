@@ -380,16 +380,30 @@ namespace Microsoft.NET.Perf.Tests
             perfTest.Run();
         }
 
-        private void TestProjectFromPerfTestSourceRepository(ProjectPerfOperation operation, string testName, string solutionDirectoryNameInPerfTestRepo, string projectDirectoryName = null)
+        private void TestProjectFromPerfTestSourceRepository(
+            ProjectPerfOperation operation,
+            string testName,
+            string solutionDirectoryNameInPerfTestRepo,
+            string projectDirectoryName = null)
         {
-            string sourceProject = Path.Combine(TestContext.GetRepoRoot(), $".perftestsource/PerformanceTestProjects/{solutionDirectoryNameInPerfTestRepo}");
-            var testDir = _testAssetsManager.CreateTestDirectory(solutionDirectoryNameInPerfTestRepo, identifier: operation.ToString());
+            string sourceProject = Path.Combine(
+                TestContext.GetRepoRoot(),
+                $".perftestsource/PerformanceTestProjects/{solutionDirectoryNameInPerfTestRepo}");
+
+            var testDir = _testAssetsManager.CreateTestDirectory(
+                solutionDirectoryNameInPerfTestRepo,
+                identifier: operation.ToString());
+
             Console.WriteLine($"Mirroring {sourceProject} to {testDir}...");
             FolderSnapshot.MirrorFiles(sourceProject, testDir.Path);
             TestContext.Current.WriteGlobalJson(testDir.Path);
             Console.WriteLine("Done");
 
-            string projectFolderOrFile = projectDirectoryName != null ? Path.Combine(testDir.Path, projectDirectoryName) : testDir.Path;
+            string projectFolderOrFile =
+                projectDirectoryName != null
+                ? Path.Combine(testDir.Path, projectDirectoryName)
+                : testDir.Path;
+
             TestProject(projectFolderOrFile, testName, operation);
         }
     }
