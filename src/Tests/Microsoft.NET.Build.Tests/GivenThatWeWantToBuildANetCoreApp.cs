@@ -35,12 +35,6 @@ namespace Microsoft.NET.Build.Tests
 
         [Theory]
         //  TargetFramework, RuntimeFrameworkVersion, ExpectedPackageVersion, ExpectedRuntimeFrameworkVersion
-        [InlineData("netcoreapp1.0", null, "1.0.5", "1.0.5")]
-        [InlineData("netcoreapp1.0", "1.0.0", "1.0.0", "1.0.0")]
-        [InlineData("netcoreapp1.0", "1.0.3", "1.0.3", "1.0.3")]
-        [InlineData("netcoreapp1.1", null, "1.1.2", "1.1.2")]
-        [InlineData("netcoreapp1.1", "1.1.0", "1.1.0", "1.1.0")]
-        [InlineData("netcoreapp1.1.1", null, "1.1.1", "1.1.1")]
         [InlineData("netcoreapp2.0", null, "2.0.0", "2.0.0")]
         [InlineData("netcoreapp2.1", null, "2.1.0", "2.1.0")]
         public void It_targets_the_right_shared_framework(string targetFramework, string runtimeFrameworkVersion,
@@ -55,12 +49,6 @@ namespace Microsoft.NET.Build.Tests
 
         //  Test behavior when implicit version differs for framework-dependent and self-contained apps
         [Theory]
-        [InlineData("netcoreapp1.0", false, true, "1.0.5")]
-        [InlineData("netcoreapp1.0", true, true, "1.0.16")]
-        [InlineData("netcoreapp1.0", false, false, "1.0.5")]
-        [InlineData("netcoreapp1.1", false, true, "1.1.2")]
-        [InlineData("netcoreapp1.1", true, true, "1.1.13")]
-        [InlineData("netcoreapp1.1", false, false, "1.1.2")]
         [InlineData("netcoreapp2.0", false, true, "2.0.0")]
         [InlineData("netcoreapp2.0", true, true, TestContext.LatestRuntimePatchForNetCoreApp2_0)]
         [InlineData("netcoreapp2.0", false, false, "2.0.0")]
