@@ -18,47 +18,6 @@ Copyright (c) .NET Foundation. All rights reserved.
   </PropertyGroup>
 
   <UsingTask TaskName="CheckForDuplicateFrameworkReferences" AssemblyFile="$(MicrosoftNETBuildTasksAssembly)" />
-  <UsingTask TaskName="ConvertReferencesToFrameworkReferences" AssemblyFile="$(MicrosoftNETBuildTasksAssembly)" />
-  
-  <Target Name="ConvertReferenceToFrameworkReference"
-          Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp' And ('$(_TargetFrameworkVersionWithoutV)' >= '3.0')">
-
-    <!-- TODO: Read these from the targeting packs for the currently targeted framework.  For this proof of concept,
-         we just hard-code some commonly referenced assemblies. -->  
-    <ItemGroup>
-      <AssemblyInFramework Include="System" FrameworkName="Microsoft.NETCore.App" />
-      <AssemblyInFramework Include="System.Core" FrameworkName="Microsoft.NETCore.App" />
-      <AssemblyInFramework Include="System.Xml.Linq" FrameworkName="Microsoft.NETCore.App" />
-      <AssemblyInFramework Include="System.Data.DataSetExtensions" FrameworkName="Microsoft.NETCore.App" />
-      <AssemblyInFramework Include="Microsoft.CSharp" FrameworkName="Microsoft.NETCore.App" />
-      <AssemblyInFramework Include="System.Data" FrameworkName="Microsoft.NETCore.App" />
-      <AssemblyInFramework Include="System.Net.Http" FrameworkName="Microsoft.NETCore.App" />
-      <AssemblyInFramework Include="System.Xml" FrameworkName="Microsoft.NETCore.App" />
-      <AssemblyInFramework Include="System.Drawing" FrameworkName="Microsoft.NETCore.App" />
-
-      <AssemblyInFramework Include="System.Xaml" FrameworkName="Microsoft.WindowsDesktop.App" />
-      <AssemblyInFramework Include="WindowsBase" FrameworkName="Microsoft.WindowsDesktop.App" />
-      <AssemblyInFramework Include="PresentationCore" FrameworkName="Microsoft.WindowsDesktop.App" />
-      <AssemblyInFramework Include="PresentationFramework" FrameworkName="Microsoft.WindowsDesktop.App" />
-
-      <AssemblyInFramework Include="System.Windows.Forms" FrameworkName="Microsoft.WindowsDesktop.App" />
-    </ItemGroup>
-
-    <ConvertReferencesToFrameworkReferences References="@(Reference)"
-                                            FrameworkReferences="@(FrameworkReference)"
-                                            AssembliesInFrameworks="@(AssemblyInFramework)">
-      <Output TaskParameter="ReferencesToRemove" ItemName="_ReferenceToRemove" />
-      <Output TaskParameter="FrameworkReferencesToAdd" ItemName="_FrameworkReferenceToAdd" />
-      
-    </ConvertReferencesToFrameworkReferences>
-
-    <ItemGroup>
-      <Reference Remove="@(_ReferenceToRemove)" />
-      <FrameworkReference Include="@(_FrameworkReferenceToAdd)" />
-    </ItemGroup>
-    
-  </Target>
-
   <UsingTask TaskName="ProcessFrameworkReferences" AssemblyFile="$(MicrosoftNETBuildTasksAssembly)" />
   <UsingTask TaskName="ResolveAppHosts" AssemblyFile="$(MicrosoftNETBuildTasksAssembly)" />
 
