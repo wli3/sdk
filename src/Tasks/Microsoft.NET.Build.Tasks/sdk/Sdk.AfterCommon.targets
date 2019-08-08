@@ -1,6 +1,6 @@
 <!--
 ***********************************************************************************************
-Microsoft.NET.Sdk.Core.BeforeCommon.targets
+Sdk.AfterCommon.targets
 
 WARNING:  DO NOT MODIFY this file unless you are knowledgeable about MSBuild and have
           created a backup copy.  Incorrect changes to this file will make it
@@ -10,8 +10,5 @@ Copyright (c) .NET Foundation. All rights reserved.
 ***********************************************************************************************
 -->
 <Project>
-  <!-- Hook up support for targeting .NET Core for projects that don't use Microsoft.NET.Sdk, but do
-       define a TargetFramework. -->
-  <Import Project="$(MSBuildThisFileDirectory)..\Microsoft.NET.Sdk.BeforeCommon.targets"
-          Condition="'$(UsingMicrosoftNETSdk)' != 'true' And '$(TargetFramework)' != ''"/>
+  <Import Project="..\targets\Microsoft.NET.Sdk.targets" />
 </Project>
