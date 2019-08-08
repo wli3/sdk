@@ -75,7 +75,6 @@ Copyright (c) .NET Foundation. All rights reserved.
     -->
   
   <Target Name="ResolveFrameworkReferences" BeforeTargets="_CheckForInvalidConfigurationAndPlatform;CollectPackageReferences">
-          DependsOnTargets="ConvertReferenceToFrameworkReference">
     <CheckForDuplicateFrameworkReferences
         FrameworkReferences="@(FrameworkReference)"
         MoreInformationLink="https://aka.ms/sdkimplicitrefs">
