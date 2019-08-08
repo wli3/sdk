@@ -33,7 +33,8 @@ Copyright (c) .NET Foundation. All rights reserved.
     ============================================================
     -->
   
-  <Target Name="ResolveFrameworkReferences" BeforeTargets="_CheckForInvalidConfigurationAndPlatform;CollectPackageReferences">
+  <Target Name="ProcessFrameworkReferences" BeforeTargets="_CheckForInvalidConfigurationAndPlatform;CollectPackageReferences;CollectPackageDownloads">
+    
     <CheckForDuplicateFrameworkReferences
         FrameworkReferences="@(FrameworkReference)"
         MoreInformationLink="https://aka.ms/sdkimplicitrefs">
