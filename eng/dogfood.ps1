@@ -38,8 +38,6 @@ try {
   $env:SDK_REPO_ROOT = $RepoRoot
   $env:SDK_CLI_VERSION = $GlobalJson.tools.dotnet
   $env:MSBuildSDKsPath = Join-Path $ArtifactsDir "bin\$configuration\Sdks"
-  $env:CustomBeforeMicrosoftCommonTargets = Join-Path $env:MSBuildSDKsPath "Microsoft.NET.Sdk\targets\core\Microsoft.NET.Sdk.Core.BeforeCommon.targets"
-  $env:CustomAfterMicrosoftCommonTargets = Join-Path $env:MSBuildSDKsPath "Microsoft.NET.Sdk\targets\core\Microsoft.NET.Sdk.Core.AfterCommon.targets"
   $env:DOTNET_MSBUILD_SDK_RESOLVER_SDKS_DIR = $env:MSBuildSDKsPath
   $env:NETCoreSdkBundledVersionsProps = Join-Path $env:DOTNET_INSTALL_DIR "sdk\$env:SDK_CLI_VERSION\Microsoft.NETCoreSdk.BundledVersions.props"
   $env:MicrosoftNETBuildExtensionsTargets = Join-Path $env:MSBuildSDKsPath "Microsoft.NET.Build.Extensions\msbuildExtensions\Microsoft\Microsoft.NET.Build.Extensions\Microsoft.NET.Build.Extensions.targets"
