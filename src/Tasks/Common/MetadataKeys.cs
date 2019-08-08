@@ -24,6 +24,7 @@ namespace Microsoft.NET.Build.Tasks
         public const string TargetFrameworkMoniker = "TargetFrameworkMoniker";
         public const string FrameworkName = "FrameworkName";
         public const string FrameworkVersion = "FrameworkVersion";
+        public const string IsTrimmable = "IsTrimmable";
 
         // SDK Metadata
         public const string SDKPackageItemSpec = "SDKPackageItemSpec";
@@ -64,6 +65,7 @@ namespace Microsoft.NET.Build.Tasks
         public const string NuGetSourceType = "NuGetSourceType";
         public const string PathInPackage = "PathInPackage";
         public const string PackageDirectory = "PackageDirectory";
+        public const string Publish = "Publish";
 
         // References
         public const string ExternallyResolved = "ExternallyResolved";
@@ -75,6 +77,9 @@ namespace Microsoft.NET.Build.Tasks
         public const string TargetPath = "TargetPath";
         public const string CopyLocal = "CopyLocal";
 
+        //  Targeting packs
+        public const string PackageConflictPreferredPackages = "PackageConflictPreferredPackages";
+
         // Content files
         public const string PPOutputPath = "PPOutputPath";
         public const string CodeLanguage = "CodeLanguage";
@@ -82,6 +87,7 @@ namespace Microsoft.NET.Build.Tasks
         public const string BuildAction = "BuildAction";
         public const string OutputPath = "OutputPath";
         public const string CopyToPublishDirectory = "CopyToPublishDirectory";
+        public const string ExcludeFromSingleFile = "ExcludeFromSingleFile";
 
         // Resource assemblies
         public const string Culture = "Culture";

@@ -70,6 +70,7 @@ namespace Microsoft.NET.Publish.Tests
                 Name = "WebTest",
                 TargetFrameworks = tfm,
                 IsSdkProject = true,
+                ProjectSdk = "Microsoft.NET.Sdk.Web",
                 IsExe = true,
             };
 
@@ -77,12 +78,7 @@ namespace Microsoft.NET.Publish.Tests
             testProject.PackageReferences.Add(new TestPackageReference("Microsoft.AspNetCore.App"));
             testProject.PackageReferences.Add(new TestPackageReference("Microsoft.AspNetCore.Razor.Design", version: "2.2.0", privateAssets: "all"));
 
-            var testProjectInstance = _testAssetsManager.CreateTestProject(testProject)
-                .WithProjectChanges(
-                    (filename, project) =>
-                    {
-                        project.Root.Attribute("Sdk").Value = "Microsoft.NET.Sdk.Web";
-                    });
+            var testProjectInstance = _testAssetsManager.CreateTestProject(testProject);
 
             var command = new PublishCommand(Log, Path.Combine(testProjectInstance.Path, testProject.Name));
 
@@ -111,8 +107,7 @@ namespace Microsoft.NET.Publish.Tests
                 $"apphost{Constants.ExeSuffix}",
             });
 
-            Command.Create(Path.Combine(output.FullName, $"{testProject.Name}{Constants.ExeSuffix}"), new string[] {})
-                .CaptureStdOut()
+            new RunExeCommand(Log, Path.Combine(output.FullName, $"{testProject.Name}{Constants.ExeSuffix}"))
                 .Execute()
                 .Should()
                 .Pass()
@@ -133,6 +128,7 @@ namespace Microsoft.NET.Publish.Tests
                 Name = "WebTest",
                 TargetFrameworks = tfm,
                 IsSdkProject = true,
+                ProjectSdk = "Microsoft.NET.Sdk.Web",
                 IsExe = true,
             };
 
@@ -140,12 +136,7 @@ namespace Microsoft.NET.Publish.Tests
             testProject.PackageReferences.Add(new TestPackageReference(platformLibrary));
             testProject.PackageReferences.Add(new TestPackageReference("Microsoft.AspNetCore.Razor.Design", version: "2.2.0", privateAssets: "all"));
 
-            var testProjectInstance = _testAssetsManager.CreateTestProject(testProject)
-                .WithProjectChanges(
-                    (filename, project) =>
-                    {
-                        project.Root.Attribute("Sdk").Value = "Microsoft.NET.Sdk.Web";
-                    });
+            var testProjectInstance = _testAssetsManager.CreateTestProject(testProject);
 
             var command = new PublishCommand(Log, Path.Combine(testProjectInstance.Path, testProject.Name));
 
@@ -189,6 +180,7 @@ namespace Microsoft.NET.Publish.Tests
                 Name = "WebWithPublishProfile",
                 TargetFrameworks = tfm,
                 IsSdkProject = true,
+                ProjectSdk = "Microsoft.NET.Sdk.Web",
                 IsExe = true,
             };
 
@@ -196,12 +188,7 @@ namespace Microsoft.NET.Publish.Tests
             testProject.PackageReferences.Add(new TestPackageReference("Microsoft.AspNetCore.App"));
             testProject.PackageReferences.Add(new TestPackageReference("Microsoft.AspNetCore.Razor.Design", version: "2.2.0", privateAssets: "all"));
 
-            var testProjectInstance = _testAssetsManager.CreateTestProject(testProject)
-                .WithProjectChanges(
-                    (filename, project) =>
-                    {
-                        project.Root.Attribute("Sdk").Value = "Microsoft.NET.Sdk.Web";
-                    });
+            var testProjectInstance = _testAssetsManager.CreateTestProject(testProject);
 
             var projectDirectory = Path.Combine(testProjectInstance.Path, testProject.Name);
             var publishProfilesDirectory = Path.Combine(projectDirectory, "Properties", "PublishProfiles");

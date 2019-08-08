@@ -31,7 +31,7 @@ Copyright (c) .NET Foundation. All rights reserved.
 
   <Import Project="Microsoft.NET.Sdk.DefaultItems.targets" />
 
-  <Import Project="Microsoft.NET.Sdk.TargetingPackResolution.targets" />
+  <Import Project="Microsoft.NET.Sdk.FrameworkReferenceResolution.targets" />
 
   <UsingTask TaskName="GenerateDepsFile" AssemblyFile="$(MicrosoftNETBuildTasksAssembly)" />
   <UsingTask TaskName="GenerateRuntimeConfigurationFiles" AssemblyFile="$(MicrosoftNETBuildTasksAssembly)" />
@@ -43,7 +43,8 @@ Copyright (c) .NET Foundation. All rights reserved.
   </PropertyGroup>
 
   <PropertyGroup>
-    <GenerateRuntimeConfigurationFiles Condition=" '$(GenerateRuntimeConfigurationFiles)' == '' and '$(TargetFrameworkIdentifier)' == '.NETCoreApp' and ('$(HasRuntimeOutput)' == 'true' or '$(UseComHost)' == 'true') ">true</GenerateRuntimeConfigurationFiles>
+    <EnableDynamicLoading Condition="'$(EnableDynamicLoading)' == '' and '$(EnableComHosting)' == 'true'">true</EnableDynamicLoading>
+    <GenerateRuntimeConfigurationFiles Condition=" '$(GenerateRuntimeConfigurationFiles)' == '' and '$(TargetFrameworkIdentifier)' == '.NETCoreApp' and ('$(HasRuntimeOutput)' == 'true' or '$(EnableComHosting)' == 'true' or '$(EnableDynamicLoading)' == 'true') ">true</GenerateRuntimeConfigurationFiles>
     <UserRuntimeConfig Condition=" '$(UserRuntimeConfig)' == '' ">$(MSBuildProjectDirectory)/runtimeconfig.template.json</UserRuntimeConfig>
     <GenerateSatelliteAssembliesForCore Condition=" '$(GenerateSatelliteAssembliesForCore)' == '' and '$(MSBuildRuntimeType)' == 'Core' ">true</GenerateSatelliteAssembliesForCore>
     <ComputeNETCoreBuildOutputFiles Condition=" '$(ComputeNETCoreBuildOutputFiles)' == '' and '$(TargetFrameworkIdentifier)' == '.NETCoreApp'">true</ComputeNETCoreBuildOutputFiles>
@@ -51,6 +52,7 @@ Copyright (c) .NET Foundation. All rights reserved.
 
   <ItemGroup>
     <GenerateRuntimeConfigurationFilesInputs Include="$(ProjectAssetsFile)" />
+    <GenerateRuntimeConfigurationFilesInputs Include="$(ProjectAssetsCacheFile)" />
     <GenerateRuntimeConfigurationFilesInputs Include="$(UserRuntimeConfig)" Condition=" Exists($(UserRuntimeConfig)) " />
   </ItemGroup>
 
@@ -90,6 +92,15 @@ Copyright (c) .NET Foundation. All rights reserved.
     <UserProfileRuntimeStorePath Condition="'$(UserProfileRuntimeStorePath)' == ''">$(_DefaultUserProfileRuntimeStorePath)</UserProfileRuntimeStorePath>
   </PropertyGroup>
 
+  <!-- Opt into .NET Core resource-serialization strategy by default when targeting frameworks
+       that support it by default.
+       -->
+  <PropertyGroup>
+    <GenerateResourceUsePreserializedResources
+      Condition="'$(GenerateResourceUsePreserializedResources)' == '' and
+                 ('$(TargetFrameworkIdentifier)' == '.NETCoreApp' and '$(_TargetFrameworkVersionWithoutV)' >= '3.0')">true</GenerateResourceUsePreserializedResources>
+  </PropertyGroup>
+
   <PropertyGroup>
     <CoreBuildDependsOn>
       _CheckForBuildWithNoBuild;
@@ -121,6 +132,18 @@ Copyright (c) .NET Foundation. All rights reserved.
     <NETSdkError ResourceName="NoBuildRequested" />
   </Target>
 
+  <Target Name="_ComputePackageReferencePublish">
+    <ItemGroup>
+
+      <!-- PrivateAssets="All" means exclude from publish, unless Publish metadata is specified separately -->
+      <PackageReference Publish="false"
+                        Condition="('%(PackageReference.PrivateAssets)' == 'All') And ('%(PackageReference.Publish)' == '')"/>
+
+      <_ExcludeFromPublishPackageReference Include="@(PackageReference)"
+                                           Condition="('%(PackageReference.Publish)' == 'false')" />
+    </ItemGroup>
+  </Target>
+
   <!--
     ============================================================
                                         GenerateBuildDependencyFile
@@ -133,10 +156,11 @@ Copyright (c) .NET Foundation. All rights reserved.
           DependsOnTargets="_DefaultMicrosoftNETPlatformLibrary;
                             _HandlePackageFileConflicts;
                             _ComputeReferenceAssemblies;
-                            ResolveRuntimePackAssets"
+                            ResolveRuntimePackAssets;
+                            _ComputePackageReferencePublish"
           BeforeTargets="CopyFilesToOutputDirectory"
           Condition="'$(GenerateDependencyFile)' == 'true'"
-          Inputs="$(ProjectAssetsFile);$(MSBuildAllProjects)"
+          Inputs="$(ProjectAssetsFile);$(ProjectAssetsCacheFile);$(MSBuildAllProjects)"
           Outputs="$(ProjectDepsFilePath)">
     
     <!-- Set a dummy Version if it hasn't been set by DefaultAssemblyInfo.targets -->
@@ -170,14 +194,12 @@ Copyright (c) .NET Foundation. All rights reserved.
                       RuntimeIdentifier="$(RuntimeIdentifier)"
                       PlatformLibraryName="$(MicrosoftNETPlatformLibrary)"
                       RuntimeFrameworks="@(RuntimeFramework)"
-                      FilesToSkip="@(_ConflictPackageFiles)"
                       CompilerOptions="@(DependencyFileCompilerOptions)"
                       CompileReferences="@(ResolvedCompileFileDefinitions)"
                       ResolvedNuGetFiles="@(NativeCopyLocalItems);@(ResourceCopyLocalItems);@(RuntimeCopyLocalItems)"
                       ResolvedRuntimeTargetsFiles="@(RuntimeTargetsCopyLocalItems)"
                       IsSelfContained="$(SelfContained)"
-                      IncludeRuntimeFileVersions="$(IncludeFileVersionsInDependencyFile)"
-                      DepsFileGenerationMode="$(DepsFileGenerationMode)">
+                      IncludeRuntimeFileVersions="$(IncludeFileVersionsInDependencyFile)">
     </GenerateDepsFile>
 
     <ItemGroup>
@@ -202,6 +224,14 @@ Copyright (c) .NET Foundation. All rights reserved.
           Inputs="@(GenerateRuntimeConfigurationFilesInputs)"
           Outputs="$(ProjectRuntimeConfigFilePath);$(ProjectRuntimeConfigDevFilePath)">
 
+    <PropertyGroup>
+      <_IsRollForwardSupported Condition="'$(_TargetFrameworkVersionWithoutV)' &gt;= '3.0'">true</_IsRollForwardSupported>
+      <RollForward Condition="'$(RollForward)' == '' and '$(EnableDynamicLoading)' == 'true' and '$(_IsRollForwardSupported)' == 'true'">LatestMinor</RollForward>
+    </PropertyGroup>
+
+    <NETSdkError Condition="'$(RollForward)' != '' and '$(_IsRollForwardSupported)' != 'true'"
+                 ResourceName="RollForwardRequiresVersion30"/>
+
     <GenerateRuntimeConfigurationFiles AssetsFilePath="$(ProjectAssetsFile)"
                                        TargetFrameworkMoniker="$(TargetFrameworkMoniker)"
                                        TargetFramework="$(TargetFramework)"
@@ -210,6 +240,7 @@ Copyright (c) .NET Foundation. All rights reserved.
                                        RuntimeIdentifier="$(RuntimeIdentifier)"
                                        PlatformLibraryName="$(MicrosoftNETPlatformLibrary)"
                                        RuntimeFrameworks="@(RuntimeFramework)"
+                                       RollForward="$(RollForward)"
                                        UserRuntimeConfig="$(UserRuntimeConfig)"
                                        HostConfigurationOptions="@(RuntimeHostConfigurationOption)"
                                        AdditionalProbingPaths="@(AdditionalProbingPath)"
@@ -279,6 +310,10 @@ Copyright (c) .NET Foundation. All rights reserved.
                                     Condition="'$(TieredCompilationQuickJit)' != ''"
                                     Value="$(TieredCompilationQuickJit)" />
 
+    <RuntimeHostConfigurationOption Include="System.Runtime.TieredCompilation.QuickJitForLoops"
+                                    Condition="'$(TieredCompilationQuickJitForLoops)' != ''"
+                                    Value="$(TieredCompilationQuickJitForLoops)" />
+
     <RuntimeHostConfigurationOption Include="System.Threading.ThreadPool.MinThreads"
                                     Condition="'$(ThreadPoolMinThreads)' != ''"
                                     Value="$(ThreadPoolMinThreads)" />
@@ -332,11 +367,15 @@ Copyright (c) .NET Foundation. All rights reserved.
     <PropertyGroup>
       <_UseWindowsGraphicalUserInterface Condition="($(RuntimeIdentifier.StartsWith('win')) or $(DefaultAppHostRuntimeIdentifier.StartsWith('win'))) and '$(OutputType)'=='WinExe'">true</_UseWindowsGraphicalUserInterface>
     </PropertyGroup>
+
     <CreateAppHost AppHostSourcePath="$(AppHostSourcePath)"
                    AppHostDestinationPath="$(AppHostIntermediatePath)"
                    AppBinaryName="$(AssemblyName)$(TargetExt)"
                    IntermediateAssembly="@(IntermediateAssembly->'%(FullPath)')"
-                   WindowsGraphicalUserInterface="$(_UseWindowsGraphicalUserInterface)" />
+                   WindowsGraphicalUserInterface="$(_UseWindowsGraphicalUserInterface)"
+                   Retries="$(CopyRetryCount)"
+                   RetryDelayMilliseconds="$(CopyRetryDelayMilliseconds)"
+                   />
   </Target>
 
   <!--
@@ -356,7 +395,7 @@ Copyright (c) .NET Foundation. All rights reserved.
              FormatArguments="$(_DotNetAppHostExecutableName)" />
 
     <PropertyGroup>
-      <!-- AppHostSourcePath will be set from ResolveFrameworkReferences if not using the apphost from the assets file -->
+      <!-- AppHostSourcePath will be set from ProcessFrameworkReferences if not using the apphost from the assets file -->
       <AppHostSourcePath Condition="'$(UseAppHostFromAssetsFile)' == 'true'">@(_NativeRestoredAppHostNETCore)</AppHostSourcePath>
     </PropertyGroup>
     <PropertyGroup Condition="'$(UseAppHostFromAssetsFile)' == 'false' Or '@(_NativeRestoredAppHostNETCore)' != ''">
@@ -383,7 +422,7 @@ Copyright (c) .NET Foundation. All rights reserved.
           Outputs="@(ClsidMap)"
           DependsOnTargets="CoreCompile"
           Condition="'$(ComputeNETCoreBuildOutputFiles)' == 'true' and
-                     '$(UseComHost)' == 'true'">
+                     '$(EnableComHosting)' == 'true'">
     <GenerateClsidMap
         IntermediateAssembly="@(IntermediateAssembly->'%(FullPath)')"
         CLsidMapDestinationPath="@(ClsidMap->'%(FullPath)')" />
@@ -426,7 +465,7 @@ Copyright (c) .NET Foundation. All rights reserved.
           Inputs="@(ClsidMap);@(IntermediateAssembly)"
           Outputs="@(RegFreeComManifest)"
           Condition="'$(ComputeNETCoreBuildOutputFiles)' == 'true' and
-                     '$(UseComHost)' == 'true' and
+                     '$(EnableComHosting)' == 'true' and
                      '$(EnableRegFreeCom)' == 'true'">
     <GenerateRegFreeComManifest
       IntermediateAssembly="@(IntermediateAssembly)"
@@ -445,7 +484,7 @@ Copyright (c) .NET Foundation. All rights reserved.
      -->
   <Target Name="_GetComHostPaths"
           DependsOnTargets="ResolvePackageAssets"
-          Condition="'$(UseComHost)' == 'true' and '$(_IsExecutable)' != 'true'">
+          Condition="'$(EnableComHosting)' == 'true' and '$(_IsExecutable)' != 'true'">
     <PropertyGroup>
       <ComHostFileName>$(AssemblyName).comhost$(_ComHostLibraryExtension)</ComHostFileName>
       <ComHostIntermediatePath>$([System.IO.Path]::GetFullPath('$(IntermediateOutputPath)$(ComHostFileName)'))</ComHostIntermediatePath>
@@ -499,7 +538,12 @@ Copyright (c) .NET Foundation. All rights reserved.
       <None Include="$(AppHostIntermediatePath)">
         <Link>$(AssemblyName)$(_NativeExecutableExtension)</Link>
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        <!-- Always copy the AppHost because the contents of the apphost binary can change during the publish step (due to single-file bundling). 
+             Always copying the apphost ensures that that the sequence
+                 dotnet publish /p:PublishSingleFile=true 
+                 dotnet publish /p:PublishSingleFile=false
+             places the correct unbundled apphost in the publish directory. -->
+        <CopyToPublishDirectory>Always</CopyToPublishDirectory>
       </None>
     </ItemGroup>
     

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -32,7 +33,11 @@ namespace Microsoft.NET.Build.Tasks
         public ITaskItem[] PackageConflictOverrides { get; set; }
 
         [Output]
-        public ITaskItem[] RuntimeFrameworksToRemove { get; set; }
+        public ITaskItem[] UsedRuntimeFrameworks { get; set; }
+
+        public ResolveTargetingPackAssets()
+        {
+        }
 
         protected override void ExecuteCore()
         {
@@ -40,6 +45,7 @@ namespace Microsoft.NET.Build.Tasks
             List<TaskItem> platformManifests = new List<TaskItem>();
             PackageConflictPreferredPackages = string.Empty;
             List<TaskItem> packageConflictOverrides = new List<TaskItem>();
+            List<string> preferredPackages = new List<string>();
 
             var resolvedTargetingPacks = ResolvedTargetingPacks.ToDictionary(item => item.ItemSpec, StringComparer.OrdinalIgnoreCase);
 
@@ -47,7 +53,7 @@ namespace Microsoft.NET.Build.Tasks
             {
                 ITaskItem targetingPack;
                 resolvedTargetingPacks.TryGetValue(frameworkReference.ItemSpec, out targetingPack);
-                string targetingPackRoot = targetingPack?.GetMetadata("Path");
+                string targetingPackRoot = targetingPack?.GetMetadata(MetadataKeys.Path);
  
                 if (string.IsNullOrEmpty(targetingPackRoot) || !Directory.Exists(targetingPackRoot))
                 {
@@ -73,74 +79,60 @@ namespace Microsoft.NET.Build.Tasks
                         }
 
                         string targetingPackDataPath = Path.Combine(targetingPackRoot, "data");
-                        string[] possibleDllFolders = new[]
-                        {
-                            Path.Combine(targetingPackRoot, "ref", targetingPackTargetFramework),
-                            targetingPackDataPath
-                        };
 
-                        string[] possibleManifestPaths = new[]
-                        {
-                            Path.Combine(targetingPackRoot, "build", targetingPackTargetFramework,
-                                targetingPack.GetMetadata(MetadataKeys.PackageName) + ".PlatformManifest.txt"),
-                            Path.Combine(targetingPackDataPath, "PlatformManifest.txt"),
-                            Path.Combine(targetingPackDataPath,
-                                        targetingPack.GetMetadata(MetadataKeys.PackageName) + ".PlatformManifest.txt"),
-                        };
+                        string targetingPackDllFolder = Path.Combine(targetingPackRoot, "ref", targetingPackTargetFramework);
 
-                        string targetingPackDllFolder = possibleDllFolders.First(path =>
-                                    Directory.Exists(path) &&
-                                    Directory.GetFiles(path, "*.dll").Any());
-
-                        string platformManifestPath = possibleManifestPaths.FirstOrDefault(File.Exists);
+                        string platformManifestPath = Path.Combine(targetingPackDataPath, "PlatformManifest.txt");
 
                         string packageOverridesPath = Path.Combine(targetingPackDataPath, "PackageOverrides.txt");
 
                         string frameworkListPath = Path.Combine(targetingPackDataPath, "FrameworkList.xml");
 
-                        if (File.Exists(frameworkListPath))
-                        {
-                            AddReferencesFromFrameworkList(frameworkListPath, targetingPackDllFolder,
-                                                           targetingPack, referencesToAdd);
-                        }
-                        else
-                        {
-                            foreach (var dll in Directory.GetFiles(targetingPackDllFolder, "*.dll"))
-                            {
-                                var reference = CreateReferenceItem(dll, targetingPack);
+                        AddReferencesFromFrameworkList(frameworkListPath, targetingPackDllFolder,
+                                                        targetingPack, referencesToAdd);
 
-                                referencesToAdd.Add(reference);
-                            }
-                        }
-
-                        if (platformManifestPath != null)
+                        if (File.Exists(platformManifestPath))
                         {
                             platformManifests.Add(new TaskItem(platformManifestPath));
                         }
 
                         if (File.Exists(packageOverridesPath))
                         {
-                            packageConflictOverrides.Add(CreatePackageOverride(targetingPack.GetMetadata("RuntimeFrameworkName"), packageOverridesPath));
+                            packageConflictOverrides.Add(CreatePackageOverride(targetingPack.GetMetadata(MetadataKeys.PackageName), packageOverridesPath));
                         }
 
-                        if (targetingPack.ItemSpec.Equals("Microsoft.NETCore.App", StringComparison.OrdinalIgnoreCase))
-                        {
-                            //  Hardcode this for now.  Load this from the targeting pack once we have "real" targeting packs
-                            //  https://github.com/dotnet/cli/issues/10581
-                            PackageConflictPreferredPackages = "Microsoft.NETCore.App;runtime.linux-x64.Microsoft.NETCore.App;runtime.linux-x64.Microsoft.NETCore.App;runtime.linux-musl-x64.Microsoft.NETCore.App;runtime.linux-musl-x64.Microsoft.NETCore.App;runtime.rhel.6-x64.Microsoft.NETCore.App;runtime.rhel.6-x64.Microsoft.NETCore.App;runtime.osx-x64.Microsoft.NETCore.App;runtime.osx-x64.Microsoft.NETCore.App;runtime.freebsd-x64.Microsoft.NETCore.App;runtime.freebsd-x64.Microsoft.NETCore.App;runtime.win-x86.Microsoft.NETCore.App;runtime.win-x86.Microsoft.NETCore.App;runtime.win-arm.Microsoft.NETCore.App;runtime.win-arm.Microsoft.NETCore.App;runtime.win-arm64.Microsoft.NETCore.App;runtime.win-arm64.Microsoft.NETCore.App;runtime.linux-arm.Microsoft.NETCore.App;runtime.linux-arm.Microsoft.NETCore.App;runtime.linux-arm64.Microsoft.NETCore.App;runtime.linux-arm64.Microsoft.NETCore.App;runtime.tizen.4.0.0-armel.Microsoft.NETCore.App;runtime.tizen.4.0.0-armel.Microsoft.NETCore.App;runtime.tizen.5.0.0-armel.Microsoft.NETCore.App;runtime.tizen.5.0.0-armel.Microsoft.NETCore.App;runtime.win-x64.Microsoft.NETCore.App;runtime.win-x64.Microsoft.NETCore.App";
-                        }
+                        preferredPackages.AddRange(targetingPack.GetMetadata(MetadataKeys.PackageConflictPreferredPackages).Split(';'));
                     }
                 }
             }
 
-            //  Remove RuntimeFramework items for shared frameworks which weren't referenced
+            //  Calculate which RuntimeFramework items should actually be used based on framework references
             HashSet<string> frameworkReferenceNames = new HashSet<string>(FrameworkReferences.Select(fr => fr.ItemSpec), StringComparer.OrdinalIgnoreCase);
-            RuntimeFrameworksToRemove = RuntimeFrameworks.Where(rf => !frameworkReferenceNames.Contains(rf.GetMetadata(MetadataKeys.FrameworkName)))
-                                        .ToArray();
+            UsedRuntimeFrameworks = RuntimeFrameworks.Where(rf => frameworkReferenceNames.Contains(rf.GetMetadata(MetadataKeys.FrameworkName)))
+                                    .ToArray();
 
-            ReferencesToAdd = referencesToAdd.ToArray();
+            //  Filter out duplicate references (which can happen when referencing two different profiles that overlap)
+            List<TaskItem> deduplicatedReferences = DeduplicateItems(referencesToAdd);
+            ReferencesToAdd = deduplicatedReferences.Distinct() .ToArray();
+
             PlatformManifests = platformManifests.ToArray();
             PackageConflictOverrides = packageConflictOverrides.ToArray();
+            PackageConflictPreferredPackages = string.Join(";", preferredPackages);
+        }
+
+        //  Get distinct items based on case-insensitive ItemSpec comparison
+        private static List<TaskItem> DeduplicateItems(List<TaskItem> items)
+        {
+            HashSet<string> seenItemSpecs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            List<TaskItem> deduplicatedItems = new List<TaskItem>(items.Count);
+            foreach (var item in items)
+            {
+                if (seenItemSpecs.Add(item.ItemSpec))
+                {
+                    deduplicatedItems.Add(item);
+                }
+            }
+            return deduplicatedItems;
         }
 
         private TaskItem CreatePackageOverride(string runtimeFrameworkName, string packageOverridesPath)
@@ -173,9 +165,38 @@ namespace Microsoft.NET.Build.Tasks
         {
             XDocument frameworkListDoc = XDocument.Load(frameworkListPath);
 
+            string profile = targetingPack.GetMetadata("Profile");
+
             foreach (var fileElement in frameworkListDoc.Root.Elements("File"))
             {
                 string assemblyName = fileElement.Attribute("AssemblyName").Value;
+
+                if (!string.IsNullOrEmpty(profile))
+                {
+                    var profileAttributeValue = fileElement.Attribute("Profile")?.Value;
+
+                    if (profileAttributeValue == null)
+                    {
+                        //  If profile was specified but this assembly doesn't belong to any profiles, don't reference it
+                        continue;
+                    }
+
+                    var assemblyProfiles = profileAttributeValue.Split(';');
+                    if (!assemblyProfiles.Contains(profile, StringComparer.OrdinalIgnoreCase))
+                    {
+                        //  Assembly wasn't in profile specified, so don't reference it
+                        continue;
+                    }
+                }
+
+                string referencedByDefaultAttributeValue = fileElement.Attribute("ReferencedByDefault")?.Value;
+                if (referencedByDefaultAttributeValue != null &&
+                    referencedByDefaultAttributeValue.Equals("false", StringComparison.OrdinalIgnoreCase))
+                {
+                    //  Don't automatically reference this assembly if it has ReferencedByDefault="false"
+                    continue;
+                }
+
                 var dllPath = Path.Combine(targetingPackDllFolder, assemblyName + ".dll");
                 var referenceItem = CreateReferenceItem(dllPath, targetingPack);
 
@@ -193,21 +214,11 @@ namespace Microsoft.NET.Build.Tasks
 
             reference.SetMetadata(MetadataKeys.ExternallyResolved, "true");
             reference.SetMetadata(MetadataKeys.Private, "false");
-            reference.SetMetadata("Visible", "false");
             reference.SetMetadata(MetadataKeys.NuGetPackageId, targetingPack.GetMetadata(MetadataKeys.PackageName));
             reference.SetMetadata(MetadataKeys.NuGetPackageVersion, targetingPack.GetMetadata(MetadataKeys.PackageVersion));
 
-            //  TODO: Once we work out what metadata we should use here to display these references grouped under the targeting pack
-            //  in solution explorer, set that metadata here.These metadata values are based on what PCLs were using.
-            //  https://github.com/dotnet/sdk/issues/2802
-            reference.SetMetadata("WinMDFile", "false");
-            reference.SetMetadata("ReferenceGroupingDisplayName", targetingPack.ItemSpec);
-            reference.SetMetadata("ReferenceGrouping", targetingPack.ItemSpec);
-            reference.SetMetadata("ResolvedFrom", "TargetingPack");
-            reference.SetMetadata("IsSystemReference", "true");
-
-            reference.SetMetadata("FrameworkName", targetingPack.ItemSpec);
-            reference.SetMetadata("FrameworkVersion", targetingPack.GetMetadata(MetadataKeys.PackageVersion));
+            reference.SetMetadata("FrameworkReferenceName", targetingPack.ItemSpec);
+            reference.SetMetadata("FrameworkReferenceVersion", targetingPack.GetMetadata(MetadataKeys.PackageVersion));
             
             return reference;
         }

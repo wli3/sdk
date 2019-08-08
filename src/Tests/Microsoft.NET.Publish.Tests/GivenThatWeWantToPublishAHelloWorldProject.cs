@@ -54,8 +54,7 @@ namespace Microsoft.NET.Publish.Tests
             outputDirectory.Should().HaveFiles(filesPublished);
             publishDirectory.Should().HaveFiles(filesPublished);
 
-            Command.Create(TestContext.Current.ToolsetUnderTest.DotNetHostPath, new[] { Path.Combine(publishDirectory.FullName, "HelloWorld.dll") })
-                .CaptureStdOut()
+            new DotnetCommand(Log, Path.Combine(publishDirectory.FullName, "HelloWorld.dll"))
                 .Execute()
                 .Should()
                 .Pass()
@@ -69,6 +68,11 @@ namespace Microsoft.NET.Publish.Tests
         [InlineData("netcoreapp3.0")]
         public void It_publishes_self_contained_apps_to_the_publish_folder_and_the_app_should_run(string targetFramework)
         {
+            if (!EnvironmentInfo.SupportsTargetFramework(targetFramework))
+            {
+                return;
+            }
+
             var rid = EnvironmentInfo.GetCompatibleRid(targetFramework);
 
             var helloWorldAsset = _testAssetsManager
@@ -112,8 +116,7 @@ namespace Microsoft.NET.Publish.Tests
             publishDirectory.Should().NotHaveFiles(filesNotPublished);
 
             string selfContainedExecutableFullPath = Path.Combine(publishDirectory.FullName, selfContainedExecutable);
-            Command.Create(selfContainedExecutableFullPath, new string[] { })
-                .CaptureStdOut()
+            new RunExeCommand(Log, selfContainedExecutableFullPath)
                 .Execute()
                 .Should()
                 .Pass()
@@ -124,7 +127,7 @@ namespace Microsoft.NET.Publish.Tests
         [Fact]
         public void Publish_self_contained_app_with_dot_in_the_name()
         {
-            var targetFramework = "netcoreapp2.0";
+            var targetFramework = "netcoreapp2.1";
             var rid = EnvironmentInfo.GetCompatibleRid(targetFramework);
 
             TestProject testProject = new TestProject()
@@ -143,7 +146,7 @@ public static class Program
 {
     public static void Main()
     {
-        Console.WriteLine(""Hello from a netcoreapp2.0.!"");
+        Console.WriteLine(""Hello from a netcoreapp2.1!"");
     }
 }
 ";
@@ -255,6 +258,10 @@ public static class Program
             }
 
             var targetFramework = "netcoreapp2.0";
+            if (!EnvironmentInfo.SupportsTargetFramework(targetFramework))
+            {
+                return;
+            }
             var rid = ridSpecific ? EnvironmentInfo.GetCompatibleRid(targetFramework) : null;
 
             TestProject testProject = new TestProject()
@@ -332,7 +339,7 @@ public static class Program
                 .And
                 .OnlyHavePackagesWithPathProperties();
 
-            ICommand runCommand;
+            TestCommand runCommand;
 
             if (selfContained)
             {
@@ -363,7 +370,7 @@ public static class Program
                     .And
                     .OnlyHaveNativeAssembliesWhichAreInFolder(rid, publishDirectory.FullName, testProject.Name);
 
-                runCommand = Command.Create(selfContainedExecutableFullPath, new string[] { });
+                runCommand = new RunExeCommand(Log, selfContainedExecutableFullPath);
             }
             else
             {
@@ -380,11 +387,10 @@ public static class Program
                 dependencyContext.Should()
                     .OnlyHaveRuntimeAssemblies(rid ?? "", testProject.Name);
 
-                runCommand = Command.Create(TestContext.Current.ToolsetUnderTest.DotNetHostPath, new[] { Path.Combine(publishDirectory.FullName, $"{testProject.Name}.dll") });
+                runCommand = new DotnetCommand(Log, Path.Combine(publishDirectory.FullName, $"{testProject.Name}.dll"));
             }
 
             runCommand
-                    .CaptureStdOut()
                     .Execute()
                     .Should()
                     .Pass()
@@ -439,15 +445,23 @@ public static class Program
             publishResult.Should().Pass();
         }
 
-        [Fact]
-        public void It_preserves_newest_files_on_publish()
+        [Theory]
+        [InlineData("netcoreapp2.1")]
+        [InlineData("netcoreapp3.0")]
+        public void It_preserves_newest_files_on_publish(string tfm)
         {
-            var helloWorldAsset = _testAssetsManager
-                .CopyTestAsset("HelloWorld")
-                .WithSource()
-                .Restore(Log);
+            var testProject = new TestProject()
+            {
+                Name = "PreserveNewestFilesOnPublish",
+                IsSdkProject = true,
+                TargetFrameworks = tfm,
+                IsExe = true
+            };
 
-            var publishCommand = new PublishCommand(Log, helloWorldAsset.TestRoot);
+            var testAsset = _testAssetsManager.CreateTestProject(testProject, testProject.Name)
+                .Restore(Log, testProject.Name);
+
+            var publishCommand = new PublishCommand(Log, Path.Combine(testAsset.TestRoot, testProject.Name));
 
             publishCommand
                 .Execute("-v:n")
@@ -495,8 +509,14 @@ public static class Program
                 .HaveStdOutContaining("NETSDK1085");
         }
 
-        [Fact]
-        public void It_contains_no_duplicates_in_resolved_publish_assets()
+        [WindowsOnlyFact]
+        public void It_contains_no_duplicates_in_resolved_publish_assets_on_windows()
+            => It_contains_no_duplicates_in_resolved_publish_assets("windows");
+
+        [Theory]
+        [InlineData("console")]
+        [InlineData("web")]
+        public void It_contains_no_duplicates_in_resolved_publish_assets(string type)
         {
             // Use a specific RID to guarantee a consistent set of assets
             var testProject = new TestProject()
@@ -508,9 +528,25 @@ public static class Program
                 IsExe = true
             };
 
+            switch (type)
+            {
+                case "windows":
+                    testProject.ProjectSdk = "Microsoft.NET.Sdk.WindowsDesktop";
+                    testProject.AdditionalProperties.Add("UseWpf", "true");
+                    testProject.AdditionalProperties.Add("UseWindowsForms", "true");
+                    break;
+               case "console":
+                    break;
+                case "web":
+                    testProject.ProjectSdk = "Microsoft.NET.Sdk.Web";
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(type));
+            }
+
             testProject.PackageReferences.Add(new TestPackageReference("NewtonSoft.Json", "9.0.1"));
 
-            var testAsset = _testAssetsManager.CreateTestProject(testProject, testProject.Name)
+            var testAsset = _testAssetsManager.CreateTestProject(testProject, testProject.Name, identifier: type)
                 .WithProjectChanges(project =>
                 {
                     project.Root.Add(XElement.Parse(@"
@@ -520,12 +556,12 @@ public static class Program
     </RemoveDuplicates>
     <Message Condition=""'@(_ResolvedCopyLocalPublishAssets)' != '@(FilteredAssets)'"" Importance=""High"" Text=""Duplicate items are present in: @(_ResolvedCopyLocalPublishAssets)!"" />
     <ItemGroup>
-        <AssetFilenames Include=""@(_ResolvedCopyLocalPublishAssets->'%(Filename)%(Extension)')"" />
+        <AssetDestinationSubPaths Include=""@(_ResolvedCopyLocalPublishAssets->'%(DestinationSubPath)')"" />
     </ItemGroup>
-    <RemoveDuplicates Inputs=""@(AssetFilenames)"">
-        <Output TaskParameter=""Filtered"" ItemName=""FilteredAssetFilenames""/>
+    <RemoveDuplicates Inputs=""@(AssetDestinationSubPaths)"">
+        <Output TaskParameter=""Filtered"" ItemName=""FilteredAssetDestinationSubPaths""/>
     </RemoveDuplicates>
-    <Message Condition=""'@(AssetFilenames)' != '@(FilteredAssetFilenames)'"" Importance=""High"" Text=""Duplicate filenames are present in: @(_ResolvedCopyLocalPublishAssets)!"" />
+    <Message Condition=""'@(AssetDestinationSubPaths)' != '@(FilteredAssetDestinationSubPaths)'"" Importance=""High"" Text=""Duplicate DestinationSubPaths are present in: @(AssetDestinationSubPaths)!"" />
 </Target>"));
                 })
                 .Restore(Log, testProject.Name);
@@ -560,15 +596,11 @@ public static class Program
                 Name = "ConsoleWithPublishProfile",
                 TargetFrameworks = tfm,
                 IsSdkProject = true,
+                ProjectSdk = "Microsoft.NET.Sdk;Microsoft.NET.Sdk.Publish",
                 IsExe = true,
             };
 
-            var testProjectInstance = _testAssetsManager.CreateTestProject(testProject)
-                .WithProjectChanges(
-                    (filename, project) =>
-                    {
-                        project.Root.Attribute("Sdk").Value = "Microsoft.NET.Sdk;Microsoft.NET.Sdk.Publish";
-                    });
+            var testProjectInstance = _testAssetsManager.CreateTestProject(testProject);
 
             var projectDirectory = Path.Combine(testProjectInstance.Path, testProject.Name);
             var publishProfilesDirectory = Path.Combine(projectDirectory, "Properties", "PublishProfiles");
@@ -622,6 +654,62 @@ public static class Program
             {
                 output.Should().NotHaveFile($"{testProject.Name}{Constants.ExeSuffix}");
             }
+        }
+
+        [Fact]
+        public void It_publishes_with_full_path_publish_profile()
+        {
+            var libProject = new TestProject()
+            {
+                Name = "LibProjectWithDifferentTFM",
+                TargetFrameworks = "netstandard2.0",
+                IsSdkProject = true,
+            };
+
+            var testProject = new TestProject()
+            {
+                Name = "ExeWithPublishProfile",
+                TargetFrameworks = "netcoreapp3.0",
+                IsSdkProject = true,
+                IsExe = true,
+            };
+
+            testProject.ReferencedProjects.Add(libProject);
+
+            var testProjectInstance = _testAssetsManager.CreateTestProject(testProject)
+                .WithProjectChanges(project =>
+                {
+                    project.Root.Add(XElement.Parse(@"
+<ItemDefinitionGroup>
+  <ProjectReference>
+    <GlobalPropertiesToRemove>%(GlobalPropertiesToRemove);WebPublishProfileFile</GlobalPropertiesToRemove>
+  </ProjectReference>
+</ItemDefinitionGroup>"));
+                });
+
+            var projectDirectory = Path.Combine(testProjectInstance.Path, testProject.Name);
+            var projectPath = Path.Combine(projectDirectory, $"{testProject.Name}.csproj");
+            var publishProfilesDirectory = Path.Combine(projectDirectory, "Properties", "PublishProfiles");
+            var publishProfilePath = Path.Combine(publishProfilesDirectory, "test.pubxml");
+
+            Directory.CreateDirectory(publishProfilesDirectory);
+            File.WriteAllText(publishProfilePath, @"
+<Project>
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
+  </PropertyGroup>
+</Project>
+");
+
+            var command = new PublishCommand(Log, projectDirectory);
+            command
+                .Execute(
+                    "/restore",
+                    $"/p:WebPublishProfileFile={publishProfilePath}",
+                    $"/p:ProjectToOverrideProjectExtensionsPath={projectPath}"
+                )
+                .Should()
+                .Pass();
         }
     }
 }

@@ -27,10 +27,11 @@ Copyright (c) .NET Foundation. All rights reserved.
   <PropertyGroup>
     <_ToolsSettingsFilePath>$(BaseIntermediateOutputPath)DotnetToolSettings.xml</_ToolsSettingsFilePath>
     <SuppressDependenciesWhenPacking Condition=" '$(PackAsTool)' == 'true' ">true</SuppressDependenciesWhenPacking>
-    <UseAppHost Condition=" '$(SelfContained)' != 'true' and '$(PackAsTool)' == 'true' ">false</UseAppHost>
+    <_PackToolPublishDependency Condition=" ('$(GeneratePackageOnBuild)' != 'true' and '$(NoBuild)' != 'true') and $(IsPublishable) == 'true' ">_PublishBuildAlternative</_PackToolPublishDependency>
+    <_PackToolPublishDependency Condition=" ('$(GeneratePackageOnBuild)' == 'true' or '$(NoBuild)' == 'true') and $(IsPublishable) == 'true' ">$(_PublishNoBuildAlternativeDependsOn)</_PackToolPublishDependency>
   </PropertyGroup>
 
-  <Target Name="PackTool" DependsOnTargets="GenerateToolsSettingsFileFromBuildProperty;Publish;_PackToolValidation" Condition=" '$(PackAsTool)' == 'true' ">
+  <Target Name="PackTool" DependsOnTargets="GenerateToolsSettingsFileFromBuildProperty;$(_PackToolPublishDependency);_PackToolValidation" Condition=" '$(PackAsTool)' == 'true' ">
     <ItemGroup>
       <_GeneratedFiles Include="$(PublishDepsFilePath)"/>
       <_GeneratedFiles Include="$(PublishRuntimeConfigFilePath)"/>
@@ -38,6 +39,7 @@ Copyright (c) .NET Foundation. All rights reserved.
     </ItemGroup>
 
     <ResolveToolPackagePaths
+      AppHostIntermediatePath="$(AppHostIntermediatePath)"
       ResolvedFileToPublish="@(ResolvedFileToPublish)"
       PublishDir="$(PublishDir)"
       TargetFramework="$(TargetFramework)">
@@ -104,6 +106,8 @@ Copyright (c) .NET Foundation. All rights reserved.
 
     <GenerateShims
       ApphostsForShimRuntimeIdentifiers="@(_ApphostsForShimRuntimeIdentifiers)"
+      IntermediateAssembly="@(IntermediateAssembly->'%(FullPath)')"
+      OutputType="$(OutputType)"
       PackagedShimOutputDirectory="$(PackagedShimOutputRootDirectory)/shims/$(TargetFramework)"
       PackageId="$(PackageId)"
       PackageVersion="$(PackageVersion)"

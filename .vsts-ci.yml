@@ -21,10 +21,10 @@ jobs:
     agentOs: Windows_NT
     pool:
       ${{ if eq(variables['System.TeamProject'], 'public') }}:
-        name: NetCorePublic-Int-Pool
-        queue: buildpool.windows.10.amd64.vs2017.open
+        name: NetCorePublic-Pool
+        queue: BuildPool.Windows.10.Amd64.VS2019.Pre.Open
       ${{ if ne(variables['System.TeamProject'], 'public') }}:
-        name: NetCoreInternal-Int-Pool
+        name: NetCoreInternal-Pool
         queue: buildpool.windows.10.amd64.vs2017
     strategy:
       matrix:
@@ -56,6 +56,20 @@ jobs:
             _SignType: test
             _DotNetPublishToBlobFeed: false
 
+- ${{ if ne(variables['System.TeamProject'], 'public') }}:
+  - template: /eng/build.yml
+    parameters:
+      agentOs: Windows_Perf_Helix_Fullframework
+      pool:
+        name: Hosted VS2017
+      strategy:
+        matrix:
+          Build_Release:
+            _BuildConfig: Release
+            _PublishType: none
+            _SignType: test
+            _DotNetPublishToBlobFeed: false
+
   - template: /eng/build.yml
     parameters:
       agentOs: Linux_Perf_Helix
@@ -74,8 +88,8 @@ jobs:
     parameters:
       agentOs: Windows_NT_FullFramework
       pool:
-        name: NetCorePublic-Int-Pool
-        queue: buildpool.windows.10.amd64.vs2017.open
+        name: NetCorePublic-Pool
+        queue: BuildPool.Windows.10.Amd64.VS2019.Pre.Open
       strategy:
         matrix:
           Build_Debug:
@@ -91,8 +105,8 @@ jobs:
     parameters:
       agentOs: Windows_NT_TestAsTools
       pool:
-        name: NetCorePublic-Int-Pool
-        queue: buildpool.windows.10.amd64.vs2017.open
+        name: NetCorePublic-Pool
+        queue: BuildPool.Windows.10.Amd64.VS2019.Pre.Open
       strategy:
         matrix:
           Build_Debug:
@@ -140,7 +154,7 @@ jobs:
     parameters:
       agentOs: Darwin
       pool:
-        name: DotNetCore-Mac
+        name: Hosted macOS
       strategy:
         matrix:
           Build_Debug:
@@ -156,7 +170,20 @@ jobs:
     parameters:
       agentOs: Windows_Perf_CI
       pool:
-        name: NetCorePublic-Int-Pool
+        name: NetCorePublic-Pool
+        queue: BuildPool.Windows.10.Amd64.VS2019.Pre.Open
+      strategy:
+        matrix:
+          Build_Release:
+            _BuildConfig: Release
+            _PublishType: none
+            _SignType: test
+
+  - template: /eng/build.yml
+    parameters:
+      agentOs: Windows_Perf_CI_FullFramework
+      pool:
+        name: NetCorePublic-Pool
         queue: buildpool.windows.10.amd64.vs2017.open
       strategy:
         matrix:

@@ -15,12 +15,14 @@ using System.Xml.Linq;
 using System.Runtime.CompilerServices;
 using System;
 using System.Runtime.InteropServices;
+using Microsoft.DotNet.PlatformAbstractions;
 
 namespace Microsoft.NET.ToolPack.Tests
 {
     public class GivenThatWeWantToPackAToolProject : SdkTest
     {
         private string _testRoot;
+        private string _targetFrameworkOrFrameworks = "netcoreapp2.1";
 
         public GivenThatWeWantToPackAToolProject(ITestOutputHelper log) : base(log)
         {
@@ -28,6 +30,7 @@ namespace Microsoft.NET.ToolPack.Tests
 
         private string SetupNuGetPackage(bool multiTarget, [CallerMemberName] string callingMethod = "")
         {
+            
             TestAsset helloWorldAsset = _testAssetsManager
                 .CopyTestAsset("PortableTool", callingMethod + multiTarget)
                 .WithSource()
@@ -36,7 +39,7 @@ namespace Microsoft.NET.ToolPack.Tests
                     XNamespace ns = project.Root.Name.Namespace;
                     XElement propertyGroup = project.Root.Elements(ns + "PropertyGroup").First();
                 })
-                .WithTargetFrameworkOrFrameworks("netcoreapp2.1", multiTarget)
+                .WithTargetFrameworkOrFrameworks(_targetFrameworkOrFrameworks, multiTarget)
                 .Restore(Log);
 
             _testRoot = helloWorldAsset.TestRoot;
@@ -128,6 +131,9 @@ namespace Microsoft.NET.ToolPack.Tests
         [InlineData(false)]
         public void It_does_not_contain_apphost_exe(bool multiTarget)
         {
+            var extension = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".exe" : "";
+            _targetFrameworkOrFrameworks = "netcoreapp3.0";
+
             var nugetPackage = SetupNuGetPackage(multiTarget);
             using (var nupkgReader = new PackageArchiveReader(nugetPackage))
             {
@@ -136,11 +142,24 @@ namespace Microsoft.NET.ToolPack.Tests
 
                 foreach (NuGet.Frameworks.NuGetFramework framework in supportedFrameworks)
                 {
-                    var extension = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".exe" : "";
                     var allItems = nupkgReader.GetToolItems().SelectMany(i => i.Items).ToList();
                     allItems.Should().NotContain($"tools/{framework.GetShortFolderName()}/any/consoledemo{extension}");
                 }
             }
+
+            var getValuesCommand = new GetValuesCommand(
+               Log,
+               _testRoot,
+               _targetFrameworkOrFrameworks,
+               "RunCommand",
+               GetValuesCommand.ValueType.Property);
+
+            getValuesCommand.Execute();
+            string runCommandPath = getValuesCommand.GetValues().Single();
+            Path.GetExtension(runCommandPath)
+                .Should().Be(extension);
+            File.Exists(runCommandPath).Should()
+                .BeTrue("run command should be apphost executable (for WinExe) to debug. But it will not be packed");
         }
 
         [Theory]

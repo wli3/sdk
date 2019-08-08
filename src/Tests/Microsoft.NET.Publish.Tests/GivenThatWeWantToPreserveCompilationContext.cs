@@ -70,6 +70,12 @@ namespace Microsoft.NET.Publish.Tests
             testAsset.Restore(Log, "TestApp");
 
             var appProjectDirectory = Path.Combine(testAsset.TestRoot, "TestApp");
+
+            var getValuesCommand = new GetValuesCommand(Log, appProjectDirectory, testProject.TargetFrameworks, "LangVersion");
+            getValuesCommand.Execute().Should().Pass();
+
+            var langVersion = getValuesCommand.GetValues().FirstOrDefault() ?? string.Empty;
+
             var publishCommand = new PublishCommand(Log, appProjectDirectory);
 
             publishCommand
@@ -114,7 +120,7 @@ namespace Microsoft.NET.Publish.Tests
                 }
 
                 dependencyContext.CompilationOptions.Defines.Should().BeEquivalentTo(expectedDefines);
-                dependencyContext.CompilationOptions.LanguageVersion.Should().BeOneOf("", "preview");
+                dependencyContext.CompilationOptions.LanguageVersion.Should().Be(langVersion);
                 dependencyContext.CompilationOptions.Platform.Should().Be("x86");
                 dependencyContext.CompilationOptions.Optimize.Should().Be(false);
                 dependencyContext.CompilationOptions.KeyFile.Should().Be("");
@@ -128,6 +134,15 @@ namespace Microsoft.NET.Publish.Tests
 
                 var extraCompileLibraryNames = compileLibraryAssemblyNames.Except(expectedCompileLibraryNames).ToList();
                 var missingCompileLibraryNames = expectedCompileLibraryNames.Except(compileLibraryAssemblyNames).ToList();
+
+                if (extraCompileLibraryNames.Any())
+                {
+                    Log.WriteLine("Unexpected compile libraries: " + string.Join(' ', extraCompileLibraryNames));
+                }
+                if (missingCompileLibraryNames.Any())
+                {
+                    Log.WriteLine("Missing compile libraries: " + string.Join(' ', missingCompileLibraryNames));
+                }
 
                 compileLibraryAssemblyNames.Should().BeEquivalentTo(expectedCompileLibraryNames);
 
@@ -665,9 +680,12 @@ System.Security.SecureString.dll
 System.ServiceModel.Web.dll
 System.ServiceProcess.dll
 System.Text.Encoding.dll
+System.Text.Encoding.CodePages.dll
 System.Text.Encoding.Extensions.dll
+System.Text.Encodings.Web.dll
 System.Text.RegularExpressions.dll
 System.Threading.dll
+System.Threading.Channels.dll
 System.Threading.Overlapped.dll
 System.Threading.Tasks.Dataflow.dll
 System.Threading.Tasks.dll

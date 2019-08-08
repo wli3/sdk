@@ -10,7 +10,7 @@ using Microsoft.Build.Utilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
-using NuGet.Frameworks;
+using NuGet.Packaging;
 using NuGet.ProjectModel;
 
 namespace Microsoft.NET.Build.Tasks
@@ -40,6 +40,8 @@ namespace Microsoft.NET.Build.Tasks
 
         public ITaskItem[] RuntimeFrameworks { get; set; }
 
+        public string RollForward { get; set; }
+
         public string UserRuntimeConfig { get; set; }
 
         public ITaskItem[] HostConfigurationOptions { get; set; }
@@ -51,6 +53,16 @@ namespace Microsoft.NET.Build.Tasks
         public bool WriteAdditionalProbingPathsToMainConfig { get; set; }
 
         List<ITaskItem> _filesWritten = new List<ITaskItem>();
+
+        private static readonly string[] RollForwardValues = new string[]
+        {
+            "Disable",
+            "LatestPatch",
+            "Minor",
+            "LatestMinor",
+            "Major",
+            "LatestMajor"
+        };
 
         [Output]
         public ITaskItem[] FilesWritten
@@ -67,6 +79,15 @@ namespace Microsoft.NET.Build.Tasks
                 if (AdditionalProbingPaths?.Any() == true && !writeDevRuntimeConfig)
                 {
                     Log.LogWarning(Strings.SkippingAdditionalProbingPaths);
+                }
+            }
+
+            if (!string.IsNullOrEmpty(RollForward))
+            {
+                if (!RollForwardValues.Any(v => string.Equals(RollForward, v, StringComparison.OrdinalIgnoreCase)))
+                {
+                    Log.LogError(Strings.InvalidRollForwardValue, RollForward, string.Join(", ", RollForwardValues));
+                    return;
                 }
             }
 
@@ -112,11 +133,12 @@ namespace Microsoft.NET.Build.Tasks
         {
             if (projectContext.IsFrameworkDependent)
             {
-                runtimeOptions.tfm = TargetFramework;
+                runtimeOptions.Tfm = TargetFramework;
+                runtimeOptions.RollForward = RollForward;
 
                 if (projectContext.RuntimeFrameworks == null || projectContext.RuntimeFrameworks.Length == 0)
                 {
-                    //  If there are no RuntimeFrameworks (which would be set in the ResolveFrameworkReference task based
+                    //  If there are no RuntimeFrameworks (which would be set in the ProcessFrameworkReferences task based
                     //  on FrameworkReference items), then use package resolved from MicrosoftNETPlatformLibrary for
                     //  the runtimeconfig
                     RuntimeConfigFramework framework = new RuntimeConfigFramework();
@@ -127,6 +149,7 @@ namespace Microsoft.NET.Build.Tasks
                 }
                 else
                 {
+                    HashSet<string> usedFrameworkNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                     foreach (var platformLibrary in projectContext.RuntimeFrameworks)
                     {
                         if (projectContext.RuntimeFrameworks.Length > 1 &&
@@ -134,6 +157,14 @@ namespace Microsoft.NET.Build.Tasks
                         {
                             //  If there are multiple runtime frameworks, then exclude Microsoft.NETCore.App,
                             //  as a workaround for https://github.com/dotnet/core-setup/issues/4947
+                            continue;
+                        }
+
+                        //  Don't add multiple entries for the same shared framework.
+                        //  This is necessary if there are FrameworkReferences to different profiles
+                        //  that map to the same shared framework.
+                        if (!usedFrameworkNames.Add(platformLibrary.Name))
+                        {
                             continue;
                         }
 

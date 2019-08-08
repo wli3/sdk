@@ -18,6 +18,12 @@ Copyright (c) .NET Foundation. All rights reserved.
   <Import Project="$(NETCoreSdkBundledVersionsProps)" Condition="Exists('$(NETCoreSdkBundledVersionsProps)')" />
 
   <PropertyGroup>
+    <!-- Set RuntimeIdentifier graph for NuGet (this needs to be after NETCoreSdkBundledVersionsProps is imported, as that's where
+         BundledRuntimeIdentifierGraphFile is set. -->
+    <RuntimeIdentifierGraphPath Condition="'$(RuntimeIdentifierGraphPath)' == ''">$(BundledRuntimeIdentifierGraphFile)</RuntimeIdentifierGraphPath>
+  </PropertyGroup>
+  
+  <PropertyGroup>
     <!-- Disable web SDK implicit package versions for ASP.NET packages, since the .NET SDK now handles that -->
     <EnableWebSdkImplicitPackageVersions>false</EnableWebSdkImplicitPackageVersions>
   </PropertyGroup>
@@ -46,7 +52,7 @@ Copyright (c) .NET Foundation. All rights reserved.
                       Publish="true" />
   </ItemGroup>
   <ItemGroup Condition=" '$(DisableImplicitFrameworkReferences)' != 'true' and '$(TargetFrameworkIdentifier)' == '.NETStandard' And '$(_TargetFrameworkVersionWithoutV)' >= '2.1'">
-    <FrameworkReference Include="NETStandard.Library" IsImplicitlyDefined="true" Pack="false"/>
+    <FrameworkReference Include="NETStandard.Library" IsImplicitlyDefined="true" Pack="false" PrivateAssets="All"/>
   </ItemGroup>
 
   <ItemGroup Condition=" '$(DisableImplicitFrameworkReferences)' != 'true' and '$(TargetFrameworkIdentifier)' == '.NETCoreApp'">
@@ -66,6 +72,7 @@ Copyright (c) .NET Foundation. All rights reserved.
 
     <FrameworkReference Include="Microsoft.NETCore.App" IsImplicitlyDefined="true"
                         Pack="false"
+                        PrivateAssets="All"
                     Condition="('$(_TargetFrameworkVersionWithoutV)' != '') And ('$(_TargetFrameworkVersionWithoutV)' >= '3.0')"/>
 
   </ItemGroup>

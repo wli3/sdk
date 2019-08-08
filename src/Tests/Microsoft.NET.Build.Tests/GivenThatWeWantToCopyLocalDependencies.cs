@@ -105,7 +105,8 @@ namespace Microsoft.NET.Build.Tests
             });
         }
 
-        [Fact]
+        //  Core MSBuild only because CI machines don't have updated VS (with support for RuntimeIdentifierGraphPath)
+        [CoreMSBuildOnlyFact]
         public void It_copies_local_specific_runtime_package_dependencies_on_build()
         {
             const string ProjectName = "TestProjWithPackageDependencies";
@@ -270,7 +271,7 @@ namespace Microsoft.NET.Build.Tests
             };
 
             testProject.AdditionalProperties["CopyLocalLockFileAssemblies"] = "true";
-            testProject.AdditionalProperties["DisableRuntimeTargets"] = "false";
+            testProject.AdditionalProperties["CopyLocalRuntimeTargetAssets"] = "true";
             testProject.PackageReferences.Add(new TestPackageReference("Newtonsoft.Json", "11.0.2"));
             testProject.PackageReferences.Add(new TestPackageReference("sqlite", "3.13.0"));
 
@@ -330,7 +331,8 @@ namespace Microsoft.NET.Build.Tests
             });
         }
 
-        [Fact]
+        //  Core MSBuild only because CI machines don't have updated VS (with support for RuntimeIdentifierGraphPath)
+        [CoreMSBuildOnlyFact]
         public void It_copies_local_all_assets_on_self_contained_build()
         {
             const string ProjectName = "TestProjWithPackageDependencies";

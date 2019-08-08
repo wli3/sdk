@@ -26,10 +26,12 @@ namespace Microsoft.NET.Publish.Tests
         private const string ExcludeContent = "/p:ExcludeContent=true";
         private const string DontUseAppHost = "/p:UseAppHost=false";
         private const string ReadyToRun = "/p:PublishReadyToRun=true";
+        private const string ReadyToRunWithSymbols = "/p:PublishReadyToRunEmitSymbols=true";
 
         private readonly string RuntimeIdentifier = $"/p:RuntimeIdentifier={RuntimeEnvironment.GetRuntimeIdentifier()}";
         private readonly string SingleFile = $"{TestProjectName}{Constants.ExeSuffix}";
         private readonly string PdbFile = $"{TestProjectName}.pdb";
+        private readonly string NiPdbFile = $"{TestProjectName}.ni.pdb";
         private const string ContentFile = "Signature.stamp";
 
         public GivenThatWeWantToPublishASingleFileApp(ITestOutputHelper log) : base(log)
@@ -142,6 +144,37 @@ namespace Microsoft.NET.Publish.Tests
                 .OnlyHaveFiles(expectedFiles);
         }
 
+        [WindowsOnlyFact]
+        public void It_excludes_ni_pdbs_from_single_file()
+        {
+            var publishCommand = GetPublishCommand();
+            publishCommand
+                .Execute(PublishSingleFile, RuntimeIdentifier, ReadyToRun, ReadyToRunWithSymbols)
+                .Should()
+                .Pass();
+
+            string[] expectedFiles = { SingleFile, PdbFile, NiPdbFile };
+            GetPublishDirectory(publishCommand)
+                .Should()
+                //  TODO: Change HaveFiles to OnlyHaveFiles, once https://github.com/dotnet/coreclr/issues/25522 is fixed
+                .HaveFiles(expectedFiles);
+        }
+
+        [WindowsOnlyFact]
+        public void It_can_include_ni_pdbs_in_single_file()
+        {
+            var publishCommand = GetPublishCommand();
+            publishCommand
+                .Execute(PublishSingleFile, RuntimeIdentifier, ReadyToRun, ReadyToRunWithSymbols, IncludePdb)
+                .Should()
+                .Pass();
+
+            string[] expectedFiles = { SingleFile };
+            GetPublishDirectory(publishCommand)
+                .Should()
+                .OnlyHaveFiles(expectedFiles);
+        }
+
         [Fact]
         public void It_generates_a_single_file_excluding_content()
         {
@@ -195,5 +228,52 @@ namespace Microsoft.NET.Publish.Tests
             fileWriteTimeAfterSecondRun.Should().Be(fileWriteTimeAfterFirstRun);
         }
 
+        [Fact]
+        public void It_rewrites_the_apphost_for_single_file_publish()
+        {
+            var publishCommand = GetPublishCommand();
+            var appHostPath = Path.Combine(GetPublishDirectory(publishCommand).FullName, SingleFile);
+            var singleFilePath = appHostPath;
+
+            publishCommand
+                .Execute(RuntimeIdentifier, FrameworkDependent)
+                .Should()
+                .Pass();
+            var appHostSize = new FileInfo(appHostPath).Length;
+
+            WaitForUtcNowToAdvance();
+
+            publishCommand
+                .Execute(PublishSingleFile, RuntimeIdentifier, FrameworkDependent)
+                .Should()
+                .Pass();
+            var singleFileSize = new FileInfo(singleFilePath).Length;
+
+            singleFileSize.Should().BeGreaterThan(appHostSize);
+        }
+
+        [Fact]
+        public void It_rewrites_the_apphost_for_non_single_file_publish()
+        {
+            var publishCommand = GetPublishCommand();
+            var appHostPath = Path.Combine(GetPublishDirectory(publishCommand).FullName, SingleFile);
+            var singleFilePath = appHostPath;
+
+            publishCommand
+                .Execute(PublishSingleFile, RuntimeIdentifier, FrameworkDependent)
+                .Should()
+                .Pass();
+            var singleFileSize = new FileInfo(singleFilePath).Length;
+
+            WaitForUtcNowToAdvance();
+
+            publishCommand
+                .Execute(RuntimeIdentifier, FrameworkDependent)
+                .Should()
+                .Pass();
+            var appHostSize = new FileInfo(appHostPath).Length;
+
+            appHostSize.Should().BeLessThan(singleFileSize);
+        }
     }
 }

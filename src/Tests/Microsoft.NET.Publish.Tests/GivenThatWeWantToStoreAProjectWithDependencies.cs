@@ -17,7 +17,7 @@ using Microsoft.NET.TestFramework.ProjectConstruction;
 
 using NuGet.Packaging.Core;
 using NuGet.Versioning;
-
+using Xunit;
 using Xunit.Abstractions;
 
 namespace Microsoft.NET.Publish.Tests
@@ -161,7 +161,7 @@ namespace Microsoft.NET.Publish.Tests
             storeDirectory.Should().OnlyHaveFiles(files_on_disk);
         }
 
-        [CoreMSBuildOnlyFact(Skip = "https://github.com/dotnet/sdk/issues/2914")]
+        [CoreMSBuildOnlyFact]
         public void compose_multifile()
         {
             TestAsset simpleDependenciesAsset = _testAssetsManager
@@ -177,7 +177,7 @@ namespace Microsoft.NET.Publish.Tests
             var additionalproj2 = Path.Combine(simpleDependenciesAsset.TestRoot, "FluentAssertion.xml");
 
             storeCommand
-                .Execute("/bl:store.binlog", $"/p:RuntimeIdentifier={_runtimeRid}", $"/p:TargetFramework={_tfm}", $"/p:Additionalprojects={additionalproj1}%3b{additionalproj2}", $"/p:ComposeDir={OutputFolder}", $"/p:ComposeWorkingDir={WorkingDir}", "/p:DoNotDecorateComposeDir=true", "/p:CreateProfilingSymbols=false")
+                .Execute($"/p:RuntimeIdentifier={_runtimeRid}", $"/p:TargetFramework={_tfm}", $"/p:Additionalprojects={additionalproj1}%3b{additionalproj2}", $"/p:ComposeDir={OutputFolder}", $"/p:ComposeWorkingDir={WorkingDir}", "/p:DoNotDecorateComposeDir=true", "/p:CreateProfilingSymbols=false")
                 .Should()
                 .Pass();
             DirectoryInfo storeDirectory = new DirectoryInfo(OutputFolder);
@@ -213,7 +213,7 @@ namespace Microsoft.NET.Publish.Tests
 
             foreach (var pkg in knownpackage)
             {
-                packagescomposed.Should().Contain(elem => elem.Equals(pkg), "package {0}, version {1} was not expected to be stored", pkg.Id, pkg.Version);
+                packagescomposed.Should().Contain(elem => elem.Equals(pkg), "package {0}, version {1} was expected to be stored", pkg.Id, pkg.Version);
             }
         }
 
@@ -300,8 +300,10 @@ namespace Microsoft.NET.Publish.Tests
             }
         }
 
-        [CoreMSBuildOnlyFact(Skip = "https://github.com/dotnet/sdk/issues/2914")]
-        public void It_stores_when_targeting_netcoreapp3()
+        [CoreMSBuildOnlyTheory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void It_stores_when_targeting_netcoreapp3(bool isExe)
         {
             const string TFM = "netcoreapp3.0";
 
@@ -309,12 +311,13 @@ namespace Microsoft.NET.Publish.Tests
             {
                 Name = "Test",
                 IsSdkProject = true,
-                TargetFrameworks = TFM
+                TargetFrameworks = TFM,
+                IsExe = isExe,
             };
 
             testProject.PackageReferences.Add(new TestPackageReference("Newtonsoft.Json", "12.0.1"));
 
-            var testProjectInstance = _testAssetsManager.CreateTestProject(testProject);
+            var testProjectInstance = _testAssetsManager.CreateTestProject(testProject, identifier: isExe.ToString());
 
             var outputFolder = Path.Combine(testProjectInstance.TestRoot, "o");
             var workingDir = Path.Combine(testProjectInstance.TestRoot, "w");

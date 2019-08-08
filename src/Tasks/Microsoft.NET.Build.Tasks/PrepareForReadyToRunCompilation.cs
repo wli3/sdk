@@ -31,6 +31,8 @@ namespace Microsoft.NET.Build.Tasks
         public string RuntimeGraphPath { get; set; }
         [Required]
         public string NETCoreSdkRuntimeIdentifier { get; set; }
+        [Required]
+        public bool IncludeSymbolsInSingleFile { get; set; }
 
         [Output]
         public ITaskItem CrossgenTool { get; set; }
@@ -67,7 +69,9 @@ namespace Microsoft.NET.Build.Tasks
             string supportedRuntimeIdentifiers = frameworkRef == null ? null : frameworkRef.GetMetadata("RuntimePackRuntimeIdentifiers");
 
             // Get information on the runtime package used for the current target
-            ITaskItem frameworkPack = RuntimePacks.Where(pack => pack.ItemSpec.EndsWith(".Microsoft.NETCore.App", StringComparison.InvariantCultureIgnoreCase)).SingleOrDefault();
+            ITaskItem frameworkPack = RuntimePacks.Where(pack => 
+                    pack.GetMetadata(MetadataKeys.FrameworkName).Equals("Microsoft.NETCore.App", StringComparison.OrdinalIgnoreCase))
+                .SingleOrDefault();
             _runtimeIdentifier = frameworkPack == null ? null : frameworkPack.GetMetadata(MetadataKeys.RuntimeIdentifier);
             _packagePath = frameworkPack == null ? null : frameworkPack.GetMetadata(MetadataKeys.PackageDirectory);
 
@@ -91,13 +95,13 @@ namespace Microsoft.NET.Build.Tasks
                 !ExtractTargetPlatformAndArchitecture(hostRuntimeIdentifier, out string hostPlatform, out Architecture hostArchitecture) ||
                 targetPlatform != hostPlatform)
             {
-                Log.LogError(Strings.ReadyToRunTargetNotSuppotedError);
+                Log.LogError(Strings.ReadyToRunTargetNotSupportedError);
                 return;
             }
 
             if (!GetCrossgenComponentsPaths() || !File.Exists(_crossgenPath) || !File.Exists(_clrjitPath))
             {
-                Log.LogError(Strings.ReadyToRunTargetNotSuppotedError);
+                Log.LogError(Strings.ReadyToRunTargetNotSupportedError);
                 return;
             }
 
@@ -162,7 +166,7 @@ namespace Microsoft.NET.Build.Tasks
                             MetadataReader mdReader = pereader.GetMetadataReader();
                             Guid mvid = mdReader.GetGuid(mdReader.GetModuleDefinition().Mvid);
 
-                            outputPDBImage = Path.ChangeExtension(file.ItemSpec, "ni.{" + mvid + "}.map");
+                            outputPDBImage = Path.ChangeExtension(outputR2RImage, "ni.{" + mvid + "}.map");
                             outputPDBImageRelativePath = Path.ChangeExtension(outputR2RImageRelativePath, "ni.{" + mvid + "}.map");
                             createPDBCommand = $"/CreatePerfMap \"{Path.GetDirectoryName(outputPDBImage)}\"";
                         }
@@ -184,6 +188,11 @@ namespace Microsoft.NET.Build.Tasks
                         r2rSymbolsFileToPublish.ItemSpec = outputPDBImage;
                         r2rSymbolsFileToPublish.SetMetadata(MetadataKeys.RelativePath, outputPDBImageRelativePath);
                         r2rSymbolsFileToPublish.RemoveMetadata(MetadataKeys.OriginalItemSpec);
+                        if (!IncludeSymbolsInSingleFile)
+                        {
+                            r2rSymbolsFileToPublish.SetMetadata(MetadataKeys.ExcludeFromSingleFile, "true");
+                        }
+
                         r2rFilesPublishList.Add(r2rSymbolsFileToPublish);
                     }
                 }
@@ -374,13 +383,21 @@ namespace Microsoft.NET.Build.Tasks
             {
                 if (_targetArchitecture == Architecture.Arm || _targetArchitecture == Architecture.Arm64)
                 {
-                    // We only have x64 hosted crossgen for both ARM target architectures
-                    if (RuntimeInformation.OSArchitecture != Architecture.X64)
+                    if (RuntimeInformation.OSArchitecture == _targetArchitecture)
+                    {
+                        _crossgenPath = Path.Combine(_packagePath, "tools", "crossgen");
+                        _clrjitPath = Path.Combine(_packagePath, "runtimes", _runtimeIdentifier, "native", "libclrjit.so");
+                    }
+                    else if (RuntimeInformation.OSArchitecture == Architecture.X64)
+                    {
+                        string xarchPath = (_targetArchitecture == Architecture.Arm ? "x64_arm" : "x64_arm64");
+                        _crossgenPath = Path.Combine(_packagePath, "tools", xarchPath, "crossgen");
+                        _clrjitPath = Path.Combine(_packagePath, "runtimes", xarchPath, "native", "libclrjit.so");
+                    }
+                    else
+                    {
                         return false;
-
-                    string xarchPath = (_targetArchitecture == Architecture.Arm ? "x64_arm" : "x64_arm64");
-                    _crossgenPath = Path.Combine(_packagePath, "tools", xarchPath, "crossgen");
-                    _clrjitPath = Path.Combine(_packagePath, "runtimes", xarchPath, "native", "libclrjit.so");
+                    }
                 }
                 else
                 {

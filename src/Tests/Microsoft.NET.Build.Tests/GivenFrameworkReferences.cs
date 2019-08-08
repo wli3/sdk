@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -6,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Xml.Linq;
 using FluentAssertions;
+using Microsoft.Build.Construction;
 using Microsoft.NET.TestFramework;
 using Microsoft.NET.TestFramework.Assertions;
 using Microsoft.NET.TestFramework.Commands;
@@ -13,6 +15,7 @@ using Microsoft.NET.TestFramework.ProjectConstruction;
 using Newtonsoft.Json.Linq;
 using Xunit;
 using Xunit.Abstractions;
+using Xunit.Sdk;
 
 namespace Microsoft.NET.Build.Tests
 {
@@ -35,6 +38,9 @@ namespace Microsoft.NET.Build.Tests
                 IsExe = true
             };
 
+            testProject.FrameworkReferences.Add("Microsoft.ASPNETCORE.App");
+            testProject.FrameworkReferences.Add("Microsoft.WindowsDesktop.App");
+
             testProject.SourceFiles.Add("Program.cs", @"
 using System;
 
@@ -49,20 +55,6 @@ namespace FrameworkReferenceTest
 }");
 
             var testAsset = _testAssetsManager.CreateTestProject(testProject)
-                .WithProjectChanges(project =>
-                {
-                    var ns = project.Root.Name.Namespace;
-
-                    var itemGroup = new XElement(ns + "ItemGroup");
-                    project.Root.Add(itemGroup);
-
-                    itemGroup.Add(new XElement(ns + "FrameworkReference",
-                                               new XAttribute("Include", "Microsoft.AspNetCore.App")));
-                    itemGroup.Add(new XElement(ns + "FrameworkReference",
-                                               new XAttribute("Include", "Microsoft.WindowsDesktop.App")));
-
-
-                })
                 .Restore(Log, testProject.Name);
 
             var buildCommand = new BuildCommand(Log, Path.Combine(testAsset.TestRoot, testProject.Name));
@@ -75,15 +67,58 @@ namespace FrameworkReferenceTest
             var outputDirectory = buildCommand.GetOutputDirectory(testProject.TargetFrameworks);
 
             string runtimeConfigFile = Path.Combine(outputDirectory.FullName, testProject.Name + ".runtimeconfig.json");
-            string runtimeConfigContents = File.ReadAllText(runtimeConfigFile);
-            JObject runtimeConfig = JObject.Parse(runtimeConfigContents);
-
-            var runtimeFrameworksList = (JArray)runtimeConfig["runtimeOptions"]["frameworks"];
-            var runtimeFrameworkNames = runtimeFrameworksList.Select(element => ((JValue)element["name"]).Value<string>());
+            var runtimeFrameworkNames = GetRuntimeFrameworks(runtimeConfigFile);
 
             //  When we remove the workaround for https://github.com/dotnet/core-setup/issues/4947 in GenerateRuntimeConfigurationFiles,
             //  Microsoft.NETCore.App will need to be added to this list
             runtimeFrameworkNames.Should().BeEquivalentTo("Microsoft.AspNetCore.App", "Microsoft.WindowsDesktop.App");
+        }
+
+        [CoreMSBuildAndWindowsOnlyFact]
+        public void DuplicateFrameworksAreNotWrittenToRuntimeConfigWhenThereAreDifferentProfiles()
+        {
+            var testProject = new TestProject()
+            {
+                Name = "MultipleProfileFrameworkReferenceTest",
+                TargetFrameworks = "netcoreapp3.0",
+                IsSdkProject = true,
+                IsExe = true
+            };
+
+            testProject.FrameworkReferences.Add("Microsoft.WindowsDesktop.App.WPF");
+            testProject.FrameworkReferences.Add("Microsoft.WindowsDesktop.App.WindowsForms");
+
+            testProject.SourceFiles.Add("Program.cs", @"
+using System;
+
+namespace FrameworkReferenceTest
+{
+    public class Program
+    {
+        public static void Main(string [] args)
+        {
+        }
+    }
+}");
+
+            var testAsset = _testAssetsManager.CreateTestProject(testProject)
+                .Restore(Log, testProject.Name);
+
+            var buildCommand = new BuildCommand(Log, Path.Combine(testAsset.TestRoot, testProject.Name));
+
+            buildCommand
+                .Execute()
+                .Should()
+                .Pass();
+
+            var outputDirectory = buildCommand.GetOutputDirectory(testProject.TargetFrameworks);
+
+            string runtimeConfigFile = Path.Combine(outputDirectory.FullName, testProject.Name + ".runtimeconfig.json");
+            var runtimeFrameworkNames = GetRuntimeFrameworks(runtimeConfigFile);
+
+            //  When we remove the workaround for https://github.com/dotnet/core-setup/issues/4947 in GenerateRuntimeConfigurationFiles,
+            //  Microsoft.NETCore.App will need to be added to this list
+            runtimeFrameworkNames.Should().BeEquivalentTo("Microsoft.WindowsDesktop.App");
         }
 
         [CoreMSBuildOnlyFact]
@@ -147,7 +182,7 @@ namespace FrameworkReferenceTest
                     project.Root.Add(itemGroup);
 
                     itemGroup.Add(new XElement(ns + "FrameworkReference",
-                                               new XAttribute("Include", "Microsoft.AspNetCore.App")));
+                                               new XAttribute("Include", "Microsoft.ASPNETCORE.App")));
                 })
                 .Restore(Log, testProject.Name);
 
@@ -165,9 +200,10 @@ namespace FrameworkReferenceTest
                     .Should()
                     .Fail()
                     .And.HaveStdOutContaining("NETSDK1073")
-                    .And.HaveStdOutContaining("Microsoft.AspNetCore.App");
+                    .And.HaveStdOutContaining("Microsoft.ASPNETCORE.App");
             }
         }
+
         [CoreMSBuildOnlyFact]
         public void TargetingPackDownloadCanBeDisabled()
         {
@@ -205,7 +241,79 @@ namespace FrameworkReferenceTest
                 .HaveStdOutContaining("NETSDK1073");
         }
 
-        [CoreMSBuildOnlyFact]
+        [Theory]
+        [InlineData("Major", true)]
+        [InlineData("latestMinor", true)]
+        [InlineData("Invalid", false)]
+        public void RollForwardCanBeSpecifiedViaProperty(string rollForwardValue, bool valid)
+        {
+            var testProject = new TestProject()
+            {
+                Name = "RollForwardSetting",
+                TargetFrameworks = "netcoreapp3.0",
+                IsSdkProject = true,
+                IsExe = true
+            };
+
+            testProject.AdditionalProperties["RollForward"] = rollForwardValue;
+
+            var testAsset = _testAssetsManager.CreateTestProject(testProject)
+                .Restore(Log, testProject.Name);
+
+            var buildCommand = new BuildCommand(Log, Path.Combine(testAsset.TestRoot, testProject.Name));
+
+            if (valid)
+            {
+                buildCommand
+                    .Execute()
+                    .Should()
+                    .Pass();
+
+                var outputDirectory = buildCommand.GetOutputDirectory(testProject.TargetFrameworks);
+
+                string runtimeConfigFile = Path.Combine(outputDirectory.FullName, testProject.Name + ".runtimeconfig.json");
+                JObject runtimeConfig = ReadRuntimeConfig(runtimeConfigFile);
+                runtimeConfig["runtimeOptions"]["rollForward"].Value<string>()
+                    .Should().Be(rollForwardValue);
+            }
+            else
+            {
+                buildCommand
+                    .Execute()
+                    .Should()
+                    .Fail()
+                    .And
+                    .HaveStdOutContaining("NETSDK1104");
+            }
+        }
+
+        [Fact]
+        public void RollForwardIsNotSupportedOn22()
+        {
+            var testProject = new TestProject()
+            {
+                Name = "RollForwardSettingNotSupported",
+                TargetFrameworks = "netcoreapp2.2",
+                IsSdkProject = true,
+                IsExe = true
+            };
+
+            testProject.AdditionalProperties["RollForward"] = "Major";
+
+            var testAsset = _testAssetsManager.CreateTestProject(testProject)
+                .Restore(Log, testProject.Name);
+
+            var buildCommand = new BuildCommand(Log, Path.Combine(testAsset.TestRoot, testProject.Name));
+
+            buildCommand
+                .Execute()
+                .Should()
+                .Fail()
+                .And
+                .HaveStdOutContaining("NETSDK1103");
+        }
+
+        [CoreMSBuildAndWindowsOnlyFact]
         public void BuildFailsIfRuntimePackIsNotAvailableForRuntimeIdentifier()
         {
             var testProject = new TestProject()
@@ -329,14 +437,14 @@ namespace FrameworkReferenceTest
 
                     project.Root.Elements(ns + "ItemGroup")
                         .Elements(ns + "FrameworkReference")
-                        .Single(fr => fr.Attribute("Include").Value == "Microsoft.NETCore.App")
+                        .Single(fr => fr.Attribute("Include").Value.Equals("Microsoft.NETCore.App", StringComparison.OrdinalIgnoreCase))
                         .SetAttributeValue("RuntimeFrameworkVersion", runtimeFrameworkVersion);
                 });
 
             resolvedVersions.RuntimeFramework["Microsoft.NETCore.App"].Should().Be(runtimeFrameworkVersion);
             resolvedVersions.PackageDownload["Microsoft.NETCore.App.Ref"].Should().Be(targetingPackVersion);
             string runtimePackName = resolvedVersions.PackageDownload.Keys
-                .Where(k => k.StartsWith("runtime.") && k.EndsWith(".Microsoft.NETCore.App"))
+                .Where(k => k.StartsWith("Microsoft.NETCore.App.Runtime."))
                 .Single();
             resolvedVersions.PackageDownload[runtimePackName].Should().Be(runtimeFrameworkVersion);
             resolvedVersions.TargetingPack["Microsoft.NETCore.App"].Should().Be(targetingPackVersion);
@@ -359,7 +467,7 @@ namespace FrameworkReferenceTest
             resolvedVersions.RuntimeFramework["Microsoft.NETCore.App"].Should().Be(runtimeFrameworkVersion);
             resolvedVersions.PackageDownload["Microsoft.NETCore.App.Ref"].Should().Be(targetingPackVersion);
             string runtimePackName = resolvedVersions.PackageDownload.Keys
-                .Where(k => k.StartsWith("runtime.") && k.EndsWith(".Microsoft.NETCore.App"))
+                .Where(k => k.StartsWith("Microsoft.NETCore.App.Runtime."))
                 .Single();
             resolvedVersions.PackageDownload[runtimePackName].Should().Be(runtimeFrameworkVersion);
             resolvedVersions.TargetingPack["Microsoft.NETCore.App"].Should().Be(targetingPackVersion);
@@ -385,7 +493,7 @@ namespace FrameworkReferenceTest
 
                 project.Root.Elements(ns + "ItemGroup")
                     .Elements(ns + "FrameworkReference")
-                    .Single(fr => fr.Attribute("Include").Value == "Microsoft.NETCore.App")
+                    .Single(fr => fr.Attribute("Include").Value.Equals("Microsoft.NETCore.App", StringComparison.OrdinalIgnoreCase))
                     .SetAttributeValue("TargetLatestRuntimePatch", attributeValue.ToString());
                 },
                 identifier: attributeValue.ToString());
@@ -395,7 +503,7 @@ namespace FrameworkReferenceTest
             resolvedVersions.RuntimeFramework["Microsoft.NETCore.App"].Should().Be(expectedRuntimeFrameworkVersion);
             resolvedVersions.PackageDownload["Microsoft.NETCore.App.Ref"].Should().Be(targetingPackVersion);
             string runtimePackName = resolvedVersions.PackageDownload.Keys
-                .Where(k => k.StartsWith("runtime.") && k.EndsWith(".Microsoft.NETCore.App"))
+                .Where(k => k.StartsWith("Microsoft.NETCore.App.Runtime."))
                 .Single();
             resolvedVersions.PackageDownload[runtimePackName].Should().Be(expectedRuntimeFrameworkVersion);
             resolvedVersions.TargetingPack["Microsoft.NETCore.App"].Should().Be(targetingPackVersion);
@@ -421,7 +529,7 @@ namespace FrameworkReferenceTest
             resolvedVersions.RuntimeFramework["Microsoft.NETCore.App"].Should().Be(expectedRuntimeFrameworkVersion);
             resolvedVersions.PackageDownload["Microsoft.NETCore.App.Ref"].Should().Be(targetingPackVersion);
             string runtimePackName = resolvedVersions.PackageDownload.Keys
-                .Where(k => k.StartsWith("runtime.") && k.EndsWith(".Microsoft.NETCore.App"))
+                .Where(k => k.StartsWith("Microsoft.NETCore.App.Runtime."))
                 .Single();
             resolvedVersions.PackageDownload[runtimePackName].Should().Be(expectedRuntimeFrameworkVersion);
             resolvedVersions.TargetingPack["Microsoft.NETCore.App"].Should().Be(targetingPackVersion);
@@ -443,7 +551,7 @@ namespace FrameworkReferenceTest
 
                     project.Root.Elements(ns + "ItemGroup")
                         .Elements(ns + "FrameworkReference")
-                        .Single(fr => fr.Attribute("Include").Value == "Microsoft.NETCore.App")
+                        .Single(fr => fr.Attribute("Include").Value.Equals("Microsoft.NETCore.App", StringComparison.OrdinalIgnoreCase))
                         .SetAttributeValue("TargetingPackVersion", targetingPackVersion);
                 });
 
@@ -452,12 +560,362 @@ namespace FrameworkReferenceTest
             resolvedVersions.RuntimeFramework["Microsoft.NETCore.App"].Should().Be(expectedRuntimeFrameworkVersion);
             resolvedVersions.PackageDownload["Microsoft.NETCore.App.Ref"].Should().Be(targetingPackVersion);
             string runtimePackName = resolvedVersions.PackageDownload.Keys
-                .Where(k => k.StartsWith("runtime.") && k.EndsWith(".Microsoft.NETCore.App"))
+                .Where(k => k.StartsWith("Microsoft.NETCore.App.Runtime."))
                 .Single();
             resolvedVersions.PackageDownload[runtimePackName].Should().Be(expectedRuntimeFrameworkVersion);
             resolvedVersions.TargetingPack["Microsoft.NETCore.App"].Should().Be(targetingPackVersion);
             resolvedVersions.RuntimePack[runtimePackName].Should().Be(expectedRuntimeFrameworkVersion);
             resolvedVersions.AppHostPack["AppHost"].Should().Be("3.0.0-apphostversion");
+        }
+
+        //  Transitive framework references require NuGet support, which isn't currently
+        //  in the full Framework MSBuild we use in CI, so only run these tests for
+        //  core MSBuild for now
+        [CoreMSBuildOnlyFact]
+        public void TransitiveFrameworkReferenceFromProjectReference()
+        {
+            var testProject = new TestProject()
+            {
+                Name = "TransitiveFrameworkReference",
+                TargetFrameworks = "netcoreapp3.0",
+                IsSdkProject = true,
+                IsExe = true
+            };
+
+            var referencedProject = new TestProject()
+            {
+                Name = "ReferencedProject",
+                TargetFrameworks = "netcoreapp3.0",
+                IsSdkProject = true
+            };
+
+            referencedProject.FrameworkReferences.Add("Microsoft.ASPNETCORE.App");
+
+            testProject.ReferencedProjects.Add(referencedProject);
+
+            var testAsset = _testAssetsManager.CreateTestProject(testProject)
+                .Restore(Log, testProject.Name);
+
+            var buildCommand = new BuildCommand(Log, Path.Combine(testAsset.TestRoot, testProject.Name));
+
+            buildCommand
+                .Execute()
+                .Should()
+                .Pass();
+
+            var outputDirectory = buildCommand.GetOutputDirectory(testProject.TargetFrameworks);
+
+            string runtimeConfigFile = Path.Combine(outputDirectory.FullName, testProject.Name + ".runtimeconfig.json");
+            var runtimeFrameworkNames = GetRuntimeFrameworks(runtimeConfigFile);
+
+            //  When we remove the workaround for https://github.com/dotnet/core-setup/issues/4947 in GenerateRuntimeConfigurationFiles,
+            //  Microsoft.NETCore.App will need to be added to this list
+            runtimeFrameworkNames.Should().BeEquivalentTo("Microsoft.AspNetCore.App");
+        }
+
+        [CoreMSBuildOnlyFact]
+        public void TransitiveFrameworkReferenceFromPackageReference()
+        {
+            var referencedPackage = new TestProject()
+            {
+                Name = "ReferencedPackage",
+                TargetFrameworks = "netcoreapp3.0",
+                IsSdkProject = true
+            };
+            referencedPackage.FrameworkReferences.Add("Microsoft.ASPNETCORE.App");
+
+            var packageAsset = _testAssetsManager.CreateTestProject(referencedPackage)
+                .Restore(Log, referencedPackage.Name);
+
+            var packCommand = new PackCommand(Log, packageAsset.TestRoot, referencedPackage.Name);
+
+            packCommand.Execute()
+                .Should()
+                .Pass();
+
+            var nupkgFolder = packCommand.GetOutputDirectory(null);
+
+            var testProject = new TestProject()
+            {
+                Name = "TransitiveFrameworkReference",
+                TargetFrameworks = "netcoreapp3.0",
+                IsSdkProject = true,
+                IsExe = true
+            };
+
+            testProject.PackageReferences.Add(new TestPackageReference(referencedPackage.Name, "1.0.0", nupkgFolder.FullName));
+            testProject.AdditionalProperties.Add("RestoreAdditionalProjectSources",
+                                     "$(RestoreAdditionalProjectSources);" + nupkgFolder);
+
+
+            var testAsset = _testAssetsManager.CreateTestProject(testProject);
+            string nugetPackagesFolder = Path.Combine(testAsset.TestRoot, "packages");
+
+            var buildCommand = (BuildCommand) new BuildCommand(Log, Path.Combine(testAsset.TestRoot, testProject.Name))
+                .WithEnvironmentVariable("NUGET_PACKAGES", nugetPackagesFolder);
+
+            buildCommand
+                .Execute("/restore")
+                .Should()
+                .Pass();
+
+            var outputDirectory = buildCommand.GetOutputDirectory(testProject.TargetFrameworks);
+
+            string runtimeConfigFile = Path.Combine(outputDirectory.FullName, testProject.Name + ".runtimeconfig.json");
+            var runtimeFrameworkNames = GetRuntimeFrameworks(runtimeConfigFile);
+
+            //  When we remove the workaround for https://github.com/dotnet/core-setup/issues/4947 in GenerateRuntimeConfigurationFiles,
+            //  Microsoft.NETCore.App will need to be added to this list
+            runtimeFrameworkNames.Should().BeEquivalentTo("Microsoft.AspNetCore.App");
+        }
+
+        [CoreMSBuildOnlyFact]
+        public void IsTrimmableDefaultsComeFromKnownFrameworkReference()
+        {
+            var testProject = new TestProject();
+
+            var runtimeAssetTrimInfo = GetRuntimeAssetTrimInfo(testProject);
+
+            string runtimePackName = runtimeAssetTrimInfo.Keys
+                .Where(k => k.StartsWith("Microsoft.NETCore.App.Runtime."))
+                .Single();
+
+            foreach (var runtimeAsset in runtimeAssetTrimInfo[runtimePackName])
+            {
+                runtimeAsset.isTrimmable.Should().Be("true");
+            }
+        }
+
+        [CoreMSBuildOnlyFact]
+        public void IsTrimmableCanBeSpecifiedOnFrameworkReference()
+        {
+            var testProject = new TestProject();
+
+            var runtimeAssetTrimInfo = GetRuntimeAssetTrimInfo(testProject,
+                project =>
+                {
+                    var ns = project.Root.Name.Namespace;
+
+                    var itemGroup = new XElement(ns + "ItemGroup");
+                    project.Root.Add(itemGroup);
+
+                    itemGroup.Add(new XElement(ns + "FrameworkReference",
+                                               new XAttribute("Include", "Microsoft.NETCore.App"),
+                                               new XAttribute("IsTrimmable", "false")));
+                });
+
+            string runtimePackName = runtimeAssetTrimInfo.Keys
+                .Where(k => k.StartsWith("Microsoft.NETCore.App.Runtime."))
+                .Single();
+
+            foreach (var runtimeAsset in runtimeAssetTrimInfo[runtimePackName])
+            {
+                runtimeAsset.isTrimmable.Should().Be("false");
+            }
+        }
+
+        [WindowsOnlyFact]
+        public void ResolvedFrameworkReferences_are_generated()
+        {
+            var testProject = new TestProject()
+            {
+                Name = "ResolvedFrameworkReferenceTest",
+                IsSdkProject = true,
+                IsExe = true,
+                TargetFrameworks = "netcoreapp3.0",
+                RuntimeIdentifier = EnvironmentInfo.GetCompatibleRid()
+            };
+
+            testProject.FrameworkReferences.Add("Microsoft.AspNetCore.App");
+            testProject.FrameworkReferences.Add("Microsoft.WindowsDesktop.App");
+
+            var testAsset = _testAssetsManager.CreateTestProject(testProject)
+                .Restore(Log, testProject.Name);
+
+            var projectFolder = Path.Combine(testAsset.TestRoot, testProject.Name);
+
+            var buildCommand = new BuildCommand(Log, projectFolder);
+
+            var expectedMetadata = new[]
+            {
+                "OriginalItemSpec",
+                "IsImplicitlyDefined",
+                "TargetingPackName",
+                "TargetingPackVersion",
+                "TargetingPackPath",
+                "RuntimePackName",
+                "RuntimePackVersion",
+                "RuntimePackPath"
+            };
+
+            var getValuesCommand = new GetValuesCommand(Log, projectFolder, testProject.TargetFrameworks,
+                "ResolvedFrameworkReference", GetValuesCommand.ValueType.Item);
+            getValuesCommand.DependsOnTargets = "ResolveFrameworkReferences";
+            getValuesCommand.MetadataNames.AddRange(expectedMetadata);
+
+            getValuesCommand.Execute().Should().Pass();
+
+            var resolvedFrameworkReferences = getValuesCommand.GetValuesWithMetadata();
+
+            resolvedFrameworkReferences.Select(rfr => rfr.value)
+                .Should()
+                .BeEquivalentTo(
+                    "Microsoft.NETCore.App",
+                    "Microsoft.AspNetCore.App",
+                    "Microsoft.WindowsDesktop.App");
+
+            foreach (var resolvedFrameworkReference in resolvedFrameworkReferences)
+            {
+                foreach (var expectedMetadataName in expectedMetadata)
+                {
+                    if (expectedMetadataName == "IsImplicitlyDefined" &&
+                        resolvedFrameworkReference.value != "Microsoft.NETCore.App")
+                    {
+                        continue;
+                    }
+
+                    resolvedFrameworkReference.metadata[expectedMetadataName]
+                        .Should()
+                        .NotBeNullOrEmpty(because:
+                            $"ResolvedFrameworkReference for {resolvedFrameworkReference.value} should have " +
+                            $"{expectedMetadataName} metadata");
+                }
+            }
+
+        }
+
+        [WindowsOnlyTheory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void WindowsFormsFrameworkReference(bool selfContained)
+        {
+            TestFrameworkReferenceProfiles(
+                frameworkReferences: new [] { "Microsoft.WindowsDesktop.App.WindowsForms" },
+                expectedReferenceNames: new[] { "Microsoft.Win32.Registry", "System.Windows.Forms" },
+                notExpectedReferenceNames: new[] { "System.Windows.Presentation", "WindowsFormsIntegration", "PresentationFramework.Aero" },
+                selfContained);
+        }
+
+        [WindowsOnlyTheory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void WPFFrameworkReference(bool selfContained)
+        {
+            TestFrameworkReferenceProfiles(
+                frameworkReferences: new[] { "Microsoft.WindowsDesktop.App.WPF" },
+                expectedReferenceNames: new[] { "Microsoft.Win32.Registry", "System.Windows.Presentation" },
+                notExpectedReferenceNames: new[] { "System.Windows.Forms", "WindowsFormsIntegration", "PresentationFramework.Aero" },
+                selfContained);
+        }
+
+        [WindowsOnlyTheory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void WindowsFormAndWPFFrameworkReference(bool selfContained)
+        {
+            TestFrameworkReferenceProfiles(
+                frameworkReferences: new[] { "Microsoft.WindowsDesktop.App.WindowsForms", "Microsoft.WindowsDesktop.App.WPF" },
+                expectedReferenceNames: new[] { "Microsoft.Win32.Registry", "System.Windows.Forms", "System.Windows.Presentation" },
+                notExpectedReferenceNames: new[] { "WindowsFormsIntegration", "PresentationFramework.Aero" },
+                selfContained);
+        }
+
+        [WindowsOnlyTheory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void WindowsDesktopFrameworkReference(bool selfContained)
+        {
+            TestFrameworkReferenceProfiles(
+                frameworkReferences: new[] { "Microsoft.WindowsDesktop.App" },
+                expectedReferenceNames: new[] { "Microsoft.Win32.Registry", "System.Windows.Forms",
+                                                "System.Windows.Presentation", "WindowsFormsIntegration" },
+                notExpectedReferenceNames: new[] { "PresentationFramework.Aero" },
+                selfContained);
+        }
+
+        private void TestFrameworkReferenceProfiles(
+            IEnumerable<string> frameworkReferences,
+            IEnumerable<string> expectedReferenceNames,
+            IEnumerable<string> notExpectedReferenceNames,
+            bool selfContained,
+            [CallerMemberName] string callingMethod = "")
+        {
+            var testProject = new TestProject()
+            {
+                Name = "WindowsFormsFrameworkReference",
+                TargetFrameworks = "netcoreapp3.0",
+                IsSdkProject = true,
+                IsExe = true
+            };
+            testProject.FrameworkReferences.AddRange(frameworkReferences);
+
+            if (selfContained)
+            {
+                testProject.RuntimeIdentifier = EnvironmentInfo.GetCompatibleRid(testProject.TargetFrameworks);
+            }
+
+            string identifier = selfContained ? "_selfcontained" : string.Empty;
+
+            var testAsset = _testAssetsManager.CreateTestProject(testProject, callingMethod, identifier)
+                .Restore(Log, testProject.Name);
+
+            string projectFolder = Path.Combine(testAsset.TestRoot, testProject.Name);
+
+            var buildCommand = new BuildCommand(Log, projectFolder);
+
+            buildCommand
+                .Execute()
+                .Should()
+                .Pass();
+
+            var getValuesCommand = new GetValuesCommand(Log, projectFolder, testProject.TargetFrameworks, "Reference", GetValuesCommand.ValueType.Item);
+
+            getValuesCommand.Execute().Should().Pass();
+
+            var references = getValuesCommand.GetValues();
+            var referenceNames = references.Select(Path.GetFileNameWithoutExtension);
+
+            referenceNames.Should().Contain(expectedReferenceNames);
+
+            if (notExpectedReferenceNames.Any())
+            {
+                referenceNames.Should().NotContain(notExpectedReferenceNames);
+            }
+
+            if (selfContained)
+            {
+                var outputDirectory = buildCommand.GetOutputDirectory(testProject.TargetFrameworks, runtimeIdentifier: testProject.RuntimeIdentifier);
+
+                //  The output directory should have the DLLs which are not referenced at compile time but are
+                //  still part of the shared framework.
+                outputDirectory.Should().HaveFiles(expectedReferenceNames.Concat(notExpectedReferenceNames)
+                    .Select(n => n + ".dll"));
+            }
+        }
+
+        private JObject ReadRuntimeConfig(string runtimeConfigPath)
+        {
+            string runtimeConfigContents = File.ReadAllText(runtimeConfigPath);
+            return JObject.Parse(runtimeConfigContents);
+        }
+
+        private List<string> GetRuntimeFrameworks(string runtimeConfigPath)
+        {
+            JObject runtimeConfig = ReadRuntimeConfig(runtimeConfigPath);
+
+            var runtimeFrameworksList = (JArray)runtimeConfig["runtimeOptions"]["frameworks"];
+            if (runtimeFrameworksList == null)
+            {
+                var runtimeFrameworkName = runtimeConfig["runtimeOptions"]["framework"]["name"].Value<string>();
+                return new List<string>() { runtimeFrameworkName };
+            }
+            else
+            {
+                var runtimeFrameworkNames = runtimeFrameworksList.Select(element => ((JValue)element["name"]).Value<string>())
+                    .ToList();
+
+                return runtimeFrameworkNames;
+            }
         }
 
         private ResolvedVersionInfo GetResolvedVersions(TestProject testProject,
@@ -481,7 +939,7 @@ namespace FrameworkReferenceTest
                     project.Root.Add(itemGroup);
 
                     var frameworkReference = new XElement(ns + "FrameworkReference",
-                                               new XAttribute("Include", "Microsoft.NETCore.App"));
+                                               new XAttribute("Include", "Microsoft.NETCore.APP"));
                     itemGroup.Add(frameworkReference);
 
                     var knownFrameworkReferenceUpdate = new XElement(ns + "KnownFrameworkReference",
@@ -498,7 +956,7 @@ namespace FrameworkReferenceTest
                     itemGroup.Add(knownAppHostPackUpdate);
 
                     string writeResolvedVersionsTarget = @"
-<Target Name=`WriteResolvedVersions` DependsOnTargets=`PrepareForBuild;ResolveFrameworkReferences`>
+<Target Name=`WriteResolvedVersions` DependsOnTargets=`PrepareForBuild;ProcessFrameworkReferences`>
     <ItemGroup>
       <LinesToWrite Include=`RuntimeFramework%09%(RuntimeFramework.Identity)%09%(RuntimeFramework.Version)`/>
       <LinesToWrite Include=`PackageDownload%09%(PackageDownload.Identity)%09%(PackageDownload.Version)`/>
@@ -510,7 +968,7 @@ namespace FrameworkReferenceTest
                       Lines=`@(LinesToWrite)`
                       Overwrite=`true`
                       Encoding=`Unicode`/>
-    
+
   </Target>";
                     writeResolvedVersionsTarget = writeResolvedVersionsTarget.Replace('`', '"');
 
@@ -532,6 +990,57 @@ namespace FrameworkReferenceTest
             var resolvedVersions = ResolvedVersionInfo.ParseFrom(Path.Combine(outputDirectory.FullName, "resolvedversions.txt"));
 
             return resolvedVersions;
+        }
+
+        private Dictionary<string, List<(string asset, string isTrimmable)>> GetRuntimeAssetTrimInfo(TestProject testProject,
+            Action<XDocument> projectChanges = null,
+            [CallerMemberName] string callingMethod = null,
+            string identifier = null)
+        {
+            string targetFramework = "netcoreapp3.0";
+
+            testProject.Name = "TrimInfoTest";
+            testProject.TargetFrameworks = targetFramework;;
+            testProject.IsSdkProject = true;
+            testProject.IsExe = true;
+            testProject.RuntimeIdentifier = EnvironmentInfo.GetCompatibleRid(testProject.TargetFrameworks);
+
+            var testAsset = _testAssetsManager.CreateTestProject(testProject, callingMethod, identifier);
+            if (projectChanges != null)
+            {
+                testAsset = testAsset.WithProjectChanges(projectChanges);
+            }
+
+            testAsset.Restore(Log, testProject.Name);
+
+            var command = new GetValuesCommand(Log, Path.Combine(testAsset.Path, testProject.Name), targetFramework,
+                                                        "ResolvedFileToPublish", GetValuesCommand.ValueType.Item)
+            {
+                DependsOnTargets = "ComputeFilesToPublish",
+                MetadataNames = { "PackageName", "IsTrimmable" },
+            };
+
+            command.Execute().Should().Pass();
+            var items = from item in command.GetValuesWithMetadata()
+                        select new
+                        {
+                            Identity = item.value,
+                            PackageName = item.metadata["PackageName"],
+                            IsTrimmable = item.metadata["IsTrimmable"]
+                        };
+
+            var trimInfo = new Dictionary<string, List<(string asset, string isTrimmable)>> ();
+            foreach (var item in items)
+            {
+                List<(string asset, string isTrimmable)> assets;
+                if (!trimInfo.TryGetValue(item.PackageName, out assets))
+                {
+                    assets = trimInfo[item.PackageName] = new List<(string asset, string isTrimmable)> (3);
+                }
+                assets.Add((item.Identity, item.IsTrimmable));
+            }
+
+            return trimInfo;
         }
 
         private class ResolvedVersionInfo
