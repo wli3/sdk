@@ -22,7 +22,7 @@ namespace Microsoft.NET.Build.Tests
         }
 
         [FullMSBuildOnlyFact]
-        public void It_builds()
+        public void It_builds_and_runs()
         {
             var testAsset = _testAssetsManager
                 .CopyTestAsset("NetCoreCsharpAppReferenceCppCliLib")
@@ -34,6 +34,17 @@ namespace Microsoft.NET.Build.Tests
                 .Execute()
                 .Should()
                 .Pass();
+
+            var outputDir = buildCommand.GetOutputDirectory(targetFramework: "netcoreapp3.0");
+            var exe = Path.Combine(outputDir.FullName, "CSConsoleApp.exe");
+
+            var runCommand = new RunExeCommand(Log, exe);
+            runCommand
+                .Execute()
+                .Should()
+                .Pass()
+                .And
+                .HaveStdOutContaining("Hello, World!");
         }
     }
 }
