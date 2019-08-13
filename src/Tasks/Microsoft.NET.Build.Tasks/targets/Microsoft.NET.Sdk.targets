@@ -509,10 +509,6 @@ Copyright (c) .NET Foundation. All rights reserved.
   <Target Name="_GetIjwHostPaths"
           DependsOnTargets="ResolvePackageAssets"
           Condition="'$(UseIJWHost)' == 'true'">
-    <PropertyGroup>
-      <IjwHostFileName>$(AssemblyName).Ijwhost$(_IjwHostLibraryExtension)</IjwHostFileName>
-      <IjwHostIntermediatePath>$([System.IO.Path]::GetFullPath('$(IntermediateOutputPath)$(IjwHostFileName)'))</IjwHostIntermediatePath>
-    </PropertyGroup>
 
     <NETSdkError Condition="'$(IjwHostSourcePath)' == '' or !Exists('$(IjwHostSourcePath)')"
              ResourceName="CannotFindIjwhost" />
@@ -585,9 +581,9 @@ Copyright (c) .NET Foundation. All rights reserved.
 
     </ItemGroup>
 
-    <ItemGroup Condition="'$(IjwIntermediatePath)' != ''">
-      <None Include="$(IjwIntermediatePath)">
-        <Link>$(AssemblyName)$(_NativeExecutableExtension)</Link>
+    <ItemGroup Condition="'$(IjwHostSourcePath)' != ''">
+      <None Include="$(IjwHostSourcePath)">
+        <Link>$(_DotNetIjwHostLibraryName)</Link>
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       </None>
