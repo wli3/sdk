@@ -78,7 +78,7 @@ Copyright (c) .NET Foundation. All rights reserved.
     </ProcessFrameworkReferences>
 
     <PropertyGroup Condition="'$(AppHostRuntimeIdentifier)' == '' And
-                              ('$(UseAppHost)' == 'true' Or '$(EnableComHosting)' == 'true')">
+                              ('$(UseAppHost)' == 'true' Or '$(EnableComHosting)' == 'true' Or '$(UseIJWHost)' == 'true')">
       <AppHostRuntimeIdentifier>$(RuntimeIdentifier)</AppHostRuntimeIdentifier>
       <AppHostRuntimeIdentifier Condition="'$(AppHostRuntimeIdentifier)' == ''">$(DefaultAppHostRuntimeIdentifier)</AppHostRuntimeIdentifier>
     </PropertyGroup>
