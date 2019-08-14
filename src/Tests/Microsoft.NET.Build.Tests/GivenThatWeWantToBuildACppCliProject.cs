@@ -1,6 +1,7 @@
 ﻿// Copyright (c) .NET Foundation and contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
@@ -35,8 +36,12 @@ namespace Microsoft.NET.Build.Tests
                 .Should()
                 .Pass();
 
-            var outputDir = buildCommand.GetOutputDirectory(targetFramework: "netcoreapp3.0");
-            var exe = Path.Combine(outputDir.FullName, "CSConsoleApp.exe");
+            var exe = Path.Combine(
+                //find the platform directory
+                new DirectoryInfo(Path.Combine(testAsset.TestRoot, "CSConsoleApp", "bin")).GetDirectories().Single().FullName,
+                "Debug",
+                "netcoreapp3.0",
+                "CSConsoleApp.exe");
 
             var runCommand = new RunExeCommand(Log, exe);
             runCommand
