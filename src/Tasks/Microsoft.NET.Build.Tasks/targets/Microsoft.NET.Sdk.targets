@@ -351,6 +351,14 @@ Copyright (c) .NET Foundation. All rights reserved.
       _GetIjwHostPaths;
     </CompileDependsOn>
   </PropertyGroup>
+  
+  <PropertyGroup>
+    <BuildCompileAction>
+      $(BuildCompileAction);
+      _CreateAppHost;
+      _GetIjwHostPaths;
+    </BuildCompileAction>
+  </PropertyGroup>
 
   <!--
     ============================================================
@@ -363,11 +371,7 @@ Copyright (c) .NET Foundation. All rights reserved.
   <Target Name="_CreateAppHost"
           Inputs="@(IntermediateAssembly);$(AppHostSourcePath)"
           Outputs="$(AppHostIntermediatePath)"
-          DependsOnTargets="_GetAppHostPaths;CoreCompile"
-          Condition="'$(ComputeNETCoreBuildOutputFiles)' == 'true' and
-                     '$(AppHostSourcePath)' != '' and
-                     Exists('@(IntermediateAssembly)') and
-                     Exists('$(AppHostSourcePath)')">
+          DependsOnTargets="_GetAppHostPaths">
     <PropertyGroup>
       <_UseWindowsGraphicalUserInterface Condition="($(RuntimeIdentifier.StartsWith('win')) or $(DefaultAppHostRuntimeIdentifier.StartsWith('win'))) and '$(OutputType)'=='WinExe'">true</_UseWindowsGraphicalUserInterface>
     </PropertyGroup>
