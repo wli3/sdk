@@ -7,5 +7,10 @@
     <!-- Workaround: These should be changed in Microsoft.CppCommon.targets to the following. -->
     <MicrosoftNETSdkBeforeCommonTargets>Sdk.BeforeCommon.targets</MicrosoftNETSdkBeforeCommonTargets>
     <MicrosoftNETSdkAfterCommonTargets>Sdk.AfterCommon.targets</MicrosoftNETSdkAfterCommonTargets>
+    
+    <!-- This comes from https://github.com/dotnet/NuGet.BuildTasks/pull/25
+      This should be set in VC props
+      Waiting from more detail from Nuget -->
+    <RuntimeIdentifiers>win-x64;win-x86</RuntimeIdentifiers>
   </PropertyGroup>
 </Project>
