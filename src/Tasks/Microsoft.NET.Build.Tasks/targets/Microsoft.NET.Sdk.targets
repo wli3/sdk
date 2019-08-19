@@ -351,7 +351,14 @@ Copyright (c) .NET Foundation. All rights reserved.
       _GetIjwHostPaths;
     </CompileDependsOn>
   </PropertyGroup>
-  
+
+  <PropertyGroup>
+    <AfterBuildLinkTargets>
+      $(AfterBuildLinkTargets);
+      _CreateAppHost;
+    </AfterBuildLinkTargets>
+  </PropertyGroup>
+
   <!--
     ============================================================
                                         _CreateAppHost
@@ -360,13 +367,20 @@ Copyright (c) .NET Foundation. All rights reserved.
     ============================================================
      -->
   <UsingTask TaskName="CreateAppHost" AssemblyFile="$(MicrosoftNETBuildTasksAssembly)" />
+
+  <!--TODO wul no check in, what is the rigth way to detect c++ project?-->
+  <PropertyGroup>
+    <_CreateAppHostDependsOn Condition="'$(Language)' == 'C++'">_GetAppHostPaths;Link</_CreateAppHostDependsOn>
+    <_CreateAppHostDependsOn Condition="'$(Language)' != 'C++'">_GetAppHostPaths;CoreCompile</_CreateAppHostDependsOn>
+  </PropertyGroup>
+
   <Target Name="_CreateAppHost"
           Inputs="@(IntermediateAssembly);$(AppHostSourcePath)"
           Outputs="$(AppHostIntermediatePath)"
-          DependsOnTargets="_GetAppHostPaths;"
-          AfterTargets="BuildLink"
+          DependsOnTargets="$(_CreateAppHostDependsOn)"
           Condition="'$(ComputeNETCoreBuildOutputFiles)' == 'true' and
                      '$(AppHostSourcePath)' != '' and
+                     Exists('@(IntermediateAssembly)') and
                      Exists('$(AppHostSourcePath)')">
     <PropertyGroup>
       <_UseWindowsGraphicalUserInterface Condition="($(RuntimeIdentifier.StartsWith('win')) or $(DefaultAppHostRuntimeIdentifier.StartsWith('win'))) and '$(OutputType)'=='WinExe'">true</_UseWindowsGraphicalUserInterface>
