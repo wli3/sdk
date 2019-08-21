@@ -353,10 +353,10 @@ Copyright (c) .NET Foundation. All rights reserved.
   </PropertyGroup>
 
   <PropertyGroup>
-    <AfterBuildCompileTargets>
-      $(AfterBuildCompileTargets);
+    <BuildDependsOn>
+      $(BuildDependsOn);
       _CreateAppHost;
-    </AfterBuildCompileTargets>
+    </BuildDependsOn>
   </PropertyGroup>
 
   <!--
@@ -370,17 +370,17 @@ Copyright (c) .NET Foundation. All rights reserved.
 
   <!--TODO wul no check in, what is the rigth way to detect c++ project?-->
   <PropertyGroup>
-    <_CreateAppHostDependsOn Condition="'$(Language)' == 'C++'">_GetAppHostPaths;ResolveFrameworkReferences;Link</_CreateAppHostDependsOn>
+    <_CreateAppHostDependsOn Condition="'$(Language)' == 'C++'">_GetAppHostPaths;ResolveFrameworkReferences;BuildCompile</_CreateAppHostDependsOn>
     <_CreateAppHostDependsOn Condition="'$(Language)' != 'C++'">_GetAppHostPaths;ResolveFrameworkReferences;CoreCompile</_CreateAppHostDependsOn>
 
-    <_OutputBase Condition="'$(Language)' == 'C++'">$(OutDir)</_OutputBase>
+    <_OutputBase Condition="'$(Language)' == 'C++'">$(TargetDir)</_OutputBase>
     <_OutputBase Condition="'$(Language)' != 'C++'">$(IntermediateOutputPath)</_OutputBase>
   </PropertyGroup>
 
   <ItemGroup>
     <!-- C++ does not use $(IntermediateAssembly). The output of the linker is $(TargetPath)-->
     <!--TODO change to $(targetpath) when <TargetExt>.dll</TargetExt> change is in C++ targets-->
-    <_IntermediateAssemblyEquivalent Condition="'$(Language)' == 'C++'" Include="$(OutDir)$(TargetName)$(TargetExt)" />
+    <_IntermediateAssemblyEquivalent Condition="'$(Language)' == 'C++'" Include="$(TargetDir)$(TargetName)$(TargetExt)" />
     <_IntermediateAssemblyEquivalent Condition="'$(Language)' != 'C++'" Include="@(IntermediateAssembly)" />
   </ItemGroup>
 
