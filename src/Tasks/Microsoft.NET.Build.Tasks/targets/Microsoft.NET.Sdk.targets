@@ -353,10 +353,10 @@ Copyright (c) .NET Foundation. All rights reserved.
   </PropertyGroup>
 
   <PropertyGroup>
-    <AfterBuildLinkTargets>
-      $(AfterBuildLinkTargets);
+    <AfterBuildCompileTargets>
+      $(AfterBuildCompileTargets);
       _CreateAppHost;
-    </AfterBuildLinkTargets>
+    </AfterBuildCompileTargets>
   </PropertyGroup>
 
   <!--
@@ -366,21 +366,22 @@ Copyright (c) .NET Foundation. All rights reserved.
     with options from the project.
     ============================================================
      -->
-    <UsingTask TaskName="CreateAppHost" AssemblyFile="$(MicrosoftNETBuildTasksAssembly)" />
+  <UsingTask TaskName="CreateAppHost" AssemblyFile="$(MicrosoftNETBuildTasksAssembly)" />
 
-    <!--TODO wul no check in, what is the rigth way to detect c++ project?-->
-    <PropertyGroup>
-      <_CreateAppHostDependsOn Condition="'$(Language)' == 'C++'">_GetAppHostPaths;Link</_CreateAppHostDependsOn>
-      <_CreateAppHostDependsOn Condition="'$(Language)' != 'C++'">_GetAppHostPaths;CoreCompile</_CreateAppHostDependsOn>
-    </PropertyGroup>
+  <!--TODO wul no check in, what is the rigth way to detect c++ project?-->
+  <PropertyGroup>
+    <_CreateAppHostDependsOn Condition="'$(Language)' == 'C++'">_GetAppHostPaths;ResolveFrameworkReferences;Link</_CreateAppHostDependsOn>
+    <_CreateAppHostDependsOn Condition="'$(Language)' != 'C++'">_GetAppHostPaths;ResolveFrameworkReferences;CoreCompile</_CreateAppHostDependsOn>
+  </PropertyGroup>
 
-    <ItemGroup>
-      <!-- C++ does not use $(IntermediateAssembly). The output of the linker is $(TargetPath)-->
-      <_IntermediateAssemblyEquivalent Condition="'$(Language)' == 'C++'" Include="$(TargetPath)" />
-      <_IntermediateAssemblyEquivalent Condition="'$(Language)' != 'C++'" Include="@(IntermediateAssembly)" />
-    </ItemGroup>
+  <ItemGroup>
+    <!-- C++ does not use $(IntermediateAssembly). The output of the linker is $(TargetPath)-->
+    <!--TODO change to $(targetpath) when <TargetExt>.dll</TargetExt> change is in C++ targets-->
+    <_IntermediateAssemblyEquivalent Condition="'$(Language)' == 'C++'" Include="$(OutDir)$(TargetName)$(TargetExt)" />
+    <_IntermediateAssemblyEquivalent Condition="'$(Language)' != 'C++'" Include="@(IntermediateAssembly)" />
+  </ItemGroup>
 
-    <Target Name="_CreateAppHost"
+  <Target Name="_CreateAppHost"
           Inputs="@(_IntermediateAssemblyEquivalent);$(AppHostSourcePath)"
           Outputs="$(AppHostIntermediatePath)"
           DependsOnTargets="$(_CreateAppHostDependsOn)"
@@ -423,6 +424,7 @@ Copyright (c) .NET Foundation. All rights reserved.
       <AppHostSourcePath Condition="'$(UseAppHostFromAssetsFile)' == 'true'">@(_NativeRestoredAppHostNETCore)</AppHostSourcePath>
     </PropertyGroup>
     <PropertyGroup Condition="'$(UseAppHostFromAssetsFile)' == 'false' Or '@(_NativeRestoredAppHostNETCore)' != ''">
+      <!--TODO wul no check in change to output dir for C++-->
       <AppHostIntermediatePath>$([System.IO.Path]::GetFullPath('$(IntermediateOutputPath)$(AssemblyName)$(_NativeExecutableExtension)'))</AppHostIntermediatePath>
     </PropertyGroup>
     
