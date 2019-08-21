@@ -372,6 +372,9 @@ Copyright (c) .NET Foundation. All rights reserved.
   <PropertyGroup>
     <_CreateAppHostDependsOn Condition="'$(Language)' == 'C++'">_GetAppHostPaths;ResolveFrameworkReferences;Link</_CreateAppHostDependsOn>
     <_CreateAppHostDependsOn Condition="'$(Language)' != 'C++'">_GetAppHostPaths;ResolveFrameworkReferences;CoreCompile</_CreateAppHostDependsOn>
+
+    <_OutputBase Condition="'$(Language)' == 'C++'">$(OutDir)</_OutputBase>
+    <_OutputBase Condition="'$(Language)' != 'C++'">$(IntermediateOutputPath)</_OutputBase>
   </PropertyGroup>
 
   <ItemGroup>
@@ -425,14 +428,14 @@ Copyright (c) .NET Foundation. All rights reserved.
     </PropertyGroup>
     <PropertyGroup Condition="'$(UseAppHostFromAssetsFile)' == 'false' Or '@(_NativeRestoredAppHostNETCore)' != ''">
       <!--TODO wul no check in change to output dir for C++-->
-      <AppHostIntermediatePath>$([System.IO.Path]::GetFullPath('$(IntermediateOutputPath)$(AssemblyName)$(_NativeExecutableExtension)'))</AppHostIntermediatePath>
+      <AppHostIntermediatePath>$([System.IO.Path]::GetFullPath('$(_OutputBase)$(AssemblyName)$(_NativeExecutableExtension)'))</AppHostIntermediatePath>
     </PropertyGroup>
     
   </Target>
 
   <ItemGroup>
-    <ClsidMap Include="$(IntermediateOutputPath)$(AssemblyName).clsidmap" />
-    <RegFreeComManifest Include="$(IntermediateOutputPath)$(AssemblyName).X.manifest" />
+    <ClsidMap Include="$(_OutputBase)$(AssemblyName).clsidmap" />
+    <RegFreeComManifest Include="$(_OutputBase)$(AssemblyName).X.manifest" />
   </ItemGroup>
   
   <!--
@@ -513,7 +516,7 @@ Copyright (c) .NET Foundation. All rights reserved.
           Condition="'$(EnableComHosting)' == 'true' and '$(_IsExecutable)' != 'true'">
     <PropertyGroup>
       <ComHostFileName>$(AssemblyName).comhost$(_ComHostLibraryExtension)</ComHostFileName>
-      <ComHostIntermediatePath>$([System.IO.Path]::GetFullPath('$(IntermediateOutputPath)$(ComHostFileName)'))</ComHostIntermediatePath>
+      <ComHostIntermediatePath>$([System.IO.Path]::GetFullPath('$(_OutputBase)$(ComHostFileName)'))</ComHostIntermediatePath>
     </PropertyGroup>
 
     <NETSdkError Condition="'$(ComHostSourcePath)' == '' or !Exists('$(ComHostSourcePath)')"
@@ -713,15 +716,15 @@ Copyright (c) .NET Foundation. All rights reserved.
 
   <Target Name="CoreGenerateSatelliteAssemblies"
           DependsOnTargets="ResolveAssemblyReferences;_GetAssemblyInfoFromTemplateFile"
-          Inputs="$(MSBuildAllProjects);@(_SatelliteAssemblyResourceInputs);$(IntermediateOutputPath)$(TargetName)$(TargetExt)"
-          Outputs="$(IntermediateOutputPath)%(Culture)\$(TargetName).resources.dll"
+          Inputs="$(MSBuildAllProjects);@(_SatelliteAssemblyResourceInputs);$(_OutputBase)$(TargetName)$(TargetExt)"
+          Outputs="$(_OutputBase)%(Culture)\$(TargetName).resources.dll"
           Condition="'@(_SatelliteAssemblyResourceInputs)' != ''  and '$(GenerateSatelliteAssembliesForCore)' == 'true' ">
 
-    <MakeDir Directories="@(_SatelliteAssemblyResourceInputs->'$(IntermediateOutputPath)%(Culture)')" />
+    <MakeDir Directories="@(_SatelliteAssemblyResourceInputs->'$(_OutputBase)%(Culture)')" />
 
     <PropertyGroup>
-      <_AssemblyInfoFile>$(IntermediateOutputPath)%(_SatelliteAssemblyResourceInputs.Culture)\$(TargetName).resources.cs</_AssemblyInfoFile>
-      <_OutputAssembly>$(IntermediateOutputPath)%(_SatelliteAssemblyResourceInputs.Culture)\$(TargetName).resources.dll</_OutputAssembly>
+      <_AssemblyInfoFile>$(_OutputBase)%(_SatelliteAssemblyResourceInputs.Culture)\$(TargetName).resources.cs</_AssemblyInfoFile>
+      <_OutputAssembly>$(_OutputBase)%(_SatelliteAssemblyResourceInputs.Culture)\$(TargetName).resources.dll</_OutputAssembly>
     </PropertyGroup>
 
     <ItemGroup>
@@ -764,7 +767,7 @@ Copyright (c) .NET Foundation. All rights reserved.
   </Target>
 
   <Target Name="_GetAssemblyInfoFromTemplateFile">
-    <GetAssemblyAttributes PathToTemplateFile="$(IntermediateOutputPath)$(TargetName)$(TargetExt)" >
+    <GetAssemblyAttributes PathToTemplateFile="$(_OutputBase)$(TargetName)$(TargetExt)" >
       <Output TaskParameter="AssemblyAttributes" ItemName="_AssemblyAttributesFromTemplateFile" />
     </GetAssemblyAttributes>
 
