@@ -30,19 +30,20 @@ namespace Microsoft.NET.Build.Tests
                 .Should()
                 .Pass();
 
-            //var exe = Path.Combine( //find the platform directory
-            //    new DirectoryInfo(Path.Combine(testAsset.TestRoot, "CSConsoleApp", "bin")).GetDirectories().Single().FullName,
-            //    "Debug",
-            //    "netcoreapp3.0",
-            //    "CSConsoleApp.exe");
+            var exe = Path.Combine( //find the platform directory
+                new DirectoryInfo(Path.Combine(testAsset.TestRoot, "CSConsoleApp", "bin")).GetDirectories().Single().FullName,
+                "Debug",
+                "netcoreapp3.0",
+                "publish",
+                "CSConsoleApp.exe");
 
-            //var runCommand = new RunExeCommand(Log, exe);
-            //runCommand
-            //    .Execute()
-            //    .Should()
-            //    .Pass()
-            //    .And
-            //    .HaveStdOutContaining("Hello, World!");
+            var runCommand = new RunExeCommand(Log, exe);
+            runCommand
+                .Execute()
+                .Should()
+                .Pass()
+                .And
+                .HaveStdOutContaining("Hello, World!");
         }
     }
 }
