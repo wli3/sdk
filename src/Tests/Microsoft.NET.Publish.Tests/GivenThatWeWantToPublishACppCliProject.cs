@@ -25,8 +25,8 @@ namespace Microsoft.NET.Build.Tests
                 .WithSource()
                 .Restore(Log, "NETCoreCppCliTest.sln");
 
-            new PublishCommand(Log, Path.Combine(testAsset.TestRoot, "NETCoreCppCliTest.sln"))
-                .Execute("/restore")
+            new PublishCommand(Log, Path.Combine(testAsset.TestRoot, "CSConsoleApp"))
+                .Execute(new string[] { "-p:Platform=x64" })
                 .Should()
                 .Pass();
 
