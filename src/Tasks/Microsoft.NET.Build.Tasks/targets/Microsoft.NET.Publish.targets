@@ -404,14 +404,8 @@ Copyright (c) .NET Foundation. All rights reserved.
     </PropertyGroup>
 
     <ItemGroup>
-      <!-- C++ does not use $(IntermediateAssembly). The output of the linker is $(TargetPath)-->
-      <_BuildProductForPublish Condition="'$(IntermediateAssemblySkipped)'=='true'" Include="$(TargetPath)" />
-      <_BuildProductForPublish Condition="'$(IntermediateAssemblySkipped)'!='true'" Include="@(IntermediateAssembly)" />
-    </ItemGroup>
-
-    <ItemGroup>
       <!-- Copy the build product (.dll or .exe). -->
-      <ResolvedFileToPublish Include="@(_BuildProductForPublish)"
+      <ResolvedFileToPublish Include="@(IntermediateAssembly)"
                              Condition="'$(CopyBuildOutputToPublishDirectory)' == 'true'">
         <RelativePath>@(IntermediateAssembly->'%(Filename)%(Extension)')</RelativePath>
         <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>

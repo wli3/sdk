@@ -7,6 +7,5 @@
     <!-- Workaround: These should be changed in Microsoft.CppCommon.targets to the following. -->
     <MicrosoftNETSdkBeforeCommonTargets>Sdk.BeforeCommon.targets</MicrosoftNETSdkBeforeCommonTargets>
     <MicrosoftNETSdkAfterCommonTargets>Sdk.AfterCommon.targets</MicrosoftNETSdkAfterCommonTargets>
-    <IntermediateAssemblySkipped>true</IntermediateAssemblySkipped>
   </PropertyGroup>
 </Project>
