@@ -4,6 +4,7 @@
 using System.IO;
 using System.Linq;
 using FluentAssertions;
+using Microsoft.NET.Build.Tasks;
 using Microsoft.NET.TestFramework;
 using Microsoft.NET.TestFramework.Assertions;
 using Microsoft.NET.TestFramework.Commands;
@@ -18,7 +19,7 @@ namespace Microsoft.NET.Build.Tests
         }
 
         [FullMSBuildOnlyFact]
-        public void It_builds_and_runs()
+        public void When_referenced_by_csharp_project_it_publishes_and_runs()
         {
             var testAsset = _testAssetsManager
                 .CopyTestAsset("NetCoreCsharpAppReferenceCppCliLib")
@@ -44,6 +45,21 @@ namespace Microsoft.NET.Build.Tests
                 .Pass()
                 .And
                 .HaveStdOutContaining("Hello, World!");
+        }
+
+        [FullMSBuildOnlyFact]
+        public void When_not_referenced_by_csharp_project_it_fails_to_publish()
+        {
+            var testAsset = _testAssetsManager
+                .CopyTestAsset("NetCoreCsharpAppReferenceCppCliLib")
+                .WithSource()
+                .Restore(Log, "NETCoreCppCliTest.sln");
+
+            new PublishCommand(Log, Path.Combine(testAsset.TestRoot, "NETCoreCppCliTest"))
+                .Execute(new string[] { "-p:Platform=x64" })
+                .Should()
+                .Fail()
+                .And.HaveStdOutContaining(Strings.NoSupportCppPublishDotnetCore);
         }
     }
 }
