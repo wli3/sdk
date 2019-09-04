@@ -359,14 +359,15 @@ Copyright (c) .NET Foundation. All rights reserved.
     with options from the project.
     ============================================================
      -->
+
   <UsingTask TaskName="CreateAppHost" AssemblyFile="$(MicrosoftNETBuildTasksAssembly)" />
   <Target Name="_CreateAppHost"
-          Inputs="@(IntermediateAssembly);$(AppHostSourcePath)"
+          Inputs="@(_IntermediateAssemblyEquivalent);$(AppHostSourcePath)"
           Outputs="$(AppHostIntermediatePath)"
           DependsOnTargets="_GetAppHostPaths;CoreCompile"
           Condition="'$(ComputeNETCoreBuildOutputFiles)' == 'true' and
                      '$(AppHostSourcePath)' != '' and
-                     Exists('@(IntermediateAssembly)') and
+                     Exists('@(_IntermediateAssemblyEquivalent)') and
                      Exists('$(AppHostSourcePath)')">
     <PropertyGroup>
       <_UseWindowsGraphicalUserInterface Condition="($(RuntimeIdentifier.StartsWith('win')) or $(DefaultAppHostRuntimeIdentifier.StartsWith('win'))) and '$(OutputType)'=='WinExe'">true</_UseWindowsGraphicalUserInterface>
@@ -375,7 +376,7 @@ Copyright (c) .NET Foundation. All rights reserved.
     <CreateAppHost AppHostSourcePath="$(AppHostSourcePath)"
                    AppHostDestinationPath="$(AppHostIntermediatePath)"
                    AppBinaryName="$(AssemblyName)$(TargetExt)"
-                   IntermediateAssembly="@(IntermediateAssembly->'%(FullPath)')"
+                   _IntermediateAssemblyEquivalent="@(_IntermediateAssemblyEquivalent->'%(FullPath)')"
                    WindowsGraphicalUserInterface="$(_UseWindowsGraphicalUserInterface)"
                    Retries="$(CopyRetryCount)"
                    RetryDelayMilliseconds="$(CopyRetryDelayMilliseconds)"
@@ -391,7 +392,7 @@ Copyright (c) .NET Foundation. All rights reserved.
     ============================================================
      -->
   <Target Name="_GetAppHostPaths"
-          DependsOnTargets="ResolvePackageAssets"
+          DependsOnTargets="ResolvePackageAssets;_GetIntermediateAssemblyEquivalent"
           Condition="'$(UseAppHost)' == 'true' and '$(_IsExecutable)' == 'true'">
 
     <NETSdkError Condition="'@(_NativeRestoredAppHostNETCore->Count())' > 1"
@@ -420,15 +421,21 @@ Copyright (c) .NET Foundation. All rights reserved.
     Generates a *.clsidmap file from the built assembly.
     ============================================================
   -->
+
+  <PropertyGroup>
+    <_GenerateClsidMapDependsOn Condition="'$(Language)' == 'C++'">Link;_GetIntermediateAssemblyEquivalent</_GenerateClsidMapDependsOn>
+    <_GenerateClsidMapDependsOn Condition="'$(Language)' != 'C++'">CoreCompile;_GetIntermediateAssemblyEquivalent</_GenerateClsidMapDependsOn>
+  </PropertyGroup>
+
   <UsingTask TaskName="GenerateClsidMap" AssemblyFile="$(MicrosoftNETBuildTasksAssembly)" />
   <Target Name="_GenerateClsidMap"
-          Inputs="@(IntermediateAssembly)"
+          Inputs="@(_IntermediateAssemblyEquivalent)"
           Outputs="@(ClsidMap)"
-          DependsOnTargets="CoreCompile"
+          DependsOnTargets="$(_GenerateClsidMapDependsOn)"
           Condition="'$(ComputeNETCoreBuildOutputFiles)' == 'true' and
                      '$(EnableComHosting)' == 'true'">
     <GenerateClsidMap
-        IntermediateAssembly="@(IntermediateAssembly->'%(FullPath)')"
+        IntermediateAssembly="@(_IntermediateAssemblyEquivalent->'%(FullPath)')"
         CLsidMapDestinationPath="@(ClsidMap->'%(FullPath)')" />
   </Target>
 
@@ -441,13 +448,19 @@ Copyright (c) .NET Foundation. All rights reserved.
     with options from the project.
     ============================================================
      -->
+
+  <PropertyGroup>
+    <_CreateComHostDependsOn Condition="'$(Language)' == 'C++'">_GetComHostPaths;Link;_GenerateClsidMap;_GenerateRegFreeComManifest</_CreateComHostDependsOn>
+    <_CreateComHostDependsOn Condition="'$(Language)' != 'C++'">_GetComHostPaths;Link;_GenerateClsidMap;_GenerateRegFreeComManifest</_CreateComHostDependsOn>
+  </PropertyGroup>
+
   <Target Name="_CreateComHost"
-          Inputs="@(IntermediateAssembly);$(ComHostSourcePath)"
+          Inputs="@(_IntermediateAssemblyEquivalent);$(ComHostSourcePath)"
           Outputs="$(ComHostIntermediatePath)"
-          DependsOnTargets="_GetComHostPaths;CoreCompile;_GenerateClsidMap;_GenerateRegFreeComManifest"
+          DependsOnTargets="$(_CreateComHostDependsOn)"
           Condition="'$(ComputeNETCoreBuildOutputFiles)' == 'true' and
                      '$(ComHostIntermediatePath)' != '' and
-                     Exists('@(IntermediateAssembly)') and
+                     Exists('@(_IntermediateAssemblyEquivalent)') and
                      Exists('$(ComHostSourcePath)')">
     <CreateComHost
       ComHostSourcePath="$(ComHostSourcePath)"
@@ -466,13 +479,13 @@ Copyright (c) .NET Foundation. All rights reserved.
   -->
   <Target Name="_GenerateRegFreeComManifest"
           DependsOnTargets="_GenerateClsidMap;_GetComHostPaths"
-          Inputs="@(ClsidMap);@(IntermediateAssembly)"
+          Inputs="@(ClsidMap);@(_IntermediateAssemblyEquivalent)"
           Outputs="@(RegFreeComManifest)"
           Condition="'$(ComputeNETCoreBuildOutputFiles)' == 'true' and
                      '$(EnableComHosting)' == 'true' and
                      '$(EnableRegFreeCom)' == 'true'">
     <GenerateRegFreeComManifest
-      IntermediateAssembly="@(IntermediateAssembly)"
+      _IntermediateAssemblyEquivalent="@(_IntermediateAssemblyEquivalent)"
       ComHostName="$(ComHostFileName)"
       ClsidMapPath="@(ClsidMap)"
       ComManifestPath="@(RegFreeComManifest)" />
@@ -487,8 +500,10 @@ Copyright (c) .NET Foundation. All rights reserved.
     ============================================================
      -->
   <Target Name="_GetComHostPaths"
-          DependsOnTargets="ResolvePackageAssets"
+          DependsOnTargets="_GetIntermediateAssemblyEquivalent"
+          AfterTargets="ResolvePackageAssets"
           Condition="'$(EnableComHosting)' == 'true' and '$(_IsExecutable)' != 'true'">
+
     <PropertyGroup>
       <ComHostFileName>$(AssemblyName).comhost$(_ComHostLibraryExtension)</ComHostFileName>
       <ComHostIntermediatePath>$([System.IO.Path]::GetFullPath('$(IntermediateOutputPath)$(ComHostFileName)'))</ComHostIntermediatePath>
@@ -496,6 +511,15 @@ Copyright (c) .NET Foundation. All rights reserved.
 
     <NETSdkError Condition="'$(ComHostSourcePath)' == '' or !Exists('$(ComHostSourcePath)')"
              ResourceName="CannotFindComhost" />
+  </Target>
+
+  <Target Name="_GetIntermediateAssemblyEquivalent">
+
+    <ItemGroup>
+      <!-- C++ does not use $(IntermediateAssembly). The output of the linker is $(TargetPath)-->
+      <_IntermediateAssemblyEquivalent Condition="'$(Language)' == 'C++'" Include="$(TargetPath)" />
+      <_IntermediateAssemblyEquivalent Condition="'$(Language)' != 'C++'" Include="@(IntermediateAssembly)" />
+    </ItemGroup>
   </Target>
 
   <!--
@@ -522,7 +546,7 @@ Copyright (c) .NET Foundation. All rights reserved.
     ============================================================
     -->
   <Target Name="_ComputeNETCoreBuildOutputFiles"
-          DependsOnTargets="_GetAppHostPaths;_GetComHostPaths;_GetIjwHostPaths"
+          DependsOnTargets="_GetAppHostPaths;_GetComHostPaths;_GetIjwHostPaths;_CreateComHost"
           BeforeTargets="AssignTargetPaths"
           Condition="'$(ComputeNETCoreBuildOutputFiles)' == 'true'">
 
