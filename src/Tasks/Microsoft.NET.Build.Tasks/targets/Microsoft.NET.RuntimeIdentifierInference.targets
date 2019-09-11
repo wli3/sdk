@@ -58,7 +58,7 @@ Copyright (c) .NET Foundation. All rights reserved.
                             '$(RuntimeIdentifier)' == ''">
     <_UsingDefaultRuntimeIdentifier>true</_UsingDefaultRuntimeIdentifier>
     <RuntimeIdentifier Condition="'$(PlatformTarget)' == 'x64'">win7-x64</RuntimeIdentifier>
-    <RuntimeIdentifier Condition="'$(PlatformTarget)' == 'x86' or '$(PlatformTarget)' == ''">win7-x86</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(PlatformTarget)' == 'x86' or '$(PlatformTarget)' == 'Win32' or '$(PlatformTarget)' == ''">win7-x86</RuntimeIdentifier>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(PlatformTarget)' == ''">
@@ -118,7 +118,7 @@ Copyright (c) .NET Foundation. All rights reserved.
                             '$(UseIJWHost)' == 'true')">
     <DefaultAppHostRuntimeIdentifier>$(NETCoreSdkRuntimeIdentifier)</DefaultAppHostRuntimeIdentifier>
     <DefaultAppHostRuntimeIdentifier Condition="$(DefaultAppHostRuntimeIdentifier.StartsWith('win')) and '$(PlatformTarget)' == 'x64'">win-x64</DefaultAppHostRuntimeIdentifier>
-    <DefaultAppHostRuntimeIdentifier Condition="$(DefaultAppHostRuntimeIdentifier.StartsWith('win')) and '$(PlatformTarget)' == 'x86'">win-x86</DefaultAppHostRuntimeIdentifier>
+    <DefaultAppHostRuntimeIdentifier Condition="$(DefaultAppHostRuntimeIdentifier.StartsWith('win')) and ('$(PlatformTarget)' == 'x86' or '$(PlatformTarget)' == 'Win32')">win-x86</DefaultAppHostRuntimeIdentifier>
   </PropertyGroup>
 
   <Target Name="_CheckForUnsupportedAppHostUsage"
@@ -146,7 +146,11 @@ Copyright (c) .NET Foundation. All rights reserved.
           BeforeTargets="_CheckForInvalidConfigurationAndPlatform"
           Condition="'$(RuntimeIdentifier)' != '' and '$(PlatformTarget)' != ''">
 
-    <NETSdkError Condition="'$(PlatformTarget)' != 'AnyCPU' and !$(RuntimeIdentifier.ToUpperInvariant().Contains($(PlatformTarget.ToUpperInvariant())))"
+    <PropertyGroup>
+      <_PlatformTargetToCompare Condition="'$(PlatformTarget)' == 'Win32'">$(PlatformTarget)</_PlatformTargetToCompare>
+      <_PlatformTargetToCompare Condition="'$(PlatformTarget)' == 'Win32'">x86</_PlatformTargetToCompare>
+    </PropertyGroup>
+    <NETSdkError Condition="'$(PlatformTarget)' != 'AnyCPU' and !$(RuntimeIdentifier.ToUpperInvariant().Contains($(_PlatformTargetToCompare.ToUpperInvariant())))"
                  ResourceName="CannotHaveRuntimeIdentifierPlatformMismatchPlatformTarget"
                  FormatArguments="$(RuntimeIdentifier);$(PlatformTarget)" />
 
