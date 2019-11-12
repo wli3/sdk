@@ -49,8 +49,8 @@ Copyright (c) .NET Foundation. All rights reserved.
     <UserRuntimeConfig Condition=" '$(UserRuntimeConfig)' == '' ">$(MSBuildProjectDirectory)/runtimeconfig.template.json</UserRuntimeConfig>
     <GenerateSatelliteAssembliesForCore Condition=" '$(GenerateSatelliteAssembliesForCore)' == '' and '$(MSBuildRuntimeType)' == 'Core' ">true</GenerateSatelliteAssembliesForCore>
     <ComputeNETCoreBuildOutputFiles Condition=" '$(ComputeNETCoreBuildOutputFiles)' == '' and '$(TargetFrameworkIdentifier)' == '.NETCoreApp'">true</ComputeNETCoreBuildOutputFiles>
-    <_GenerateRuntimeConfigurationPropertyInputsCache Condition="'$(_ShimInputCacheFile)' == ''">$(IntermediateOutputPath)$(MSBuildProjectName).shiminput.cache</_GenerateRuntimeConfigurationPropertyInputsCache>
-    <_GenerateRuntimeConfigurationPropertyInputsCache>$([MSBuild]::NormalizePath($(MSBuildProjectDirectory), $(_ShimInputCacheFile)))</_GenerateRuntimeConfigurationPropertyInputsCache>
+    <_GenerateRuntimeConfigurationPropertyInputsCache Condition="'$(_GenerateRuntimeConfigurationPropertyInputsCache)' == ''">$(IntermediateOutputPath)$(MSBuildProjectName).genruntimeconfig.cache</_GenerateRuntimeConfigurationPropertyInputsCache>
+    <_GenerateRuntimeConfigurationPropertyInputsCache>$([MSBuild]::NormalizePath($(MSBuildProjectDirectory), $(_GenerateRuntimeConfigurationPropertyInputsCache)))</_GenerateRuntimeConfigurationPropertyInputsCache>
   </PropertyGroup>
 
   <ItemGroup>
@@ -241,7 +241,11 @@ Copyright (c) .NET Foundation. All rights reserved.
       <Output TaskParameter="HashResult" PropertyName="_GenerateRuntimeConfigurationPropertyInputsCacheHash" />
     </Hash>
 
-    <WriteLinesToFile Lines="$(_GenerateRuntimeConfigurationPropertyInputsCacheHash)" File="$(_GenerateRuntimeConfigurationPropertyInputsCache)" Overwrite="True" WriteOnlyWhenDifferent="True" />
+    <WriteLinesToFile
+      Lines="$(_GenerateRuntimeConfigurationPropertyInputsCacheHash)"
+      File="$(_GenerateRuntimeConfigurationPropertyInputsCache)"
+      Overwrite="True"
+      WriteOnlyWhenDifferent="True" />
 
     <ItemGroup>
       <FileWrites Include="$(_GenerateRuntimeConfigurationPropertyInputsCache)" />
