@@ -570,7 +570,7 @@ Copyright (c) .NET Foundation. All rights reserved.
     ============================================================
     -->
   <Target Name="_ComputeNETCoreBuildOutputFiles"
-          DependsOnTargets="_GetAppHostPaths;_GetComHostPaths;_GetIjwHostPaths"
+          DependsOnTargets="_GetAppHostPaths;_GetComHostPaths;_GetIjwHostPaths;GenerateBuildRuntimeConfigurationFiles"
           BeforeTargets="AssignTargetPaths"
           Condition="'$(ComputeNETCoreBuildOutputFiles)' == 'true'">
 
@@ -632,6 +632,14 @@ Copyright (c) .NET Foundation. All rights reserved.
     <ItemGroup Condition="'$(IjwHostSourcePath)' != '' and '$(UseIJWHost)' == 'true'">
       <None Include="$(IjwHostSourcePath)">
         <Link>$(_DotNetIjwHostLibraryName)</Link>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      </None>
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(GenerateRuntimeConfigurationFiles)' == 'true' and '$(NativeReferenceCppCLI)' == 'true'">
+      <None Include="$(ProjectRuntimeConfigFilePath)">
+        <Link>$(ProjectRuntimeConfigFileName)</Link>
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       </None>
