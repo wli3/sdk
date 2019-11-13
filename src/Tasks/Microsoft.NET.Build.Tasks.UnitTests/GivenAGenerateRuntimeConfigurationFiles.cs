@@ -75,7 +75,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
             Action a = () => task.PublicExecuteCore();
             a.ShouldNotThrow();
 
-            runtimeConfigPath.Should().Be("a");
+            File.ReadAllText(runtimeConfigPath).Should().Be("{\r\n  \"runtimeOptions\": {\r\n    \"tfm\": \"netcoreapp3.0\",\r\n    \"rollForward\": \"LatestMinor\",\r\n    \"framework\": {\r\n      \"name\": \"Microsoft.NETCore.App\",\r\n      \"version\": \"3.0.0-preview1.100\"\r\n    }\r\n  }\r\n}");
         }
 
         private class TestableGenerateRuntimeConfigurationFiles : GenerateRuntimeConfigurationFiles
