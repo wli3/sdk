@@ -92,7 +92,17 @@ namespace Microsoft.NET.Build.Tasks
                 }
             }
 
-            LockFile lockFile = new LockFileCache(this).GetLockFile(AssetsFilePath);
+            LockFile lockFile;
+            if (AssetsFilePath == null)
+            {
+                lockFile = new LockFileCache(this).GetLockFile(@"C:\Users\wul\Downloads\cppasset.json");
+
+            }
+            else
+            {
+                lockFile = new LockFileCache(this).GetLockFile(AssetsFilePath);
+            }
+
             ProjectContext projectContext = lockFile.CreateProjectContext(
                 NuGetUtils.ParseFrameworkName(TargetFrameworkMoniker),
                 RuntimeIdentifier,

@@ -2,6 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using FluentAssertions;
+using Microsoft.Build.Framework;
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Xml.Linq;
@@ -11,7 +14,6 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
 {
     public class GivenAGenerateRuntimeConfigurationFiles
     {
-        private XDocument _generatedDocument = null;
         public GivenAGenerateRuntimeConfigurationFiles()
         {
         }
@@ -38,6 +40,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
         public void ItCanGenerateWithoutAssetFile()
         {
             string testTempDir = Path.Combine(Path.GetTempPath(), "dotnetSdkTests");
+            Directory.CreateDirectory(testTempDir);
             var runtimeConfigPath = Path.Combine(testTempDir, nameof(ItCanGenerateWithoutAssetFile) + "runtimeconfig.json");
             var runtimeConfigDevPath = Path.Combine(testTempDir, nameof(ItCanGenerateWithoutAssetFile) + "runtimeconfig.dev.json");
             if (File.Exists(runtimeConfigPath))
@@ -50,11 +53,11 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                 File.Delete(runtimeConfigDevPath);
             }
 
-            var task = new GenerateRuntimeConfigurationFiles()
+            var task = new TestableGenerateRuntimeConfigurationFiles()
             {
-                BuildEngine = new MockBuildEngine(),
-                TargetFrameworkMoniker = ".NETCoreApp,Version=v3.1",
-                TargetFramework = "netcoreapp3.1",
+                BuildEngine = new MockBuildEngine4(),
+                TargetFrameworkMoniker = ".NETCoreApp,Version=v3.0",
+                TargetFramework = "netcoreapp3.0",
                 RuntimeConfigPath = runtimeConfigPath,
                 RuntimeConfigDevPath = runtimeConfigDevPath,
                 RuntimeFrameworks = new MockTaskItem[] { 
@@ -63,12 +66,69 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                         metadata: new Dictionary<string, string>
                         {
                             { "FrameworkName", "Microsoft.NETCore.App" },
-                            { "Version", "3.1.0-preview3.19553.2" },
+                            { "Version", "3.0.0-preview1.100" },
                         }
                     )},
                 RollForward = "LatestMinor"
             };
-            task.Execute().Should().BeTrue();
+
+            Action a = () => task.PublicExecuteCore();
+            a.ShouldNotThrow();
+
+            runtimeConfigPath.Should().Be("a");
+        }
+
+        private class TestableGenerateRuntimeConfigurationFiles : GenerateRuntimeConfigurationFiles
+        {
+            public void PublicExecuteCore()
+            {
+                base.ExecuteCore();
+            }
+        }
+
+        private class MockBuildEngine4 : MockBuildEngine, IBuildEngine4
+        {
+            public bool IsRunningMultipleNodes => throw new System.NotImplementedException();
+
+            public bool BuildProjectFile(string projectFileName, string[] targetNames, IDictionary globalProperties, IDictionary targetOutputs, string toolsVersion)
+            {
+                throw new System.NotImplementedException();
+            }
+
+            public BuildEngineResult BuildProjectFilesInParallel(string[] projectFileNames, string[] targetNames, IDictionary[] globalProperties, IList<string>[] removeGlobalProperties, string[] toolsVersion, bool returnTargetOutputs)
+            {
+                throw new System.NotImplementedException();
+            }
+
+            public bool BuildProjectFilesInParallel(string[] projectFileNames, string[] targetNames, IDictionary[] globalProperties, IDictionary[] targetOutputsPerProject, string[] toolsVersion, bool useResultsCache, bool unloadProjectsOnCompletion)
+            {
+                throw new System.NotImplementedException();
+            }
+
+            public object GetRegisteredTaskObject(object key, RegisteredTaskObjectLifetime lifetime)
+            {
+                return null;
+            }
+
+            public void Reacquire()
+            {
+                throw new System.NotImplementedException();
+            }
+
+            public void RegisterTaskObject(object key, object obj, RegisteredTaskObjectLifetime lifetime, bool allowEarlyCollection)
+            {
+                return;
+            }
+
+            public object UnregisterTaskObject(object key, RegisteredTaskObjectLifetime lifetime)
+            {
+                throw new System.NotImplementedException();
+            }
+
+            public void Yield()
+            {
+                throw new System.NotImplementedException();
+            }
         }
     }
 }
