@@ -95,8 +95,32 @@ namespace Microsoft.NET.Build.Tasks
             LockFile lockFile;
             if (AssetsFilePath == null)
             {
-                lockFile = new LockFileCache(this).GetLockFile(@"C:\Users\wul\Downloads\cppasset.json");
+                RuntimeConfig config = new RuntimeConfig();
+                config.RuntimeOptions = new RuntimeOptions();
 
+                if (RuntimeFrameworks.Length == 1)
+                {
+                    config.RuntimeOptions.Framework = new RuntimeConfigFramework();
+                    config.RuntimeOptions.Framework.Name = RuntimeFrameworks[0].GetMetadata("FrameworkName");
+                    config.RuntimeOptions.Framework.Version = RuntimeFrameworks[0].GetMetadata("Version");
+                    config.RuntimeOptions.Tfm = TargetFramework;
+                    config.RuntimeOptions.RollForward = RollForward; // TODO not so sample, need to know portable or not
+                }
+                else
+                {
+                    throw new NotImplementedException();
+                }
+                // AddUserRuntimeOptions(config.RuntimeOptions);
+
+                // HostConfigurationOptions are added after AddUserRuntimeOptions so if there are
+                // conflicts the HostConfigurationOptions win. The reasoning is that HostConfigurationOptions
+                // can be changed using MSBuild properties, which can be specified at build time.
+                // AddHostConfigurationOptions(config.RuntimeOptions);
+
+                WriteToJsonFile(RuntimeConfigPath, config);
+                _filesWritten.Add(new TaskItem(RuntimeConfigPath));
+
+                return;
             }
             else
             {

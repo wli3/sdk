@@ -75,7 +75,25 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
             Action a = () => task.PublicExecuteCore();
             a.ShouldNotThrow();
 
-            File.ReadAllText(runtimeConfigPath).Should().Be("{\r\n  \"runtimeOptions\": {\r\n    \"tfm\": \"netcoreapp3.0\",\r\n    \"rollForward\": \"LatestMinor\",\r\n    \"framework\": {\r\n      \"name\": \"Microsoft.NETCore.App\",\r\n      \"version\": \"3.0.0-preview1.100\"\r\n    }\r\n  }\r\n}");
+            File.ReadAllText(runtimeConfigPath).Should()
+                .Be(
+@"{
+  ""runtimeOptions"": {
+    ""tfm"": ""netcoreapp3.0"",
+    ""rollForward"": ""LatestMinor"",
+    ""framework"": {
+      ""name"": ""Microsoft.NETCore.App"",
+      ""version"": ""3.0.0-preview1.100""
+    }
+  }
+}");
+            File.Exists(runtimeConfigDevPath).Should().BeFalse("No nuget involved, so no extra probing path"); // TODO wul need discussion
+        }
+
+        [Fact(Skip = "Pending")]
+        public void ItShouldErrorAndCallForRestoreWhenAssetFileDoesNotExist()
+        {
+            // When Microsoft.PackageDependencyResolution.targets is not imported, this is not set. So does not expect it
         }
 
         private class TestableGenerateRuntimeConfigurationFiles : GenerateRuntimeConfigurationFiles
