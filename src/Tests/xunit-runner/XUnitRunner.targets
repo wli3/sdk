@@ -74,7 +74,6 @@
           Condition="'@(SDKCustomXUnitProject)' != ''"
           BeforeTargets="CoreTest">
 
-          <!-- TODO isPosixshell no check in -->
     <SDKCustomCreateXUnitWorkItems XUnitProjects="@(SDKCustomXUnitProject)" IsPosixShell="$(IsPosixShell)" XUnitArguments="$(SDKCustomXUnitArguments)" XUnitWorkItemTimeout="$(XUnitWorkItemTimeout)">
       <Output TaskParameter="XUnitWorkItems" ItemName="HelixWorkItem"/>
     </SDKCustomCreateXUnitWorkItems>
