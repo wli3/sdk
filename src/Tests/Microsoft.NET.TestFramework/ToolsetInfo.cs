@@ -169,17 +169,13 @@ namespace Microsoft.NET.TestFramework
                 ret.DotNetHostPath = ResolveCommand("dotnet");
             }
 
-            string envOverrideSdksPath = Environment.GetEnvironmentVariable("TestSubjectMSBuildSDKsPath");
-            if (!string.IsNullOrWhiteSpace(envOverrideSdksPath))
+            if (!string.IsNullOrWhiteSpace(commandLine.MSBuildSDKsPath))
             {
-                ret.SdksPath = envOverrideSdksPath;
+                ret.SdksPath = commandLine.MSBuildSDKsPath;
             }
-            else
+            else if (repoRoot != null)
             {
-                if (repoRoot != null)
-                {
-                    ret.SdksPath = Path.Combine(repoArtifactsDir, "bin", configuration, "Sdks");
-                }
+                ret.SdksPath = Path.Combine(repoArtifactsDir, "bin", configuration, "Sdks");
             }
 
             if (!string.IsNullOrEmpty(commandLine.FullFrameworkMSBuildPath))
