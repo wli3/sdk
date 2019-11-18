@@ -36,6 +36,11 @@
       <GlobalJson Include="$(RepoRoot)\global.json"/>
       <!-- Get full framework msbuild end -->
 
+      <!-- Files in testExecutionDirectory to prevent environment interference -->
+      <TestExecutionDirectoryFiles Include="$(ArtifactsTmpDir)NuGet.config"/>
+      <TestExecutionDirectoryFiles Include="$(ArtifactsTmpDir)Directory.Build.props"/>
+      <TestExecutionDirectoryFiles Include="$(ArtifactsTmpDir)Directory.Build.targets"/>
+
       <FilesInHelixRoot Include="$(RepoRoot)\artifacts\tmp\$(Configuration)\NuGet.config"/>
       <FilesInHelixRoot Condition="'$(OS)' == 'Windows_NT'" Include="$(RepoRoot)\build\RunTestsOnHelix.cmd"/>
       <FilesInHelixRoot Condition="'$(OS)' != 'Windows_NT'" Include="$(RepoRoot)\build\RunTestsOnHelix.sh"/>
@@ -50,6 +55,8 @@
     <Copy SourceFiles="@(DotToolsFolder)" DestinationFiles="@(DotToolsFolder->'$(HelixPayloadOnHost)\%(RecursiveDir)%(Filename)%(Extension)')" />
 
     <Copy SourceFiles="@(FilesInHelixRoot)" DestinationFiles="@(FilesInHelixRoot->'$(HelixPayloadOnHost)\%(RecursiveDir)%(Filename)%(Extension)')" />
+
+    <Copy SourceFiles="@(TestExecutionDirectoryFiles)" DestinationFiles="@(DotToolsFolder->'$(HelixPayloadOnHost)\TestExecutionDirectoryFiles\%(RecursiveDir)%(Filename)%(Extension)')" />
   </Target>
 
 
