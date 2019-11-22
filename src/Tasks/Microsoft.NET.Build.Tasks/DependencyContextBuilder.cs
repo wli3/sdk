@@ -44,50 +44,66 @@ namespace Microsoft.NET.Build.Tasks
 
         private const string NetCorePlatformLibrary = "Microsoft.NETCore.App";
 
-        public DependencyContextBuilder(SingleProjectInfo mainProjectInfo, ProjectContext projectContext, bool includeRuntimeFileVersions)
+        public DependencyContextBuilder(SingleProjectInfo mainProjectInfo, bool includeRuntimeFileVersions, ProjectContext projectContext = null)
         {
             _mainProjectInfo = mainProjectInfo;
             _includeRuntimeFileVersions = includeRuntimeFileVersions;
 
-            var libraryLookup = new LockFileLookup(projectContext.LockFile);
-
-            _dependencyLibraries = projectContext.LockFileTarget.Libraries
-                .Select(lockFileTargetLibrary =>
-                {
-                    var dependencyLibrary = new DependencyLibrary(lockFileTargetLibrary.Name, lockFileTargetLibrary.Version, lockFileTargetLibrary.Type);
-
-                    LockFileLibrary library;
-                    if (libraryLookup.TryGetLibrary(lockFileTargetLibrary, out library))
-                    {
-                        dependencyLibrary.Sha512 = library.Sha512;
-                        dependencyLibrary.Path = library.Path;
-                        dependencyLibrary.MSBuildProject = library.MSBuildProject;
-                    }
-
-                    return dependencyLibrary;
-                }).ToDictionary(d => d.Name, StringComparer.OrdinalIgnoreCase);
-
-            _libraryDependencies = new Dictionary<string, List<LibraryDependency>>(StringComparer.OrdinalIgnoreCase);
-            foreach (var library in projectContext.LockFileTarget.Libraries)
+            if (projectContext == null)
             {
-                _libraryDependencies[library.Name] = library.Dependencies
-                    .Select(d => new LibraryDependency()
-                    {
-                        Name = d.Id,
-                        MinVersion = d.VersionRange.MinVersion
-                    }).ToList();
+                _dependencyLibraries = new Dictionary<string, DependencyLibrary>();
+                _libraryDependencies = new Dictionary<string, List<LibraryDependency>>();
+                _mainProjectDependencies = new List<string>();
+                _packagesToBeFiltered = null;
+                _isFrameworkDependent = true; // TODO WUL No checkin, this should be passed in
+                _platformLibrary = null;
+                _dotnetFrameworkName = ".NETCoreApp,Version=v3.1"; // TODO WUL No checkin, this should be passed in
+                _runtimeIdentifier = null; // TODO should be passed in
+                _isPortable = true; // TODO WUL No checkin, this should be passed in, what is the relation with _isFrameworkDependent?
+                _usedLibraryNames = new HashSet<string>();
             }
+            else
+            {
+                var libraryLookup = new LockFileLookup(projectContext.LockFile);
 
-            _mainProjectDependencies = projectContext.GetTopLevelDependencies().ToList();
-            _packagesToBeFiltered = projectContext.PackagesToBeFiltered;
+                _dependencyLibraries = projectContext.LockFileTarget.Libraries
+                    .Select(lockFileTargetLibrary =>
+                    {
+                        var dependencyLibrary = new DependencyLibrary(lockFileTargetLibrary.Name, lockFileTargetLibrary.Version, lockFileTargetLibrary.Type);
 
-            _isFrameworkDependent = projectContext.IsFrameworkDependent;
-            _platformLibrary = projectContext.PlatformLibrary?.Name;
-            _dotnetFrameworkName = projectContext.LockFileTarget.TargetFramework.DotNetFrameworkName;
-            _runtimeIdentifier = projectContext.LockFileTarget.RuntimeIdentifier;
-            _isPortable = projectContext.IsPortable;
+                        LockFileLibrary library;
+                        if (libraryLookup.TryGetLibrary(lockFileTargetLibrary, out library))
+                        {
+                            dependencyLibrary.Sha512 = library.Sha512;
+                            dependencyLibrary.Path = library.Path;
+                            dependencyLibrary.MSBuildProject = library.MSBuildProject;
+                        }
 
-            _usedLibraryNames = new HashSet<string>(_dependencyLibraries.Keys, StringComparer.OrdinalIgnoreCase);
+                        return dependencyLibrary;
+                    }).ToDictionary(d => d.Name, StringComparer.OrdinalIgnoreCase);
+
+                _libraryDependencies = new Dictionary<string, List<LibraryDependency>>(StringComparer.OrdinalIgnoreCase);
+                foreach (var library in projectContext.LockFileTarget.Libraries)
+                {
+                    _libraryDependencies[library.Name] = library.Dependencies
+                        .Select(d => new LibraryDependency()
+                        {
+                            Name = d.Id,
+                            MinVersion = d.VersionRange.MinVersion
+                        }).ToList();
+                }
+
+                _mainProjectDependencies = projectContext.GetTopLevelDependencies().ToList();
+                _packagesToBeFiltered = projectContext.PackagesToBeFiltered;
+
+                _isFrameworkDependent = projectContext.IsFrameworkDependent;
+                _platformLibrary = projectContext.PlatformLibrary?.Name;
+                _dotnetFrameworkName = projectContext.LockFileTarget.TargetFramework.DotNetFrameworkName;
+                _runtimeIdentifier = projectContext.LockFileTarget.RuntimeIdentifier;
+                _isPortable = projectContext.IsPortable;
+
+                _usedLibraryNames = new HashSet<string>(_dependencyLibraries.Keys, StringComparer.OrdinalIgnoreCase);
+            }
         }
 
         private bool IncludeCompilationLibraries => _compilationOptions != null;

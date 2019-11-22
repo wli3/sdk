@@ -11,6 +11,7 @@ using NuGet.ProjectModel;
 using NuGet.Versioning;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
@@ -120,7 +121,22 @@ namespace Microsoft.NET.Build.Tasks
 
         private void WriteDepsFile(string depsFilePath)
         {
-            LockFile lockFile = new LockFileCache(this).GetLockFile(AssetsFilePath);
+            ProjectContext projectContext;
+            if (AssetsFilePath == null)
+            {
+                projectContext = null;
+            }
+            else
+            {
+                LockFile lockFile = new LockFileCache(this).GetLockFile(AssetsFilePath);
+                projectContext = lockFile.CreateProjectContext(
+                 NuGetUtils.ParseFrameworkName(TargetFramework),
+                 RuntimeIdentifier,
+                 PlatformLibraryName,
+                 RuntimeFrameworks,
+                 IsSelfContained);
+            }
+
             CompilationOptions compilationOptions = CompilationOptionsConverter.ConvertFrom(CompilerOptions);
 
             SingleProjectInfo mainProject = SingleProjectInfo.Create(
@@ -148,14 +164,7 @@ namespace Microsoft.NET.Build.Tasks
             IEnumerable<RuntimePackAssetInfo> runtimePackAssets =
                 IsSelfContained ? RuntimePackAssets.Select(item => RuntimePackAssetInfo.FromItem(item)) : Enumerable.Empty<RuntimePackAssetInfo>();
 
-            ProjectContext projectContext = lockFile.CreateProjectContext(
-                NuGetUtils.ParseFrameworkName(TargetFramework),
-                RuntimeIdentifier,
-                PlatformLibraryName,
-                RuntimeFrameworks,
-                IsSelfContained);
-
-            var builder = new DependencyContextBuilder(mainProject, projectContext, IncludeRuntimeFileVersions);
+            var builder = new DependencyContextBuilder(mainProject, IncludeRuntimeFileVersions, projectContext);
 
             builder = builder
                 .WithMainProjectInDepsFile(IncludeMainProject)
