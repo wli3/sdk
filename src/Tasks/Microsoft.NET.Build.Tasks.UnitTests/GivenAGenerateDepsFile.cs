@@ -9196,7 +9196,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
 
             File.ReadAllText(depsFilePath).Should()
                 .Be(
-                    @"");
+                    "{\r\n  \"runtimeTarget\": {\r\n    \"name\": \".NETCoreApp,Version=v3.1\",\r\n    \"signature\": \"\"\r\n  },\r\n  \"compilationOptions\": {},\r\n  \"targets\": {\r\n    \".NETCoreApp,Version=v3.1\": {\r\n      \"NETCoreCppCliTest/1.0.0\": {\r\n        \"runtime\": {\r\n          \"NETCoreCppCliTest.dll\": {}\r\n        }\r\n      },\r\n      \"NETCoreCppCliTestC/0.0.0.0\": {\r\n        \"runtime\": {\r\n          \"NETCoreCppCliTestC.dll\": {}\r\n        }\r\n      }\r\n    }\r\n  },\r\n  \"libraries\": {\r\n    \"NETCoreCppCliTest/1.0.0\": {\r\n      \"type\": \"project\",\r\n      \"serviceable\": false,\r\n      \"sha512\": \"\"\r\n    },\r\n    \"NETCoreCppCliTestC/0.0.0.0\": {\r\n      \"type\": \"reference\",\r\n      \"serviceable\": false,\r\n      \"sha512\": \"\"\r\n    }\r\n  }\r\n}");
         }
 
         private class TestableGenerateDepsFile : GenerateDepsFile
