@@ -39,6 +39,20 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                 AssemblyName = "NETCoreCppCliTest",
                 AssemblyExtension = ".dll",
                 AssemblyVersion = "1.0.0",
+                IncludeMainProject = true,
+                RuntimeFrameworks = new MockTaskItem[] {
+                    new MockTaskItem(
+                        itemSpec: "Microsoft.NETCore.App",
+                        metadata: new Dictionary<string, string>
+                        {
+                            { "FrameworkName", "Microsoft.NETCore.App" },
+                            { "Version", "Version = 3.1.0-preview3.19553.2" },
+                        }
+                    )},
+                UserRuntimeAssemblies = new string[] {
+    @"C:\work\NETCoreCppCliTest\NETCoreCppCliTestB\Debug\NETCoreCppCliTestB.dll",
+    @"C:\work\NETCoreCppCliTest\NETCoreCppCliTestC\Debug\NETCoreCppCliTestC.dll"},
+
                 ReferencePaths = new MockTaskItem[] {
       new MockTaskItem(
       itemSpec: @"C:\work\sdk\.dotnet\packs\Microsoft.NETCore.App.Ref\3.1.0-preview3.19553.2\ref\netcoreapp3.1\Microsoft.CSharp.dll",
@@ -7041,7 +7055,10 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
             { "ReferenceSourceTarget" , "ResolveAssemblyReference" },
             { "ResolvedFrom" , "{RawFileName}" },
             { "Version" , "" },
-        })}
+        })
+    
+    
+    }
             };
 
             Action a = () => task.PublicExecuteCore();
