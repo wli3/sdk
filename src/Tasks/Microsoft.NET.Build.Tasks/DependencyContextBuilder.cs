@@ -44,7 +44,7 @@ namespace Microsoft.NET.Build.Tasks
 
         private const string NetCorePlatformLibrary = "Microsoft.NETCore.App";
 
-        public DependencyContextBuilder(SingleProjectInfo mainProjectInfo, bool includeRuntimeFileVersions, ProjectContext projectContext = null)
+        public DependencyContextBuilder(SingleProjectInfo mainProjectInfo, bool includeRuntimeFileVersions, ProjectContext projectContext = null) // TODO wul no check in just make a separate constructor
         {
             _mainProjectInfo = mainProjectInfo;
             _includeRuntimeFileVersions = includeRuntimeFileVersions;
