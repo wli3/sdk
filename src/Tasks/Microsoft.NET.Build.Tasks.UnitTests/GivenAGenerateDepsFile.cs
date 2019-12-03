@@ -48,11 +48,13 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                             { "FrameworkName", "Microsoft.NETCore.App" },
                             { "Version", "Version = 3.1.0-preview3.19553.2" },
                         }
-                    )},
+                    ) },
                 UserRuntimeAssemblies = new string[] {
-    @"C:\work\NETCoreCppCliTest\NETCoreCppCliTestB\Debug\NETCoreCppCliTestB.dll",
-    @"C:\work\NETCoreCppCliTest\NETCoreCppCliTestC\Debug\NETCoreCppCliTestC.dll"},
-
+                    @"C:\work\NETCoreCppCliTest\NETCoreCppCliTestB\Debug\NETCoreCppCliTestB.dll",
+                    @"C:\work\NETCoreCppCliTest\NETCoreCppCliTestC\Debug\NETCoreCppCliTestC.dll" },
+                CompileReferences = Array.Empty<MockTaskItem>(),
+                ResolvedNuGetFiles = Array.Empty<MockTaskItem>(),
+                ResolvedRuntimeTargetsFiles = Array.Empty<MockTaskItem>(),
                 ReferencePaths = new MockTaskItem[] {
       new MockTaskItem(
       itemSpec: @"C:\work\sdk\.dotnet\packs\Microsoft.NETCore.App.Ref\3.1.0-preview3.19553.2\ref\netcoreapp3.1\Microsoft.CSharp.dll",
@@ -7076,12 +7078,6 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
     }
   }
 }");
-        }
-
-        [Fact(Skip = "Pending")]
-        public void ItShouldErrorAndCallForRestoreWhenAssetFileDoesNotExist()
-        {
-            // When Microsoft.PackageDependencyResolution.targets is not imported, this is not set. So does not expect it
         }
 
         private class TestableGenerateDepsFile : GenerateDepsFile
