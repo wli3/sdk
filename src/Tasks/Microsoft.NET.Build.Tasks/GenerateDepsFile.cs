@@ -121,6 +121,7 @@ namespace Microsoft.NET.Build.Tasks
 
         private void WriteDepsFile(string depsFilePath)
         {
+
             ProjectContext projectContext;
             if (AssetsFilePath == null)
             {

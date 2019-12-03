@@ -32,8 +32,8 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
 
             var task = new TestableGenerateDepsFile()
             {
-                BuildEngine = new MockBuildEngine4(),
-                ProjectPath = @"c:\NETCoreCppCliTest.vcxproj",
+                BuildEngine = new MockBuildEngine(),
+                ProjectPath = @"C:\work\NETCoreCppCliTest\NETCoreCppCliTest\NETCoreCppCliTest.vcxproj",
                 DepsFilePath = depsFilePath,
                 TargetFramework = ".NETCoreApp,Version=v3.1",
                 AssemblyName = "NETCoreCppCliTest",
@@ -55,7 +55,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                     new string[]
                     {
                         @"C:\work\NETCoreCppCliTest\NETCoreCppCliTestB\Debug\NETCoreCppCliTestB.dll",
-                        @"C:\work\NETCoreCppCliTest\NETCoreCppCliTestC\Debug\NETCoreCppCliTestC.dll"
+                        @"C:\work\NETCoreCppCliTest\NETCoreCppCliTestB\Debug\NETCoreCppCliTestC.dll"
                     },
                 CompileReferences = Array.Empty<MockTaskItem>(),
                 ResolvedNuGetFiles = Array.Empty<MockTaskItem>(),
@@ -9196,16 +9196,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
 
             File.ReadAllText(depsFilePath).Should()
                 .Be(
-                    @"{
-  ""runtimeOptions"": {
-    ""tfm"": ""netcoreapp3.0"",
-    ""rollForward"": ""LatestMinor"",
-    ""framework"": {
-      ""name"": ""Microsoft.NETCore.App"",
-      ""version"": ""3.0.0-preview1.100""
-    }
-  }
-}");
+                    @"");
         }
 
         private class TestableGenerateDepsFile : GenerateDepsFile
