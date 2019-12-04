@@ -77,6 +77,7 @@ namespace Microsoft.NET.Build.Tasks
                             dependencyLibrary.Sha512 = library.Sha512;
                             dependencyLibrary.Path = library.Path;
                             dependencyLibrary.MSBuildProject = library.MSBuildProject;
+                            dependencyLibrary.AssembliesPath = lockFileTargetLibrary.RuntimeAssemblies.Select(r => r.Path).ToArray();
                         }
 
                         return dependencyLibrary;
@@ -811,6 +812,7 @@ namespace Microsoft.NET.Build.Tasks
             public string Sha512 { get; set; }
             public string Path { get; set; }
             public string MSBuildProject { get; set; }
+            public string[] AssembliesPath { get; set; }
 
             public bool ExcludeFromRuntime { get; set; }
 

@@ -57,7 +57,7 @@ namespace Microsoft.NET.Build.Tasks
             Func<ITaskItem, bool> isRuntimeAssembly)
         {
             IEnumerable<ITaskItem> directReferencePaths = referencePaths
-                .Where(r => !IsProjectReference(r) && !IsNuGetReference(r) && isRuntimeAssembly(r));
+                .Where(r => !IsNuGetReference(r) && isRuntimeAssembly(r)); // TODO wul IsProjectReference(r) is the problem. But where should it get handled in normal case?
 
             return CreateFilteredReferenceInfos(directReferencePaths, referenceSatellitePaths);
         }
