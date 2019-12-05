@@ -121,7 +121,6 @@ namespace Microsoft.NET.Build.Tasks
 
         private void WriteDepsFile(string depsFilePath)
         {
-
             ProjectContext projectContext;
             if (AssetsFilePath == null)
             {
@@ -153,8 +152,11 @@ namespace Microsoft.NET.Build.Tasks
             IEnumerable<ReferenceInfo> referenceAssemblyInfos =
                 ReferenceInfo.CreateReferenceInfos(ReferenceAssemblies);
 
+            // If there is generated asset file. The projectContext will have project reference.
+            // So remove it from directReferences to avoid duplication
+            var projectReferenceExistedInProjectContext = projectContext != null;
             IEnumerable<ReferenceInfo> directReferences =
-                ReferenceInfo.CreateDirectReferenceInfos(ReferencePaths, ReferenceSatellitePaths, isUserRuntimeAssembly);
+                ReferenceInfo.CreateDirectReferenceInfos(ReferencePaths, ReferenceSatellitePaths, projectReferenceExistedInProjectContext, isUserRuntimeAssembly);
 
             IEnumerable<ReferenceInfo> dependencyReferences =
                 ReferenceInfo.CreateDependencyReferenceInfos(ReferenceDependencyPaths, ReferenceSatellitePaths, isUserRuntimeAssembly);

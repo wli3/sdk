@@ -54,10 +54,17 @@ namespace Microsoft.NET.Build.Tasks
         public static IEnumerable<ReferenceInfo> CreateDirectReferenceInfos(
             IEnumerable<ITaskItem> referencePaths,
             IEnumerable<ITaskItem> referenceSatellitePaths,
+            bool projectReferenceExistedInProjectContext,
             Func<ITaskItem, bool> isRuntimeAssembly)
         {
+
+            bool filterOutProjectReferenceIfInProjectContextAlready(ITaskItem referencePath)
+            {
+                return (projectReferenceExistedInProjectContext ? !IsProjectReference(referencePath) : true);
+            }
+
             IEnumerable<ITaskItem> directReferencePaths = referencePaths
-                .Where(r => !IsNuGetReference(r) && isRuntimeAssembly(r)); // TODO wul IsProjectReference(r) is the problem. But where should it get handled in normal case?
+                .Where(r => filterOutProjectReferenceIfInProjectContextAlready(r) && !IsNuGetReference(r) && isRuntimeAssembly(r));
 
             return CreateFilteredReferenceInfos(directReferencePaths, referenceSatellitePaths);
         }
