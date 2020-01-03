@@ -230,12 +230,12 @@ Copyright (c) .NET Foundation. All rights reserved.
     ============================================================
     -->
 
+  <!--Do not use Input/Output for incremental build. Only write when file content is changed.
+      The skip writting logic is implemented in GenerateRuntimeConfigurationFiles task.-->
   <Target Name="GenerateBuildRuntimeConfigurationFiles"
           DependsOnTargets="_DefaultMicrosoftNETPlatformLibrary"
           BeforeTargets="CopyFilesToOutputDirectory"
-          Condition=" '$(GenerateRuntimeConfigurationFiles)' == 'true'"
-          Inputs="@(GenerateRuntimeConfigurationFilesInputs)"
-          Outputs="$(ProjectRuntimeConfigFilePath);$(ProjectRuntimeConfigDevFilePath)">
+          Condition=" '$(GenerateRuntimeConfigurationFiles)' == 'true'" >
 
     <PropertyGroup>
       <_IsRollForwardSupported Condition="'$(_TargetFrameworkVersionWithoutV)' &gt;= '3.0'">true</_IsRollForwardSupported>

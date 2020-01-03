@@ -170,7 +170,7 @@ namespace Microsoft.NET.Build.Tasks
                 AddAdditionalProbingPaths(config.RuntimeOptions, packageFolders);
             }
 
-            WriteToJsonFile(RuntimeConfigPath, config);
+            WriteToJsonFileWhenChanged(RuntimeConfigPath, config);
             _filesWritten.Add(new TaskItem(RuntimeConfigPath));
         }
 
@@ -324,7 +324,7 @@ namespace Microsoft.NET.Build.Tasks
 
             AddAdditionalProbingPaths(devConfig.RuntimeOptions, packageFolders);
 
-            WriteToJsonFile(RuntimeConfigDevPath, devConfig);
+            WriteToJsonFileWhenChanged(RuntimeConfigDevPath, devConfig);
             _filesWritten.Add(new TaskItem(RuntimeConfigDevPath));
         }
 
@@ -365,17 +365,54 @@ namespace Microsoft.NET.Build.Tasks
             return path;
         }
 
-        private static void WriteToJsonFile(string fileName, object value)
+        private static void WriteToJsonFileWhenChanged(string fileName, object value)
         {
-            JsonSerializer serializer = new JsonSerializer();
-            serializer.ContractResolver = new CamelCasePropertyNamesContractResolver();
-            serializer.Formatting = Formatting.Indented;
-            serializer.DefaultValueHandling = DefaultValueHandling.Ignore;
-
-            using (JsonTextWriter writer = new JsonTextWriter(new StreamWriter(File.Create(fileName))))
+            JsonSerializer serializer = new JsonSerializer
             {
-                serializer.Serialize(writer, value);
+                ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                Formatting = Formatting.Indented,
+                DefaultValueHandling = DefaultValueHandling.Ignore
+            };
+
+            using var newMemoryStream = new MemoryStream();
+            using JsonTextWriter writer = new JsonTextWriter(new StreamWriter(newMemoryStream));
+            serializer.Serialize(writer, value);
+            writer.Flush();
+
+            if (File.Exists(fileName))
+            {
+                using (MemoryStream existingMemoryStream = new MemoryStream())
+                using (FileStream existing = new FileStream(fileName, FileMode.Open, FileAccess.Read))
+                {
+                    existing.CopyTo(existingMemoryStream);
+
+                    if (CompareMemoryStreams(newMemoryStream, existingMemoryStream))
+                    {
+                        return;
+                    }
+                }
             }
+
+            using FileStream newOverride = File.Create(fileName);
+            newMemoryStream.Position = 0;
+            newMemoryStream.CopyTo(newOverride);
+            newOverride.Flush();
+        }
+
+        private static bool CompareMemoryStreams(MemoryStream left, MemoryStream right)
+        {
+            if (left.Length != right.Length)
+            {
+                return false;
+            }
+
+            left.Position = 0;
+            right.Position = 0;
+
+            var msArray1 = left.ToArray();
+            var msArray2 = right.ToArray();
+
+            return msArray1.SequenceEqual(msArray2);
         }
     }
 }

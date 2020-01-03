@@ -186,6 +186,40 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                     "There is no Microsoft.NETCore.App.");
         }
 
+        [Fact]
+        public void ItDoesNotWriteAgainWhenOutputIsTheSame()
+        {
+            var task = new TestableGenerateRuntimeConfigurationFiles
+            {
+                BuildEngine = new MockBuildEngine4(),
+                TargetFrameworkMoniker = ".NETCoreApp,Version=v3.0",
+                TargetFramework = "netcoreapp3.0",
+                RuntimeConfigPath = _runtimeConfigPath,
+                RuntimeConfigDevPath = _runtimeConfigDevPath,
+                RuntimeFrameworks = new[]
+                {
+                    new MockTaskItem(
+                        "Microsoft.NETCore.App",
+                        new Dictionary<string, string>
+                        {
+                            {"FrameworkName", "Microsoft.NETCore.App"}, {"Version", "3.0.0-preview1.100"}
+                        }
+                    )
+                },
+                RollForward = "LatestMinor"
+            };
+
+            Action a = () => task.PublicExecuteCore();
+            a.ShouldNotThrow();
+
+            DateTime firstWriteTime = File.GetLastWriteTimeUtc(_runtimeConfigPath);
+            Action secondRun = () => task.PublicExecuteCore();
+            secondRun.ShouldNotThrow();
+            DateTime sceondWriteTime = File.GetLastWriteTimeUtc(_runtimeConfigPath);
+
+            firstWriteTime.Should().Be(sceondWriteTime, "expect no second write");
+        }
+
 
         private class TestableGenerateRuntimeConfigurationFiles : GenerateRuntimeConfigurationFiles
         {
