@@ -571,7 +571,7 @@ Copyright (c) .NET Foundation. All rights reserved.
     ============================================================
     -->
   <Target Name="_ComputeNETCoreBuildOutputFiles"
-          DependsOnTargets="_GetAppHostPaths;_GetComHostPaths;_GetIjwHostPaths;GenerateBuildRuntimeConfigurationFiles"
+          DependsOnTargets="_GetAppHostPaths;_GetComHostPaths;_GetIjwHostPaths"
           BeforeTargets="AssignTargetPaths"
           Condition="'$(ComputeNETCoreBuildOutputFiles)' == 'true'">
 
