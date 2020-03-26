@@ -10,7 +10,7 @@ jobs:
 - job: debug_osx
   displayName: OSX Debug
   pool:
-    vmImage: macOS-10.13
+    vmImage: macOS-10.14
   variables:
     DOTNET_RUNTIME_ID: osx.10.12-x64
   steps:
@@ -126,7 +126,7 @@ jobs:
 - job: release_osx
   displayName: OSX Release
   pool:
-    vmImage: macOS-10.13
+    vmImage: macOS-10.14
   variables:
     DOTNET_RUNTIME_ID: osx.10.12-x64
   steps:
