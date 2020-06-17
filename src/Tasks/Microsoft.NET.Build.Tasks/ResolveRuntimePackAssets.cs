@@ -83,7 +83,9 @@ namespace Microsoft.NET.Build.Tasks
 
                 if (File.Exists(runtimeListPath))
                 {
-                    AddRuntimePackAssetsFromManifest(runtimePackAssets, runtimePackRoot, runtimeListPath, runtimePack);
+                    var targetingPackCombinedAndEmbedRuntime = runtimePack.HasMetadataValue(MetadataKeys.TargetingPackCombinedAndEmbedRuntime, "true");
+
+                    AddRuntimePackAssetsFromManifest(runtimePackAssets, runtimePackRoot, runtimeListPath, runtimePack, targetingPackCombinedAndEmbedRuntime);
                 }
                 else
                 {
@@ -95,7 +97,7 @@ namespace Microsoft.NET.Build.Tasks
         }
 
         private void AddRuntimePackAssetsFromManifest(List<ITaskItem> runtimePackAssets, string runtimePackRoot,
-            string runtimeListPath, ITaskItem runtimePack)
+            string runtimeListPath, ITaskItem runtimePack, bool targetingPackCombinedAndEmbedRuntime)
         {
             var assetSubPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -149,6 +151,10 @@ namespace Microsoft.NET.Build.Tasks
                 assetItem.SetMetadata("FileVersion", fileElement.Attribute("FileVersion")?.Value);
                 assetItem.SetMetadata("PublicKeyToken", fileElement.Attribute("PublicKeyToken")?.Value);
                 assetItem.SetMetadata("DropFromSingleFile", fileElement.Attribute("DropFromSingleFile")?.Value);
+                if (targetingPackCombinedAndEmbedRuntime)
+                {
+                    assetItem.SetMetadata(MetadataKeys.TargetingPackCombinedAndEmbedRuntime, "true");
+                }
 
                 runtimePackAssets.Add(assetItem);
             }

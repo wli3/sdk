@@ -35,6 +35,7 @@ namespace Microsoft.NET.Build.Tasks
         [Output]
         public ITaskItem[] UsedRuntimeFrameworks { get; set; }
 
+        private bool _targetingPackCombinedAndEmbedRuntime = false;
         public ResolveTargetingPackAssets()
         {
         }
@@ -87,14 +88,23 @@ namespace Microsoft.NET.Build.Tasks
 
                         string targetingPackDataPath = Path.Combine(targetingPackRoot, "data");
 
-                        string targetingPackDllFolder = Path.Combine(targetingPackRoot, "ref", targetingPackTargetFramework);
-                        
-                        //  Fall back to netcoreapp5.0 folder if looking for net5.0 and it's not found
-                        if (!Directory.Exists(targetingPackDllFolder) &&
-                            targetingPackTargetFramework.Equals("net5.0", StringComparison.OrdinalIgnoreCase))
+                        string targetingPackDllFolder;
+                        _targetingPackCombinedAndEmbedRuntime = targetingPackFormat.Equals(MetadataKeys.TargetingPackCombinedAndEmbedRuntime, StringComparison.OrdinalIgnoreCase);
+                        if (_targetingPackCombinedAndEmbedRuntime)
                         {
-                            targetingPackTargetFramework = "netcoreapp5.0";
+                            targetingPackDllFolder = Path.Combine(targetingPackRoot);
+                        }
+                        else
+                        {
                             targetingPackDllFolder = Path.Combine(targetingPackRoot, "ref", targetingPackTargetFramework);
+
+                            //  Fall back to netcoreapp5.0 folder if looking for net5.0 and it's not found
+                            if (!Directory.Exists(targetingPackDllFolder) &&
+                                targetingPackTargetFramework.Equals("net5.0", StringComparison.OrdinalIgnoreCase))
+                            {
+                                targetingPackTargetFramework = "netcoreapp5.0";
+                                targetingPackDllFolder = Path.Combine(targetingPackRoot, "ref", targetingPackTargetFramework);
+                            }
                         }
 
                         string platformManifestPath = Path.Combine(targetingPackDataPath, "PlatformManifest.txt");
@@ -184,8 +194,6 @@ namespace Microsoft.NET.Build.Tasks
 
             foreach (var fileElement in frameworkListDoc.Root.Elements("File"))
             {
-                string assemblyName = fileElement.Attribute("AssemblyName").Value;
-
                 if (!string.IsNullOrEmpty(profile))
                 {
                     var profileAttributeValue = fileElement.Attribute("Profile")?.Value;
@@ -212,7 +220,20 @@ namespace Microsoft.NET.Build.Tasks
                     continue;
                 }
 
-                var dllPath = Path.Combine(targetingPackDllFolder, assemblyName + ".dll");
+                // due to https://github.com/dotnet/sdk/issues/12098 we use "Path" instead of "AssemblyName" only
+                // when targetingPackCombinedAndEmbedRuntime=true. Since this type of package is new and consistent.
+                string dllPath;
+                if (_targetingPackCombinedAndEmbedRuntime)
+                {
+                    string assemblyPath = fileElement.Attribute("Path").Value;
+                    dllPath = Path.Combine(targetingPackDllFolder, assemblyPath);
+                }
+                else
+                {
+                    string assemblyName = fileElement.Attribute("AssemblyName").Value;
+                    dllPath = Path.Combine(targetingPackDllFolder, assemblyName + ".dll");
+                }
+
                 var referenceItem = CreateReferenceItem(dllPath, targetingPack);
 
                 referenceItem.SetMetadata("AssemblyVersion", fileElement.Attribute("AssemblyVersion").Value);
