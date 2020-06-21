@@ -35,7 +35,7 @@ namespace Microsoft.NET.Build.Tasks
         [Output]
         public ITaskItem[] UsedRuntimeFrameworks { get; set; }
 
-        private bool _targetingPackCombinedAndEmbedRuntime = false;
+        private bool _runtimeCopyLocal = false;
         public ResolveTargetingPackAssets()
         {
         }
@@ -89,8 +89,8 @@ namespace Microsoft.NET.Build.Tasks
                         string targetingPackDataPath = Path.Combine(targetingPackRoot, "data");
 
                         string targetingPackDllFolder;
-                        _targetingPackCombinedAndEmbedRuntime = targetingPackFormat.Equals(MetadataKeys.RuntimeCopyLocal, StringComparison.OrdinalIgnoreCase);
-                        if (_targetingPackCombinedAndEmbedRuntime)
+                        _runtimeCopyLocal = targetingPackFormat.Equals(MetadataKeys.RuntimeCopyLocal, StringComparison.OrdinalIgnoreCase);
+                        if (_runtimeCopyLocal)
                         {
                             targetingPackDllFolder = Path.Combine(targetingPackRoot);
                         }
@@ -221,9 +221,9 @@ namespace Microsoft.NET.Build.Tasks
                 }
 
                 // due to https://github.com/dotnet/sdk/issues/12098 we use "Path" instead of "AssemblyName" only
-                // when targetingPackCombinedAndEmbedRuntime=true. Since this type of package is new and consistent.
+                // when RuntimeCopyLocal=true. Since this type of package is new and consistent.
                 string dllPath;
-                if (_targetingPackCombinedAndEmbedRuntime)
+                if (_runtimeCopyLocal)
                 {
                     string assemblyPath = fileElement.Attribute("Path").Value;
                     dllPath = Path.Combine(targetingPackDllFolder, assemblyPath);

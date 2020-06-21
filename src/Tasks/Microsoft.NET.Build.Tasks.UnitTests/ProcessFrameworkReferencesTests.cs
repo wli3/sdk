@@ -78,7 +78,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
         }
 
         [Fact]
-        public void Given_KnownFrameworkReferences_with_TargetingPackCombinedAndEmbedRuntime_It_resolves_FrameworkReferences()
+        public void Given_KnownFrameworkReferences_with_RuntimeCopyLocal_It_resolves_FrameworkReferences()
         {
             var task = new ProcessFrameworkReferences();
 

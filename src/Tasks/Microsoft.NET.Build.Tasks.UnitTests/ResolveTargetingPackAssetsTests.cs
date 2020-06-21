@@ -10,7 +10,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
     public class ResolveTargetingPackAssetsTests
     {
         [Fact]
-        public void Given_ResolvedTargetingPacks_with_TargetingPackCombinedAndEmbedRuntime_It_resolves_TargetingPack()
+        public void Given_ResolvedTargetingPacks_with_RuntimeCopyLocal_It_resolves_TargetingPack()
         {
             string mockPackageDirectory = Path.Combine(Path.GetTempPath(), "dotnetSdkTests", Path.GetRandomFileName());
 
