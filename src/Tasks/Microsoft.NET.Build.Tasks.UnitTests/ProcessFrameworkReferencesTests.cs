@@ -118,8 +118,6 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
             task.TargetingPacks[0].GetMetadata(MetadataKeys.RuntimeFrameworkName).Should()
                 .Be("Microsoft.Windows.Ref");
             task.TargetingPacks[0].GetMetadata(MetadataKeys.RuntimeIdentifier).Should().Be("");
-            task.TargetingPacks[0].GetMetadata(MetadataKeys.TargetingPackFormat).Should()
-                .Be(MetadataKeys.TargetingPackCombinedAndEmbedRuntime);
         }
     }
 }

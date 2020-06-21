@@ -37,8 +37,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                         {MetadataKeys.PackageConflictPreferredPackages, "Microsoft.Windows.Ref;"},
                         {MetadataKeys.PackageDirectory, mockPackageDirectory},
                         {MetadataKeys.Path, mockPackageDirectory},
-                        {"TargetFramework", "net5.0"},
-                        {MetadataKeys.TargetingPackFormat, MetadataKeys.TargetingPackCombinedAndEmbedRuntime},
+                        {"TargetFramework", "net5.0"}
                     })
             };
 
