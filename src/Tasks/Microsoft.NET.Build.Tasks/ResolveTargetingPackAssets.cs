@@ -89,7 +89,7 @@ namespace Microsoft.NET.Build.Tasks
                         string targetingPackDataPath = Path.Combine(targetingPackRoot, "data");
 
                         string targetingPackDllFolder;
-                        _targetingPackCombinedAndEmbedRuntime = targetingPackFormat.Equals(MetadataKeys.TargetingPackCombinedAndEmbedRuntime, StringComparison.OrdinalIgnoreCase);
+                        _targetingPackCombinedAndEmbedRuntime = targetingPackFormat.Equals(MetadataKeys.RuntimeCopyLocal, StringComparison.OrdinalIgnoreCase);
                         if (_targetingPackCombinedAndEmbedRuntime)
                         {
                             targetingPackDllFolder = Path.Combine(targetingPackRoot);

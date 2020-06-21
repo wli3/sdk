@@ -83,7 +83,7 @@ namespace Microsoft.NET.Build.Tasks
 
                 if (File.Exists(runtimeListPath))
                 {
-                    var targetingPackCombinedAndEmbedRuntime = runtimePack.HasMetadataValue(MetadataKeys.TargetingPackCombinedAndEmbedRuntime, "true");
+                    var targetingPackCombinedAndEmbedRuntime = runtimePack.HasMetadataValue(MetadataKeys.RuntimeCopyLocal, "true");
 
                     AddRuntimePackAssetsFromManifest(runtimePackAssets, runtimePackRoot, runtimeListPath, runtimePack, targetingPackCombinedAndEmbedRuntime);
                 }
@@ -153,7 +153,7 @@ namespace Microsoft.NET.Build.Tasks
                 assetItem.SetMetadata("DropFromSingleFile", fileElement.Attribute("DropFromSingleFile")?.Value);
                 if (targetingPackCombinedAndEmbedRuntime)
                 {
-                    assetItem.SetMetadata(MetadataKeys.TargetingPackCombinedAndEmbedRuntime, "true");
+                    assetItem.SetMetadata(MetadataKeys.RuntimeCopyLocal, "true");
                 }
 
                 runtimePackAssets.Add(assetItem);
