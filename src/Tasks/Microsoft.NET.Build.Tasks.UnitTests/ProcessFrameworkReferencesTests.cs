@@ -95,9 +95,16 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                 new MockTaskItem("Microsoft.Windows.Ref",
                     new Dictionary<string, string>()
                     {
-                        { "TargetFramework", "netcoreapp5.0" },
-                        { "Version", "5.0.0-preview1" },
-                        { MetadataKeys.TargetingPackCombinedAndEmbedRuntime, "true" },
+                        {"TargetFramework" , "netcoreapp5.0"},
+                        {"RuntimeFrameworkName" , "Microsoft.Windows.Ref"},
+                        {"DefaultRuntimeFrameworkVersion" , "5.0.0-preview1"},
+                        {"LatestRuntimeFrameworkVersion" , "5.0.0-preview1"},
+                        {"TargetingPackName" , "Microsoft.Windows.Ref"},
+                        {"TargetingPackVersion" , "5.0.0-preview1"},
+                        {"RuntimePackNamePatterns" , "Microsoft.Windows.Ref"},
+                        {"RuntimePackRuntimeIdentifiers" , "any"},
+                        {"RuntimeCopyLocal" , "true"},
+                        {"IsWindowsOnly" , "true"},
                     })
             };
 
