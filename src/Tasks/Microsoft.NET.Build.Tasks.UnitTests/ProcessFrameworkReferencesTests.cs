@@ -112,7 +112,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
 
             task.PackagesToDownload.Length.Should().Be(1);
 
-            task.RuntimeFrameworks.Length.Should().Be(0,
+            task.RuntimeFrameworks.Should().BeNullOrEmpty(
                 "Should not contain RuntimeCopyLocal framework, or it will be put into runtimeconfig.json");
 
             task.TargetingPacks.Length.Should().Be(1);
@@ -120,7 +120,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
             task.TargetingPacks[0].GetMetadata(MetadataKeys.NuGetPackageId).Should().Be("Microsoft.Windows.Ref");
             task.TargetingPacks[0].GetMetadata(MetadataKeys.NuGetPackageVersion).Should().Be("5.0.0-preview1");
             task.TargetingPacks[0].GetMetadata(MetadataKeys.PackageConflictPreferredPackages).Should()
-                .Be("Microsoft.Windows.Ref;");
+                .Be("Microsoft.Windows.Ref");
             task.TargetingPacks[0].GetMetadata(MetadataKeys.RuntimeFrameworkName).Should()
                 .Be("Microsoft.Windows.Ref");
             task.TargetingPacks[0].GetMetadata(MetadataKeys.RuntimeIdentifier).Should().Be("");

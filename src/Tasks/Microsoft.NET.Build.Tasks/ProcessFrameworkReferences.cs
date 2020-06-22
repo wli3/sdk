@@ -143,7 +143,7 @@ namespace Microsoft.NET.Build.Tasks
 
                 //  Add targeting pack and all known runtime packs to "preferred packages" list.
                 //  These are packages that will win in conflict resolution for assets that have identical assembly and file versions
-                List<string> preferredPackages = new List<string>();
+                var preferredPackages = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
                 preferredPackages.Add(knownFrameworkReference.TargetingPackName);
 
                 if (selectedRuntimePack != null)
@@ -236,7 +236,8 @@ namespace Microsoft.NET.Build.Tasks
                 {
                     bool processedPrimaryRuntimeIdentifier = false;
 
-                    if ((SelfContained || ReadyToRunEnabled) &&
+                    if ((selectedRuntimePack != null && selectedRuntimePack.Value.RuntimeCopyLocal) 
+                        || (SelfContained || ReadyToRunEnabled) &&
                         !string.IsNullOrEmpty(RuntimeIdentifier) &&
                         selectedRuntimePack != null &&
                         !string.IsNullOrEmpty(selectedRuntimePack?.RuntimePackNamePatterns))
@@ -282,7 +283,7 @@ namespace Microsoft.NET.Build.Tasks
                 }
 
 
-                if (!string.IsNullOrEmpty(knownFrameworkReference.RuntimeFrameworkName))
+                if (!string.IsNullOrEmpty(knownFrameworkReference.RuntimeFrameworkName) && !knownFrameworkReference.RuntimeCopyLocal)
                 {
                     TaskItem runtimeFramework = new TaskItem(knownFrameworkReference.RuntimeFrameworkName);
 
@@ -635,6 +636,9 @@ namespace Microsoft.NET.Build.Tasks
 
             public bool IsWindowsOnly => _item.HasMetadataValue("IsWindowsOnly", "true");
 
+            public bool RuntimeCopyLocal =>
+                _item.HasMetadataValue(MetadataKeys.RuntimeCopyLocal, "true");
+
             public string Profile => _item.GetMetadata("Profile");
 
             public NuGetFramework TargetFramework { get; }
@@ -679,6 +683,9 @@ namespace Microsoft.NET.Build.Tasks
             public string IsTrimmable => _item.GetMetadata(MetadataKeys.IsTrimmable);
 
             public bool IsWindowsOnly => _item.HasMetadataValue("IsWindowsOnly", "true");
+
+            public bool RuntimeCopyLocal =>
+                            _item.HasMetadataValue(MetadataKeys.RuntimeCopyLocal, "true");
 
             public string [] RuntimePackLabels { get; }
 
