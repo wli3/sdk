@@ -236,13 +236,21 @@ namespace Microsoft.NET.Build.Tasks
                 {
                     bool processedPrimaryRuntimeIdentifier = false;
 
-                    if ((selectedRuntimePack != null && selectedRuntimePack.Value.RuntimeCopyLocal) 
-                        || (SelfContained || ReadyToRunEnabled) &&
-                        !string.IsNullOrEmpty(RuntimeIdentifier) &&
-                        selectedRuntimePack != null &&
-                        !string.IsNullOrEmpty(selectedRuntimePack?.RuntimePackNamePatterns))
+                    bool HasRuntimeCopyLocal()
                     {
+                        return selectedRuntimePack != null && selectedRuntimePack.Value.RuntimeCopyLocal;
+                    }
 
+                    bool RuntimeRequiredByRuntimeDependentDeployment()
+                    {
+                        return (SelfContained || ReadyToRunEnabled) &&
+                               !string.IsNullOrEmpty(RuntimeIdentifier) &&
+                               selectedRuntimePack != null &&
+                               !string.IsNullOrEmpty(selectedRuntimePack.Value.RuntimePackNamePatterns);
+                    }
+
+                    if (HasRuntimeCopyLocal()|| RuntimeRequiredByRuntimeDependentDeployment())
+                    {
                         //  Find other KnownFrameworkReferences that map to the same runtime pack, if any
                         List<string> additionalFrameworkReferencesForRuntimePack = null;
                         foreach (var additionalKnownFrameworkReference in knownFrameworkReferencesForTargetFramework)
