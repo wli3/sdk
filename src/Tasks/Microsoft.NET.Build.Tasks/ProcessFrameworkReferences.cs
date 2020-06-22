@@ -266,7 +266,7 @@ namespace Microsoft.NET.Build.Tasks
                             }
                         }
 
-                        ProcessRuntimeIdentifier(RuntimeIdentifier, selectedRuntimePack.Value, runtimePackVersion, additionalFrameworkReferencesForRuntimePack,
+                        ProcessRuntimeIdentifier(HasRuntimeCopyLocal() ? "any" : RuntimeIdentifier, selectedRuntimePack.Value, runtimePackVersion, additionalFrameworkReferencesForRuntimePack,
                             unrecognizedRuntimeIdentifiers, unavailableRuntimePacks, runtimePacks, packagesToDownload, isTrimmable);
 
                         processedPrimaryRuntimeIdentifier = true;
@@ -318,7 +318,7 @@ namespace Microsoft.NET.Build.Tasks
 
             if (packagesToDownload.Any())
             {
-                PackagesToDownload = packagesToDownload.ToArray();
+                PackagesToDownload = packagesToDownload.Distinct(new PackageToDownloadComparer<ITaskItem>()).ToArray();
             }
 
             if (runtimeFrameworks.Any())
@@ -563,6 +563,42 @@ namespace Microsoft.NET.Build.Tasks
             UseDefaultVersionWithLatestRuntimePack,
             UseDefaultVersion,
             UseLatestVersion,
+        }
+
+        /// <summary>
+        /// Compare PackageToDownload by NuGetPackageId and NuGetPackageVersion.
+        /// Used to deduplicate PackageToDownloads
+        /// </summary>
+        private class PackageToDownloadComparer<T> : IEqualityComparer<T> where T : ITaskItem
+        {
+            public bool Equals(T x, T y)
+            {
+                if (x is null || y is null)
+                {
+                    return false;
+                }
+
+                if (!x.GetMetadata(MetadataKeys.NuGetPackageId).Equals(y.GetMetadata(MetadataKeys.NuGetPackageId),
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+
+                if (!x.GetMetadata(MetadataKeys.NuGetPackageVersion)
+                    .Equals(y.GetMetadata(MetadataKeys.NuGetPackageVersion), StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+
+                return true;
+            }
+
+            public int GetHashCode(T obj)
+            {
+                return
+                    StringComparer.OrdinalIgnoreCase.GetHashCode(obj.GetMetadata(MetadataKeys.NuGetPackageId)) ^
+                    StringComparer.OrdinalIgnoreCase.GetHashCode(obj.GetMetadata(MetadataKeys.NuGetPackageVersion));
+            }
         }
 
         private RuntimePatchRequest GetRuntimePatchRequest(ITaskItem frameworkReference)
