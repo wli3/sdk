@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using FluentAssertions;
+using Microsoft.Build.Framework;
 using Xunit;
 
 namespace Microsoft.NET.Build.Tasks.UnitTests
@@ -80,33 +82,37 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
         [Fact]
         public void Given_KnownFrameworkReferences_with_RuntimeCopyLocal_It_resolves_FrameworkReferences()
         {
-            var task = new ProcessFrameworkReferences();
-
-            task.EnableTargetingPackDownload = true;
-            task.TargetFrameworkIdentifier = ".NETCoreApp";
-            task.TargetFrameworkVersion = "5.0";
-            task.FrameworkReferences = new[]
+            var task = new ProcessFrameworkReferences
             {
-                new MockTaskItem("Microsoft.Windows.Ref", new Dictionary<string, string>())
+                BuildEngine = new MockNeverCacheBuildEngine4(),
+                EnableTargetingPackDownload = true,
+                TargetFrameworkIdentifier = ".NETCoreApp",
+                TargetFrameworkVersion = "5.0",
+                RuntimeGraphPath =
+                    @"C:\work\sdk\artifacts\bin\redist\Debug\dotnet\sdk\5.0.100-dev\RuntimeIdentifierGraph.json",
+                FrameworkReferences =
+                    new[] {new MockTaskItem("Microsoft.Windows.Ref", new Dictionary<string, string>())},
+                KnownFrameworkReferences = new[]
+                {
+                    new MockTaskItem("Microsoft.Windows.Ref",
+                        new Dictionary<string, string>()
+                        {
+                            {"TargetFramework", "netcoreapp5.0"},
+                            {"RuntimeFrameworkName", "Microsoft.Windows.Ref"},
+                            {"DefaultRuntimeFrameworkVersion", "5.0.0-preview1"},
+                            {"LatestRuntimeFrameworkVersion", "5.0.0-preview1"},
+                            {"TargetingPackName", "Microsoft.Windows.Ref"},
+                            {"TargetingPackVersion", "5.0.0-preview1"},
+                            {"RuntimePackNamePatterns", "Microsoft.Windows.Ref"},
+                            {"RuntimePackRuntimeIdentifiers", "any"},
+                            {MetadataKeys.RuntimeCopyLocal, "true"},
+                            {"IsWindowsOnly", "true"},
+                        })
+                }
             };
 
-            task.KnownFrameworkReferences = new[]
-            {
-                new MockTaskItem("Microsoft.Windows.Ref",
-                    new Dictionary<string, string>()
-                    {
-                        {"TargetFramework", "netcoreapp5.0"},
-                        {"RuntimeFrameworkName", "Microsoft.Windows.Ref"},
-                        {"DefaultRuntimeFrameworkVersion", "5.0.0-preview1"},
-                        {"LatestRuntimeFrameworkVersion", "5.0.0-preview1"},
-                        {"TargetingPackName", "Microsoft.Windows.Ref"},
-                        {"TargetingPackVersion", "5.0.0-preview1"},
-                        {"RuntimePackNamePatterns", "Microsoft.Windows.Ref"},
-                        {"RuntimePackRuntimeIdentifiers", "any"},
-                        {MetadataKeys.RuntimeCopyLocal, "true"},
-                        {"IsWindowsOnly", "true"},
-                    })
-            };
+            // TODO wul not hard code it
+
 
             task.Execute().Should().BeTrue();
 
