@@ -442,6 +442,11 @@ namespace Microsoft.NET.Build.Tasks
                         runtimePackItem.SetMetadata(MetadataKeys.RuntimeIdentifier, runtimePackRuntimeIdentifier);
                         runtimePackItem.SetMetadata(MetadataKeys.IsTrimmable, isTrimmable);
 
+                        if (selectedRuntimePack.RuntimeCopyLocal)
+                        {
+                            runtimePackItem.SetMetadata(MetadataKeys.RuntimeCopyLocal, "true");
+                        }
+
                         if (additionalFrameworkReferencesForRuntimePack != null)
                         {
                             runtimePackItem.SetMetadata(MetadataKeys.AdditionalFrameworkReferences, string.Join(";", additionalFrameworkReferencesForRuntimePack));

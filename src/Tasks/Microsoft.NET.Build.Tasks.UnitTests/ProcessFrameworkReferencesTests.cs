@@ -134,7 +134,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
             task.RuntimePacks.Length.Should().Be(1);
             task.RuntimePacks[0].ItemSpec.Should().Be("Microsoft.Windows.Ref");
             task.RuntimePacks[0].GetMetadata(MetadataKeys.FrameworkName).Should().Be("Microsoft.Windows.Ref");
-            task.RuntimePacks[0].GetMetadata(MetadataKeys.NuGetPackageId).Should().Be("5.0.0-preview1");
+            task.RuntimePacks[0].GetMetadata(MetadataKeys.NuGetPackageVersion).Should().Be("5.0.0-preview1");
             task.RuntimePacks[0].GetMetadata(MetadataKeys.RuntimeCopyLocal).Should().Be("true");
         }
     }
