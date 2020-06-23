@@ -170,15 +170,19 @@ namespace Microsoft.NET.Build.Tasks
             Dictionary<string, SingleProjectInfo> referenceProjects =
                 SingleProjectInfo.CreateProjectReferenceInfos(ReferencePaths, ReferenceSatellitePaths, isUserRuntimeAssembly);
 
+            bool NotSingleFile(ITaskItem taskItem)
+            {
+                return !IsSingleFile || !taskItem.GetMetadata(MetadataKeys.DropFromSingleFile).Equals("true");
+            }
+
             IEnumerable<RuntimePackAssetInfo> runtimePackAssets =
                 IsSelfContained
-                    ? RuntimePackAssets.Where(item =>
-                            !IsSingleFile || !item.GetMetadata(MetadataKeys.DropFromSingleFile).Equals("true"))
-                        .Select(item => RuntimePackAssetInfo.FromItem(item))
+                    ? RuntimePackAssets.Where(NotSingleFile)
+                        .Select(RuntimePackAssetInfo.FromItem)
                     : RuntimePackAssets.Where(item =>
-                            (!IsSingleFile || !item.GetMetadata(MetadataKeys.DropFromSingleFile).Equals("true")) &&
-                            item.HasMetadataValue(MetadataKeys.RuntimeCopyLocal, "true"))
-                        .Select(item => RuntimePackAssetInfo.FromItem(item));
+                            NotSingleFile(item)
+                            && item.HasMetadataValue(MetadataKeys.RuntimeCopyLocal, "true"))
+                        .Select(RuntimePackAssetInfo.FromItem);
 
             DependencyContextBuilder builder;
             if (projectContext != null)
