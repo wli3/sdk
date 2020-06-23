@@ -384,7 +384,7 @@ Copyright (c) .NET Foundation. All rights reserved.
     
     <ItemGroup>
       <ReferenceCopyLocalPaths Include="@(RuntimePackAsset)"
-                               Condition="('$(CopyLocalLockFileAssemblies)' == 'true' and '$(SelfContained)' == 'true') or '%(RuntimePackAsset.RuntimeCopyLocal)' == 'true'" />
+                               Condition="'$(CopyLocalLockFileAssemblies)' == 'true' and ('$(SelfContained)' == 'true' or '%(RuntimePackAsset.RuntimeCopyLocal)') == 'true'" />
     </ItemGroup>
   
   
