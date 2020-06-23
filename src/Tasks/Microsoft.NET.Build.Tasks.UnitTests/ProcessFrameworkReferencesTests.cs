@@ -82,6 +82,11 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
         [Fact]
         public void Given_KnownFrameworkReferences_with_RuntimeCopyLocal_It_resolves_FrameworkReferences()
         {
+            const string minimalRuntimeGraphPathContent =
+                "{\"runtimes\":{\"any\":{\"#import\":[\"base\"]},\"base\":{\"#import\":[]}}}";
+            var runtimeGraphPathPath = Path.GetTempFileName();
+            File.WriteAllText(runtimeGraphPathPath, minimalRuntimeGraphPathContent);
+
             var task = new ProcessFrameworkReferences
             {
                 BuildEngine = new MockNeverCacheBuildEngine4(),
@@ -89,7 +94,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                 TargetFrameworkIdentifier = ".NETCoreApp",
                 TargetFrameworkVersion = "5.0",
                 RuntimeGraphPath =
-                    @"C:\work\sdk\artifacts\bin\redist\Debug\dotnet\sdk\5.0.100-dev\RuntimeIdentifierGraph.json",
+                    runtimeGraphPathPath,
                 FrameworkReferences =
                     new[] {new MockTaskItem("Microsoft.Windows.Ref", new Dictionary<string, string>())},
                 KnownFrameworkReferences = new[]
@@ -110,8 +115,6 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                         })
                 }
             };
-
-            // TODO wul not hard code it
 
 
             task.Execute().Should().BeTrue();
