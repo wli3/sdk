@@ -142,7 +142,7 @@ namespace Microsoft.NET.Build.Tasks
 
                 //  Add targeting pack and all known runtime packs to "preferred packages" list.
                 //  These are packages that will win in conflict resolution for assets that have identical assembly and file versions
-                List<string> preferredPackages = new List<string>();
+                var preferredPackages = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
                 preferredPackages.Add(knownFrameworkReference.TargetingPackName);
 
                 if (selectedRuntimePack != null)
@@ -253,12 +253,21 @@ namespace Microsoft.NET.Build.Tasks
 
                 bool processedPrimaryRuntimeIdentifier = false;
 
-                if ((SelfContained || ReadyToRunEnabled) &&
-                    !string.IsNullOrEmpty(RuntimeIdentifier) &&
-                    selectedRuntimePack != null &&
-                    !string.IsNullOrEmpty(selectedRuntimePack?.RuntimePackNamePatterns))
+                bool HasRuntimeCopyLocal()
                 {
-
+                    return selectedRuntimePack != null && selectedRuntimePack.Value.RuntimeCopyLocal;
+                }
+                
+                bool RuntimeRequiredByRuntimeDependentDeployment()
+                {
+                    return (SelfContained || ReadyToRunEnabled) &&
+                           !string.IsNullOrEmpty(RuntimeIdentifier) &&
+                           selectedRuntimePack != null &&
+                           !string.IsNullOrEmpty(selectedRuntimePack.Value.RuntimePackNamePatterns);
+                }
+                
+                if (HasRuntimeCopyLocal()|| RuntimeRequiredByRuntimeDependentDeployment())
+                {
                     //  Find other KnownFrameworkReferences that map to the same runtime pack, if any
                     List<string> additionalFrameworkReferencesForRuntimePack = null;
                     foreach (var additionalKnownFrameworkReference in knownFrameworkReferencesForTargetFramework)
@@ -274,7 +283,7 @@ namespace Microsoft.NET.Build.Tasks
                         }
                     }
 
-                    ProcessRuntimeIdentifier(RuntimeIdentifier, runtimePackForRuntimeIDProcessing, runtimePackVersion, additionalFrameworkReferencesForRuntimePack,
+                    ProcessRuntimeIdentifier(HasRuntimeCopyLocal() ? "any" : RuntimeIdentifier, runtimePackForRuntimeIDProcessing, runtimePackVersion, additionalFrameworkReferencesForRuntimePack,
                         unrecognizedRuntimeIdentifiers, unavailableRuntimePacks, runtimePacks, packagesToDownload, isTrimmable, includeInPackageDownload);
 
                     processedPrimaryRuntimeIdentifier = true;
@@ -297,7 +306,7 @@ namespace Microsoft.NET.Build.Tasks
                     }
                 }
 
-                if (!string.IsNullOrEmpty(knownFrameworkReference.RuntimeFrameworkName))
+                if (!string.IsNullOrEmpty(knownFrameworkReference.RuntimeFrameworkName) && !knownFrameworkReference.RuntimeCopyLocal)
                 {
                     TaskItem runtimeFramework = new TaskItem(knownFrameworkReference.RuntimeFrameworkName);
 
@@ -324,7 +333,7 @@ namespace Microsoft.NET.Build.Tasks
 
             if (packagesToDownload.Any())
             {
-                PackagesToDownload = packagesToDownload.ToArray();
+                PackagesToDownload = packagesToDownload.Distinct(new PackageToDownloadComparer<ITaskItem>()).ToArray();
             }
 
             if (runtimeFrameworks.Any())
@@ -449,6 +458,11 @@ namespace Microsoft.NET.Build.Tasks
                         runtimePackItem.SetMetadata(MetadataKeys.RuntimeIdentifier, runtimePackRuntimeIdentifier);
                         runtimePackItem.SetMetadata(MetadataKeys.IsTrimmable, isTrimmable);
 
+                        if (selectedRuntimePack.RuntimeCopyLocal)
+                        {
+                            runtimePackItem.SetMetadata(MetadataKeys.RuntimeCopyLocal, "true");
+                        }
+
                         if (additionalFrameworkReferencesForRuntimePack != null)
                         {
                             runtimePackItem.SetMetadata(MetadataKeys.AdditionalFrameworkReferences, string.Join(";", additionalFrameworkReferencesForRuntimePack));
@@ -572,6 +586,42 @@ namespace Microsoft.NET.Build.Tasks
             UseLatestVersion,
         }
 
+        /// <summary>
+        /// Compare PackageToDownload by NuGetPackageId and NuGetPackageVersion.
+        /// Used to deduplicate PackageToDownloads
+        /// </summary>
+        private class PackageToDownloadComparer<T> : IEqualityComparer<T> where T : ITaskItem
+        {
+            public bool Equals(T x, T y)
+            {
+                if (x is null || y is null)
+                {
+                    return false;
+                }
+
+                if (!x.GetMetadata(MetadataKeys.NuGetPackageId).Equals(y.GetMetadata(MetadataKeys.NuGetPackageId),
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+
+                if (!x.GetMetadata(MetadataKeys.NuGetPackageVersion)
+                    .Equals(y.GetMetadata(MetadataKeys.NuGetPackageVersion), StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+
+                return true;
+            }
+
+            public int GetHashCode(T obj)
+            {
+                return
+                    StringComparer.OrdinalIgnoreCase.GetHashCode(obj.GetMetadata(MetadataKeys.NuGetPackageId)) ^
+                    StringComparer.OrdinalIgnoreCase.GetHashCode(obj.GetMetadata(MetadataKeys.NuGetPackageVersion));
+            }
+        }
+
         private RuntimePatchRequest GetRuntimePatchRequest(ITaskItem frameworkReference)
         {
             string value = frameworkReference?.GetMetadata("TargetLatestRuntimePatch");
@@ -645,6 +695,9 @@ namespace Microsoft.NET.Build.Tasks
             public string RuntimePackRuntimeIdentifiers => _item.GetMetadata(MetadataKeys.RuntimePackRuntimeIdentifiers);
 
             public bool IsWindowsOnly => _item.HasMetadataValue("IsWindowsOnly", "true");
+            
+            public bool RuntimeCopyLocal =>
+                _item.HasMetadataValue(MetadataKeys.RuntimeCopyLocal, "true");
 
             public string Profile => _item.GetMetadata("Profile");
 
@@ -689,7 +742,10 @@ namespace Microsoft.NET.Build.Tasks
 
             public bool IsWindowsOnly => _item.HasMetadataValue("IsWindowsOnly", "true");
 
-            public string [] RuntimePackLabels { get; }
+            public bool RuntimeCopyLocal =>
+                _item.HasMetadataValue(MetadataKeys.RuntimeCopyLocal, "true");
+
+            public string[] RuntimePackLabels { get; }
 
             public NuGetFramework TargetFramework { get; }
         }
