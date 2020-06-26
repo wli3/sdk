@@ -76,67 +76,6 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
         }
 
         [Fact]
-        public void Given_KnownFrameworkReferences_with_RuntimeCopyLocal_It_resolves_FrameworkReferences2()
-        {
-            const string minimalRuntimeGraphPathContent =
-                "{\"runtimes\":{\"any\":{\"#import\":[\"base\"]},\"base\":{\"#import\":[]}}}";
-            var runtimeGraphPathPath = Path.GetTempFileName();
-            File.WriteAllText(runtimeGraphPathPath, minimalRuntimeGraphPathContent);
-
-            var task = new ProcessFrameworkReferences
-            {
-                BuildEngine = new MockNeverCacheBuildEngine4(),
-                EnableTargetingPackDownload = true,
-                TargetFrameworkIdentifier = ".NETCoreApp",
-                TargetFrameworkVersion = "5.0",
-                RuntimeGraphPath =
-                    runtimeGraphPathPath,
-                FrameworkReferences =
-                    new[] { new MockTaskItem("Microsoft.Windows.SDK.NET.Ref", new Dictionary<string, string>()) },
-                KnownFrameworkReferences = new[]
-                {
-                    new MockTaskItem("Microsoft.Windows.SDK.NET.Ref",
-                        new Dictionary<string, string>()
-                        {
-                            {"TargetFramework", "netcoreapp5.0"},
-                            {"RuntimeFrameworkName", "Microsoft.Windows.SDK.NET.Ref"},
-                            {"DefaultRuntimeFrameworkVersion", "5.0.0-preview1"},
-                            {"LatestRuntimeFrameworkVersion", "5.0.0-preview1"},
-                            {"TargetingPackName", "Microsoft.Windows.SDK.NET.Ref"},
-                            {"TargetingPackVersion", "5.0.0-preview1"},
-                            {"RuntimePackNamePatterns", "Microsoft.Windows.SDK.NET.Ref"},
-                            {"RuntimePackRuntimeIdentifiers", "any"},
-                            {MetadataKeys.RuntimeCopyLocal, "true"},
-                            {"IsWindowsOnly", "true"},
-                        })
-                }
-            };
-
-            task.Execute().Should().BeTrue();
-
-            task.PackagesToDownload.Length.Should().Be(1);
-
-            task.RuntimeFrameworks.Should().BeNullOrEmpty(
-                "Should not contain RuntimeCopyLocal framework, or it will be put into runtimeconfig.json");
-
-            task.TargetingPacks.Length.Should().Be(1);
-            task.TargetingPacks[0].ItemSpec.Should().Be("Microsoft.Windows.SDK.NET.Ref");
-            task.TargetingPacks[0].GetMetadata(MetadataKeys.NuGetPackageId).Should().Be("Microsoft.Windows.SDK.NET.Ref");
-            task.TargetingPacks[0].GetMetadata(MetadataKeys.NuGetPackageVersion).Should().Be("5.0.0-preview1");
-            task.TargetingPacks[0].GetMetadata(MetadataKeys.PackageConflictPreferredPackages).Should()
-                .Be("Microsoft.Windows.SDK.NET.Ref");
-            task.TargetingPacks[0].GetMetadata(MetadataKeys.RuntimeFrameworkName).Should()
-                .Be("Microsoft.Windows.SDK.NET.Ref");
-            task.TargetingPacks[0].GetMetadata(MetadataKeys.RuntimeIdentifier).Should().Be("");
-
-            task.RuntimePacks.Length.Should().Be(1);
-            task.RuntimePacks[0].ItemSpec.Should().Be("Microsoft.Windows.SDK.NET.Ref");
-            task.RuntimePacks[0].GetMetadata(MetadataKeys.FrameworkName).Should().Be("Microsoft.Windows.SDK.NET.Ref");
-            task.RuntimePacks[0].GetMetadata(MetadataKeys.NuGetPackageVersion).Should().Be("5.0.0-preview1");
-            task.RuntimePacks[0].GetMetadata(MetadataKeys.RuntimeCopyLocal).Should().Be("true");
-        }
-
-        [Fact]
         public void Given_KnownFrameworkReferences_with_RuntimeCopyLocal_It_resolves_FrameworkReferences()
         {
             const string minimalRuntimeGraphPathContent =

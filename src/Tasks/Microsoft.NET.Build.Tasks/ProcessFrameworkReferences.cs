@@ -82,6 +82,8 @@ namespace Microsoft.NET.Build.Tasks
         [Output]
         public ITaskItem[] UnavailableRuntimePacks { get; set; }
 
+        private Version _normalizedTargetFrameworkVersion;
+
         protected override void ExecuteCore()
         {
             //  Perf optimization: If there are no FrameworkReference items, then don't do anything
@@ -91,36 +93,13 @@ namespace Microsoft.NET.Build.Tasks
                 return;
             }
 
-            var normalizedTargetFrameworkVersion = NormalizeVersion(new Version(TargetFrameworkVersion));
+            _normalizedTargetFrameworkVersion = NormalizeVersion(new Version(TargetFrameworkVersion));
 
-            bool MatchingTargetFrameworkAndVersion(KnownFrameworkReference kfr)
-            {
-                bool targetFrameworkMatches;
-                if (string.IsNullOrEmpty(TargetPlatformVersion) && string.IsNullOrEmpty(TargetFrameworkIdentifier))
-                {
-                    targetFrameworkMatches = kfr.TargetFramework.Framework.Equals(TargetFrameworkIdentifier,
-                                                 StringComparison.OrdinalIgnoreCase)
-                                             && NormalizeVersion(kfr.TargetFramework.Version) ==
-                                             normalizedTargetFrameworkVersion;
-                }
-                else
-                {
-                    targetFrameworkMatches = kfr.TargetFramework.Framework.Equals(TargetFrameworkIdentifier,
-                                                 StringComparison.OrdinalIgnoreCase)
-                                             && kfr.TargetFramework.Platform.Equals(TargetPlatformIdentifier,
-                                                 StringComparison.OrdinalIgnoreCase)
-                                             && kfr.TargetFramework.PlatformVersion.Equals(TargetPlatformVersion,
-                                                 StringComparison.OrdinalIgnoreCase)
-                                             && NormalizeVersion(kfr.TargetFramework.Version) ==
-                                             normalizedTargetFrameworkVersion;
-                }
-
-                return targetFrameworkMatches;
-            }
-
-            var knownFrameworkReferencesForTargetFramework = KnownFrameworkReferences.Select(item => new KnownFrameworkReference(item))
-                .Where(MatchingTargetFrameworkAndVersion)
-                .ToList();
+            var knownFrameworkReferencesForTargetFramework =
+                KnownFrameworkReferences
+                    .Select(item => new KnownFrameworkReference(item))
+                    .Where(TargetFrameworkPropertiesMatches)
+                    .ToList();
 
             //  Get known runtime packs from known framework references.
             //  Only use items where the framework reference name matches the RuntimeFrameworkName.
@@ -135,7 +114,7 @@ namespace Microsoft.NET.Build.Tasks
             knownRuntimePacksForTargetFramework.AddRange(
                 KnownRuntimePacks.Select(item => new KnownRuntimePack(item))
                                  .Where(krp => krp.TargetFramework.Framework.Equals(TargetFrameworkIdentifier, StringComparison.OrdinalIgnoreCase) &&
-                                               NormalizeVersion(krp.TargetFramework.Version) == normalizedTargetFrameworkVersion));
+                                               NormalizeVersion(krp.TargetFramework.Version) == _normalizedTargetFrameworkVersion));
 
             var frameworkReferenceMap = FrameworkReferences.ToDictionary(fr => fr.ItemSpec, StringComparer.OrdinalIgnoreCase);
 
@@ -353,7 +332,7 @@ namespace Microsoft.NET.Build.Tasks
                     Log.LogError(Strings.Crossgen2RequiresSelfContained);
                     return;
                 }
-                if (!AddCrossgen2Package(normalizedTargetFrameworkVersion, packagesToDownload))
+                if (!AddCrossgen2Package(_normalizedTargetFrameworkVersion, packagesToDownload))
                 {
                     Log.LogError(Strings.ReadyToRunNoValidRuntimePackageError);
                     return;
@@ -384,6 +363,38 @@ namespace Microsoft.NET.Build.Tasks
             {
                 UnavailableRuntimePacks = unavailableRuntimePacks.ToArray();
             }
+        }
+
+        private bool TargetFrameworkPropertiesMatches(KnownFrameworkReference knownFrameworkReference)
+        {
+            bool targetFrameworkMatches;
+            if (string.IsNullOrEmpty(TargetPlatformVersion) &&
+                string.IsNullOrEmpty(TargetFrameworkIdentifier))
+            {
+                targetFrameworkMatches = knownFrameworkReference.TargetFramework.Framework.Equals(
+                                             TargetFrameworkIdentifier,
+                                             StringComparison.OrdinalIgnoreCase)
+                                         && NormalizeVersion(
+                                             knownFrameworkReference.TargetFramework.Version) ==
+                                         _normalizedTargetFrameworkVersion;
+            }
+            else
+            {
+                targetFrameworkMatches = knownFrameworkReference.TargetFramework.Framework.Equals(
+                                             TargetFrameworkIdentifier,
+                                             StringComparison.OrdinalIgnoreCase)
+                                         && knownFrameworkReference.TargetFramework.Platform.Equals(
+                                             TargetPlatformIdentifier,
+                                             StringComparison.OrdinalIgnoreCase)
+                                         && knownFrameworkReference.TargetFramework.PlatformVersion.Equals(
+                                             TargetPlatformVersion,
+                                             StringComparison.OrdinalIgnoreCase)
+                                         && NormalizeVersion(
+                                             knownFrameworkReference.TargetFramework.Version) ==
+                                         _normalizedTargetFrameworkVersion;
+            }
+
+            return targetFrameworkMatches;
         }
 
         private KnownRuntimePack? SelectRuntimePack(ITaskItem frameworkReference, KnownFrameworkReference knownFrameworkReference, List<KnownRuntimePack> knownRuntimePacks)
@@ -770,7 +781,7 @@ namespace Microsoft.NET.Build.Tasks
 
             public string GetShortFolderName()
             {
-                throw new NotImplementedException();
+                return ShortFolderName;
             }
         }
 
