@@ -368,8 +368,8 @@ namespace Microsoft.NET.Build.Tasks
         private bool TargetFrameworkPropertiesMatches(KnownFrameworkReference knownFrameworkReference)
         {
             bool targetFrameworkMatches;
-            if (string.IsNullOrEmpty(TargetPlatformVersion) &&
-                string.IsNullOrEmpty(TargetPlatformIdentifier))
+            if (string.IsNullOrEmpty(knownFrameworkReference.TargetFramework.Platform) &&
+                string.IsNullOrEmpty(knownFrameworkReference.TargetFramework.PlatformVersion))
             {
                 targetFrameworkMatches = knownFrameworkReference.TargetFramework.Framework.Equals(
                                              TargetFrameworkIdentifier,
