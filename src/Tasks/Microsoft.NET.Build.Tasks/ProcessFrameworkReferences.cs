@@ -369,7 +369,7 @@ namespace Microsoft.NET.Build.Tasks
         {
             bool targetFrameworkMatches;
             if (string.IsNullOrEmpty(TargetPlatformVersion) &&
-                string.IsNullOrEmpty(TargetFrameworkIdentifier))
+                string.IsNullOrEmpty(TargetPlatformIdentifier))
             {
                 targetFrameworkMatches = knownFrameworkReference.TargetFramework.Framework.Equals(
                                              TargetFrameworkIdentifier,
