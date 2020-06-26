@@ -150,26 +150,42 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                 EnableTargetingPackDownload = true,
                 TargetFrameworkIdentifier = ".NETCoreApp",
                 TargetFrameworkVersion = "5.0",
+                TargetPlatformIdentifier = "Windows",
+                TargetPlatformVersion = "10.0.18362",
                 RuntimeGraphPath =
                     runtimeGraphPathPath,
                 FrameworkReferences =
-                    new[] {new MockTaskItem("Microsoft.Windows.SDK.NET.Ref.10.0.18362", new Dictionary<string, string>())},
+                    new[] {new MockTaskItem("Microsoft.Windows.SDK.NET.Ref", new Dictionary<string, string>())},
                 KnownFrameworkReferences = new[]
                 {
-                    new MockTaskItem("Microsoft.Windows.SDK.NET.Ref.10.0.18362",
-                        new Dictionary<string, string>()
+                    new MockTaskItem("Microsoft.Windows.SDK.NET.Ref",
+                        new Dictionary<string, string>
                         {
-                            {"TargetFramework", "netcoreapp5.0"},
+                            {"TargetFramework", "net5.0-windows10.0.17760"},
                             {"RuntimeFrameworkName", "Microsoft.Windows.SDK.NET.Ref"},
-                            {"DefaultRuntimeFrameworkVersion", "5.0.0-preview1"},
-                            {"LatestRuntimeFrameworkVersion", "5.0.0-preview1"},
+                            {"DefaultRuntimeFrameworkVersion", "10.0.17760.1-preview"},
+                            {"LatestRuntimeFrameworkVersion", "10.0.17760.1-preview"},
                             {"TargetingPackName", "Microsoft.Windows.SDK.NET.Ref"},
-                            {"TargetingPackVersion", "5.0.0-preview1"},
+                            {"TargetingPackVersion", "10.0.17760.1-preview"},
                             {"RuntimePackNamePatterns", "Microsoft.Windows.SDK.NET.Ref"},
                             {"RuntimePackRuntimeIdentifiers", "any"},
                             {MetadataKeys.RuntimeCopyLocal, "true"},
                             {"IsWindowsOnly", "true"},
-                        })
+                        }),
+                    new MockTaskItem("Microsoft.Windows.SDK.NET.Ref",
+                        new Dictionary<string, string>
+                        {
+                            {"TargetFramework", "net5.0-windows10.0.18362"},
+                            {"RuntimeFrameworkName", "Microsoft.Windows.SDK.NET.Ref"},
+                            {"DefaultRuntimeFrameworkVersion", "10.0.18362.1-preview"},
+                            {"LatestRuntimeFrameworkVersion", "10.0.18362.1-preview"},
+                            {"TargetingPackName", "Microsoft.Windows.SDK.NET.Ref"},
+                            {"TargetingPackVersion", "10.0.18362.1-preview"},
+                            {"RuntimePackNamePatterns", "Microsoft.Windows.SDK.NET.Ref"},
+                            {"RuntimePackRuntimeIdentifiers", "any"},
+                            {MetadataKeys.RuntimeCopyLocal, "true"},
+                            {"IsWindowsOnly", "true"},
+                        }),
                 }
             };
 
@@ -181,9 +197,9 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                 "Should not contain RuntimeCopyLocal framework, or it will be put into runtimeconfig.json");
 
             task.TargetingPacks.Length.Should().Be(1);
-            task.TargetingPacks[0].ItemSpec.Should().Be("Microsoft.Windows.SDK.NET.Ref.10.0.18362");
+            task.TargetingPacks[0].ItemSpec.Should().Be("Microsoft.Windows.SDK.NET.Ref");
             task.TargetingPacks[0].GetMetadata(MetadataKeys.NuGetPackageId).Should().Be("Microsoft.Windows.SDK.NET.Ref");
-            task.TargetingPacks[0].GetMetadata(MetadataKeys.NuGetPackageVersion).Should().Be("5.0.0-preview1");
+            task.TargetingPacks[0].GetMetadata(MetadataKeys.NuGetPackageVersion).Should().Be("10.0.18362.1-preview");
             task.TargetingPacks[0].GetMetadata(MetadataKeys.PackageConflictPreferredPackages).Should()
                 .Be("Microsoft.Windows.SDK.NET.Ref");
             task.TargetingPacks[0].GetMetadata(MetadataKeys.RuntimeFrameworkName).Should()
@@ -193,7 +209,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
             task.RuntimePacks.Length.Should().Be(1);
             task.RuntimePacks[0].ItemSpec.Should().Be("Microsoft.Windows.SDK.NET.Ref");
             task.RuntimePacks[0].GetMetadata(MetadataKeys.FrameworkName).Should().Be("Microsoft.Windows.SDK.NET.Ref");
-            task.RuntimePacks[0].GetMetadata(MetadataKeys.NuGetPackageVersion).Should().Be("5.0.0-preview1");
+            task.RuntimePacks[0].GetMetadata(MetadataKeys.NuGetPackageVersion).Should().Be("10.0.18362.1-preview");
             task.RuntimePacks[0].GetMetadata(MetadataKeys.RuntimeCopyLocal).Should().Be("true");
         }
     }
