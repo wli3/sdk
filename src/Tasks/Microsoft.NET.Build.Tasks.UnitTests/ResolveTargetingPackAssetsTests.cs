@@ -24,17 +24,17 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
 
             task.FrameworkReferences = new[]
             {
-                new MockTaskItem("Microsoft.Windows.Ref", new Dictionary<string, string>())
+                new MockTaskItem("Microsoft.Windows.SDK.NET.Ref", new Dictionary<string, string>())
             };
 
             task.ResolvedTargetingPacks = new[]
             {
-                new MockTaskItem("Microsoft.Windows.Ref",
+                new MockTaskItem("Microsoft.Windows.SDK.NET.Ref",
                     new Dictionary<string, string>()
                     {
-                        {MetadataKeys.NuGetPackageId, "Microsoft.Windows.Ref"},
+                        {MetadataKeys.NuGetPackageId, "Microsoft.Windows.SDK.NET.Ref"},
                         {MetadataKeys.NuGetPackageVersion, "5.0.0-preview1"},
-                        {MetadataKeys.PackageConflictPreferredPackages, "Microsoft.Windows.Ref;"},
+                        {MetadataKeys.PackageConflictPreferredPackages, "Microsoft.Windows.SDK.NET.Ref;"},
                         {MetadataKeys.PackageDirectory, mockPackageDirectory},
                         {MetadataKeys.Path, mockPackageDirectory},
                         {"TargetFramework", "net5.0"}
