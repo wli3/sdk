@@ -92,9 +92,29 @@ namespace Microsoft.NET.Build.Tasks
 
             var normalizedTargetFrameworkVersion = NormalizeVersion(new Version(TargetFrameworkVersion));
 
+            bool MatchingTargetFrameworkAndVersion(KnownFrameworkReference kfr)
+            {
+                bool targetFrameworkMatches;
+                // TODO replace with nuget API when available
+                if (string.IsNullOrEmpty(TargetPlatformVersion) && string.IsNullOrEmpty(TargetFrameworkIdentifier))
+                {
+                    targetFrameworkMatches = kfr.TargetFramework.Framework.Equals(TargetFrameworkIdentifier,
+                        StringComparison.OrdinalIgnoreCase);
+                }
+                else
+                {
+                    var targetFrameworkToCompare = new NuGetFramework(TargetFrameworkIdentifier).GetShortFolderName() +
+                                                   "-" + TargetPlatformIdentifier + TargetFrameworkVersion;
+                    targetFrameworkMatches = kfr.TargetFramework.Framework.Equals(targetFrameworkToCompare,
+                        StringComparison.OrdinalIgnoreCase);
+                }
+
+                return targetFrameworkMatches && NormalizeVersion(kfr.TargetFramework.Version) ==
+                    normalizedTargetFrameworkVersion;
+            }
+
             var knownFrameworkReferencesForTargetFramework = KnownFrameworkReferences.Select(item => new KnownFrameworkReference(item))
-                .Where(kfr => kfr.TargetFramework.Framework.Equals(TargetFrameworkIdentifier, StringComparison.OrdinalIgnoreCase) &&
-                              NormalizeVersion(kfr.TargetFramework.Version) == normalizedTargetFrameworkVersion)
+                .Where(MatchingTargetFrameworkAndVersion)
                 .ToList();
 
             //  Get known runtime packs from known framework references.
