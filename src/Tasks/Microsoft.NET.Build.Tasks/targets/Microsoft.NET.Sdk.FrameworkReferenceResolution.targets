@@ -61,6 +61,8 @@ Copyright (c) .NET Foundation. All rights reserved.
                                 KnownRuntimePacks="@(KnownRuntimePack)"
                                 TargetFrameworkIdentifier="$(TargetFrameworkIdentifier)"
                                 TargetFrameworkVersion="$(_TargetFrameworkVersionWithoutV)"
+                                TargetPlatformIdentifier="$(TargetPlatformIdentifier)"
+                                TargetPlatformVersion="$(TargetPlatformVersion)"
                                 TargetingPackRoot="$(NetCoreTargetingPackRoot)"
                                 RuntimeGraphPath="$(BundledRuntimeIdentifierGraphFile)"
                                 SelfContained="$(SelfContained)"

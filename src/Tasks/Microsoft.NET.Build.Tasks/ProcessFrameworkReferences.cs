@@ -24,6 +24,10 @@ namespace Microsoft.NET.Build.Tasks
 
         public string TargetFrameworkVersion { get; set; }
 
+        public string TargetPlatformIdentifier { get; set; }
+
+        public string TargetPlatformVersion { get; set; }
+
         public string TargetingPackRoot { get; set; }
 
         [Required]
