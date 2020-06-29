@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using FluentAssertions;
 using Xunit;
@@ -166,6 +167,11 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                 }
             };
 
+            if (Environment.OSVersion.Platform != PlatformID.Win32NT)
+            {
+                task.Execute().Should().BeFalse("IsWindowsOnly=true");
+                return;
+            }
             task.Execute().Should().BeTrue();
 
             task.PackagesToDownload.Length.Should().Be(1);
@@ -241,10 +247,16 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                         }),
                 }
             };
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+            {
+                task.Execute().Should().BeTrue();
 
-            task.Execute().Should().BeTrue();
-
-            task.PackagesToDownload.Length.Should().Be(2);
+                task.PackagesToDownload.Length.Should().Be(2);
+            }
+            else
+            {
+                task.Execute().Should().BeFalse("IsWindowsOnly=true");
+            }
         }
     }
 }
