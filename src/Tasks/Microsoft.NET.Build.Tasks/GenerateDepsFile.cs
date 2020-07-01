@@ -168,21 +168,28 @@ namespace Microsoft.NET.Build.Tasks
                 ReferenceInfo.CreateDependencyReferenceInfos(ReferenceDependencyPaths, ReferenceSatellitePaths, isUserRuntimeAssembly);
 
             Dictionary<string, SingleProjectInfo> referenceProjects =
-                SingleProjectInfo.CreateProjectReferenceInfos(ReferencePaths, ReferenceSatellitePaths, isUserRuntimeAssembly);
+                SingleProjectInfo.CreateProjectReferenceInfos(ReferencePaths, ReferenceSatellitePaths,
+                    isUserRuntimeAssembly);
 
-            bool NotSingleFile(ITaskItem taskItem)
+            bool ShouldIncludeRuntimeAsset(ITaskItem item)
             {
-                return !IsSingleFile || !taskItem.GetMetadata(MetadataKeys.DropFromSingleFile).Equals("true");
+                if (IsSelfContained)
+                {
+                    if (!IsSingleFile || !item.GetMetadata(MetadataKeys.DropFromSingleFile).Equals("true"))
+                    {
+                        return true;
+                    }
+                }
+                else if (item.HasMetadataValue(MetadataKeys.RuntimePackAlwaysCopyLocal, "true"))
+                {
+                    return true;
+                }
+
+                return false;
             }
 
             IEnumerable<RuntimePackAssetInfo> runtimePackAssets =
-                IsSelfContained
-                    ? RuntimePackAssets.Where(NotSingleFile)
-                        .Select(RuntimePackAssetInfo.FromItem)
-                    : RuntimePackAssets.Where(item =>
-                            NotSingleFile(item)
-                            && item.HasMetadataValue(MetadataKeys.RuntimePackAlwaysCopyLocal, "true"))
-                        .Select(RuntimePackAssetInfo.FromItem);
+                RuntimePackAssets.Where(ShouldIncludeRuntimeAsset).Select(RuntimePackAssetInfo.FromItem);
 
             DependencyContextBuilder builder;
             if (projectContext != null)
