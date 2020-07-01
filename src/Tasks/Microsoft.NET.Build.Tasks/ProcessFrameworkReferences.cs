@@ -98,7 +98,7 @@ namespace Microsoft.NET.Build.Tasks
             var knownFrameworkReferencesForTargetFramework =
                 KnownFrameworkReferences
                     .Select(item => new KnownFrameworkReference(item))
-                    .Where(TargetFrameworkPropertiesMatches)
+                    .Where(KnownFrameworkReferenceAppliesToTargetFramework)
                     .ToList();
 
             //  Get known runtime packs from known framework references.
@@ -261,20 +261,15 @@ namespace Microsoft.NET.Build.Tasks
 
                 bool processedPrimaryRuntimeIdentifier = false;
 
-                bool HasRuntimePackAlwaysCopyLocal()
-                {
-                    return selectedRuntimePack != null && selectedRuntimePack.Value.RuntimePackAlwaysCopyLocal;
-                }
+                var hasRuntimePackAlwaysCopyLocal =
+                    selectedRuntimePack != null && selectedRuntimePack.Value.RuntimePackAlwaysCopyLocal;
+                var runtimeRequiredByDeployment
+                    = (SelfContained || ReadyToRunEnabled) &&
+                      !string.IsNullOrEmpty(RuntimeIdentifier) &&
+                      selectedRuntimePack != null &&
+                      !string.IsNullOrEmpty(selectedRuntimePack.Value.RuntimePackNamePatterns);
 
-                bool RuntimeRequiredByRuntimeDependentDeployment()
-                {
-                    return (SelfContained || ReadyToRunEnabled) &&
-                           !string.IsNullOrEmpty(RuntimeIdentifier) &&
-                           selectedRuntimePack != null &&
-                           !string.IsNullOrEmpty(selectedRuntimePack.Value.RuntimePackNamePatterns);
-                }
-
-                if (HasRuntimePackAlwaysCopyLocal() || RuntimeRequiredByRuntimeDependentDeployment())
+                if (hasRuntimePackAlwaysCopyLocal || runtimeRequiredByDeployment)
                 {
                     //  Find other KnownFrameworkReferences that map to the same runtime pack, if any
                     List<string> additionalFrameworkReferencesForRuntimePack = null;
@@ -291,7 +286,7 @@ namespace Microsoft.NET.Build.Tasks
                         }
                     }
 
-                    ProcessRuntimeIdentifier(HasRuntimePackAlwaysCopyLocal() ? "any" : RuntimeIdentifier, runtimePackForRuntimeIDProcessing, runtimePackVersion, additionalFrameworkReferencesForRuntimePack,
+                    ProcessRuntimeIdentifier(hasRuntimePackAlwaysCopyLocal ? "any" : RuntimeIdentifier, runtimePackForRuntimeIDProcessing, runtimePackVersion, additionalFrameworkReferencesForRuntimePack,
                         unrecognizedRuntimeIdentifiers, unavailableRuntimePacks, runtimePacks, packagesToDownload, isTrimmable, includeInPackageDownload);
 
                     processedPrimaryRuntimeIdentifier = true;
@@ -365,7 +360,7 @@ namespace Microsoft.NET.Build.Tasks
             }
         }
 
-        private bool TargetFrameworkPropertiesMatches(KnownFrameworkReference kfr)
+        private bool KnownFrameworkReferenceAppliesToTargetFramework(KnownFrameworkReference kfr)
         {
             if (!kfr.TargetFramework.Framework.Equals(TargetFrameworkIdentifier, StringComparison.OrdinalIgnoreCase)
                 || NormalizeVersion(kfr.TargetFramework.Version) != _normalizedTargetFrameworkVersion)
