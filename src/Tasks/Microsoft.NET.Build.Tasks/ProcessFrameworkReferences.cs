@@ -261,9 +261,9 @@ namespace Microsoft.NET.Build.Tasks
 
                 bool processedPrimaryRuntimeIdentifier = false;
 
-                bool HasRuntimeCopyLocal()
+                bool HasRuntimePackAlwaysCopyLocal()
                 {
-                    return selectedRuntimePack != null && selectedRuntimePack.Value.RuntimeCopyLocal;
+                    return selectedRuntimePack != null && selectedRuntimePack.Value.RuntimePackAlwaysCopyLocal;
                 }
 
                 bool RuntimeRequiredByRuntimeDependentDeployment()
@@ -274,7 +274,7 @@ namespace Microsoft.NET.Build.Tasks
                            !string.IsNullOrEmpty(selectedRuntimePack.Value.RuntimePackNamePatterns);
                 }
 
-                if (HasRuntimeCopyLocal() || RuntimeRequiredByRuntimeDependentDeployment())
+                if (HasRuntimePackAlwaysCopyLocal() || RuntimeRequiredByRuntimeDependentDeployment())
                 {
                     //  Find other KnownFrameworkReferences that map to the same runtime pack, if any
                     List<string> additionalFrameworkReferencesForRuntimePack = null;
@@ -291,7 +291,7 @@ namespace Microsoft.NET.Build.Tasks
                         }
                     }
 
-                    ProcessRuntimeIdentifier(HasRuntimeCopyLocal() ? "any" : RuntimeIdentifier, runtimePackForRuntimeIDProcessing, runtimePackVersion, additionalFrameworkReferencesForRuntimePack,
+                    ProcessRuntimeIdentifier(HasRuntimePackAlwaysCopyLocal() ? "any" : RuntimeIdentifier, runtimePackForRuntimeIDProcessing, runtimePackVersion, additionalFrameworkReferencesForRuntimePack,
                         unrecognizedRuntimeIdentifiers, unavailableRuntimePacks, runtimePacks, packagesToDownload, isTrimmable, includeInPackageDownload);
 
                     processedPrimaryRuntimeIdentifier = true;
@@ -314,7 +314,7 @@ namespace Microsoft.NET.Build.Tasks
                     }
                 }
 
-                if (!string.IsNullOrEmpty(knownFrameworkReference.RuntimeFrameworkName) && !knownFrameworkReference.RuntimeCopyLocal)
+                if (!string.IsNullOrEmpty(knownFrameworkReference.RuntimeFrameworkName) && !knownFrameworkReference.RuntimePackAlwaysCopyLocal)
                 {
                     TaskItem runtimeFramework = new TaskItem(knownFrameworkReference.RuntimeFrameworkName);
 
@@ -487,9 +487,9 @@ namespace Microsoft.NET.Build.Tasks
                         runtimePackItem.SetMetadata(MetadataKeys.RuntimeIdentifier, runtimePackRuntimeIdentifier);
                         runtimePackItem.SetMetadata(MetadataKeys.IsTrimmable, isTrimmable);
 
-                        if (selectedRuntimePack.RuntimeCopyLocal)
+                        if (selectedRuntimePack.RuntimePackAlwaysCopyLocal)
                         {
-                            runtimePackItem.SetMetadata(MetadataKeys.RuntimeCopyLocal, "true");
+                            runtimePackItem.SetMetadata(MetadataKeys.RuntimePackAlwaysCopyLocal, "true");
                         }
 
                         if (additionalFrameworkReferencesForRuntimePack != null)
@@ -717,8 +717,8 @@ namespace Microsoft.NET.Build.Tasks
 
             public bool IsWindowsOnly => _item.HasMetadataValue("IsWindowsOnly", "true");
             
-            public bool RuntimeCopyLocal =>
-                _item.HasMetadataValue(MetadataKeys.RuntimeCopyLocal, "true");
+            public bool RuntimePackAlwaysCopyLocal =>
+                _item.HasMetadataValue(MetadataKeys.RuntimePackAlwaysCopyLocal, "true");
 
             public string Profile => _item.GetMetadata("Profile");
 
@@ -799,8 +799,8 @@ namespace Microsoft.NET.Build.Tasks
 
             public bool IsWindowsOnly => _item.HasMetadataValue("IsWindowsOnly", "true");
 
-            public bool RuntimeCopyLocal =>
-                _item.HasMetadataValue(MetadataKeys.RuntimeCopyLocal, "true");
+            public bool RuntimePackAlwaysCopyLocal =>
+                _item.HasMetadataValue(MetadataKeys.RuntimePackAlwaysCopyLocal, "true");
 
             public string[] RuntimePackLabels { get; }
 

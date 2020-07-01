@@ -181,7 +181,7 @@ namespace Microsoft.NET.Build.Tasks
                         .Select(RuntimePackAssetInfo.FromItem)
                     : RuntimePackAssets.Where(item =>
                             NotSingleFile(item)
-                            && item.HasMetadataValue(MetadataKeys.RuntimeCopyLocal, "true"))
+                            && item.HasMetadataValue(MetadataKeys.RuntimePackAlwaysCopyLocal, "true"))
                         .Select(RuntimePackAssetInfo.FromItem);
 
             DependencyContextBuilder builder;

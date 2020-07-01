@@ -116,7 +116,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
         }
 
         [Fact]
-        public void Given_KnownFrameworkReferences_with_RuntimeCopyLocal_It_resolves_FrameworkReferences()
+        public void Given_KnownFrameworkReferences_with_RuntimePackAlwaysCopyLocal_It_resolves_FrameworkReferences()
         {
             const string minimalRuntimeGraphPathContent =
                 "{\"runtimes\":{\"any\":{\"#import\":[\"base\"]},\"base\":{\"#import\":[]}}}";
@@ -148,7 +148,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                             {"TargetingPackVersion", "10.0.17760.1-preview"},
                             {"RuntimePackNamePatterns", "Microsoft.Windows.SDK.NET.Ref"},
                             {"RuntimePackRuntimeIdentifiers", "any"},
-                            {MetadataKeys.RuntimeCopyLocal, "true"},
+                            {MetadataKeys.RuntimePackAlwaysCopyLocal, "true"},
                             {"IsWindowsOnly", "true"},
                         }),
                     new MockTaskItem("Microsoft.Windows.SDK.NET.Ref",
@@ -162,7 +162,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                             {"TargetingPackVersion", "10.0.18362.1-preview"},
                             {"RuntimePackNamePatterns", "Microsoft.Windows.SDK.NET.Ref"},
                             {"RuntimePackRuntimeIdentifiers", "any"},
-                            {MetadataKeys.RuntimeCopyLocal, "true"},
+                            {MetadataKeys.RuntimePackAlwaysCopyLocal, "true"},
                             {"IsWindowsOnly", "true"},
                         }),
                 }
@@ -178,7 +178,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
             task.PackagesToDownload.Length.Should().Be(1);
 
             task.RuntimeFrameworks.Should().BeNullOrEmpty(
-                "Should not contain RuntimeCopyLocal framework, or it will be put into runtimeconfig.json");
+                "Should not contain RuntimePackAlwaysCopyLocal framework, or it will be put into runtimeconfig.json");
 
             task.TargetingPacks.Length.Should().Be(1);
             task.TargetingPacks[0].ItemSpec.Should().Be("Microsoft.Windows.SDK.NET.Ref");
@@ -194,7 +194,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
             task.RuntimePacks[0].ItemSpec.Should().Be("Microsoft.Windows.SDK.NET.Ref");
             task.RuntimePacks[0].GetMetadata(MetadataKeys.FrameworkName).Should().Be("Microsoft.Windows.SDK.NET.Ref");
             task.RuntimePacks[0].GetMetadata(MetadataKeys.NuGetPackageVersion).Should().Be("10.0.18362.1-preview");
-            task.RuntimePacks[0].GetMetadata(MetadataKeys.RuntimeCopyLocal).Should().Be("true");
+            task.RuntimePacks[0].GetMetadata(MetadataKeys.RuntimePackAlwaysCopyLocal).Should().Be("true");
         }
 
         [Fact]
@@ -247,7 +247,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                             {"TargetingPackVersion", "10.0.18362.1-preview"},
                             {"RuntimePackNamePatterns", "Microsoft.Windows.SDK.NET.Ref"},
                             {"RuntimePackRuntimeIdentifiers", "any"},
-                            {MetadataKeys.RuntimeCopyLocal, "true"},
+                            {MetadataKeys.RuntimePackAlwaysCopyLocal, "true"},
                             {"IsWindowsOnly", "true"},
                         }),
                 }
