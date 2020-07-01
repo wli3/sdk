@@ -9,6 +9,37 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
 {
     public class ProcessFrameworkReferencesTests
     {
+        private MockTaskItem _validWindowsSDKKnownFrameworkReference
+            = new MockTaskItem("Microsoft.Windows.SDK.NET.Ref",
+                new Dictionary<string, string>
+                {
+                    {"TargetFramework", "net5.0-windows10.0.18362"},
+                    {"RuntimeFrameworkName", "Microsoft.Windows.SDK.NET.Ref"},
+                    {"DefaultRuntimeFrameworkVersion", "10.0.18362.1-preview"},
+                    {"LatestRuntimeFrameworkVersion", "10.0.18362.1-preview"},
+                    {"TargetingPackName", "Microsoft.Windows.SDK.NET.Ref"},
+                    {"TargetingPackVersion", "10.0.18362.1-preview"},
+                    {"RuntimePackNamePatterns", "Microsoft.Windows.SDK.NET.Ref"},
+                    {"RuntimePackRuntimeIdentifiers", "any"},
+                    {MetadataKeys.RuntimePackAlwaysCopyLocal, "true"},
+                    {"IsWindowsOnly", "true"},
+                });
+
+
+        private MockTaskItem _netcoreAppKnownFrameworkReference =
+            new MockTaskItem("Microsoft.NETCore.App",
+                new Dictionary<string, string>
+                {
+                    {"TargetFramework", "net5.0"},
+                    {"RuntimeFrameworkName", "Microsoft.NETCore.App"},
+                    {"DefaultRuntimeFrameworkVersion", "5.0.0-preview.4.20251.6"},
+                    {"LatestRuntimeFrameworkVersion", "5.0.0-preview.4.20251.6"},
+                    {"TargetingPackName", "Microsoft.NETCore.App.Ref"},
+                    {"TargetingPackVersion", "5.0.0-preview.4.20251.6"},
+                    {"RuntimePackNamePatterns", "Microsoft.NETCore.App.Runtime.**RID**"},
+                    {"RuntimePackRuntimeIdentifiers", "win-x64"},
+                });
+
         [Fact]
         public void It_resolves_FrameworkReferences()
         {
@@ -27,12 +58,12 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                 new MockTaskItem("Microsoft.AspNetCore.App",
                     new Dictionary<string, string>()
                     {
-                        { "TargetFramework", "netcoreapp3.0" },
-                        { "RuntimeFrameworkName", "Microsoft.AspNetCore.App" },
-                        { "DefaultRuntimeFrameworkVersion", "1.9.5" },
-                        { "LatestRuntimeFrameworkVersion", "1.9.6" },
-                        { "TargetingPackName", "Microsoft.AspNetCore.App" },
-                        { "TargetingPackVersion", "1.9.0" }
+                        {"TargetFramework", "netcoreapp3.0"},
+                        {"RuntimeFrameworkName", "Microsoft.AspNetCore.App"},
+                        {"DefaultRuntimeFrameworkVersion", "1.9.5"},
+                        {"LatestRuntimeFrameworkVersion", "1.9.6"},
+                        {"TargetingPackName", "Microsoft.AspNetCore.App"},
+                        {"TargetingPackVersion", "1.9.0"}
                     })
             };
 
@@ -65,12 +96,12 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                 new MockTaskItem("Microsoft.AspNetCore.App",
                     new Dictionary<string, string>()
                     {
-                        { "TargetFramework", "netcoreapp3.0" },
-                        { "RuntimeFrameworkName", "Microsoft.AspNetCore.App" },
-                        { "DefaultRuntimeFrameworkVersion", "1.9.5" },
-                        { "LatestRuntimeFrameworkVersion", "1.9.6" },
-                        { "TargetingPackName", "Microsoft.AspNetCore.App" },
-                        { "TargetingPackVersion", "1.9.0" }
+                        {"TargetFramework", "netcoreapp3.0"},
+                        {"RuntimeFrameworkName", "Microsoft.AspNetCore.App"},
+                        {"DefaultRuntimeFrameworkVersion", "1.9.5"},
+                        {"LatestRuntimeFrameworkVersion", "1.9.6"},
+                        {"TargetingPackName", "Microsoft.AspNetCore.App"},
+                        {"TargetingPackVersion", "1.9.0"}
                     })
             };
 
@@ -100,12 +131,12 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                 new MockTaskItem("Microsoft.AspNetCore.App",
                     new Dictionary<string, string>()
                     {
-                        { "TargetFramework", "netcoreapp3.0" },
-                        { "RuntimeFrameworkName", "Microsoft.AspNetCore.App" },
-                        { "DefaultRuntimeFrameworkVersion", "1.9.5" },
-                        { "LatestRuntimeFrameworkVersion", "1.9.6" },
-                        { "TargetingPackName", "Microsoft.AspNetCore.App" },
-                        { "TargetingPackVersion", "1.9.0" }
+                        {"TargetFramework", "netcoreapp3.0"},
+                        {"RuntimeFrameworkName", "Microsoft.AspNetCore.App"},
+                        {"DefaultRuntimeFrameworkVersion", "1.9.5"},
+                        {"LatestRuntimeFrameworkVersion", "1.9.6"},
+                        {"TargetingPackName", "Microsoft.AspNetCore.App"},
+                        {"TargetingPackVersion", "1.9.0"}
                     })
             };
 
@@ -151,20 +182,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                             {MetadataKeys.RuntimePackAlwaysCopyLocal, "true"},
                             {"IsWindowsOnly", "true"},
                         }),
-                    new MockTaskItem("Microsoft.Windows.SDK.NET.Ref",
-                        new Dictionary<string, string>
-                        {
-                            {"TargetFramework", "net5.0-windows10.0.18362"},
-                            {"RuntimeFrameworkName", "Microsoft.Windows.SDK.NET.Ref"},
-                            {"DefaultRuntimeFrameworkVersion", "10.0.18362.1-preview"},
-                            {"LatestRuntimeFrameworkVersion", "10.0.18362.1-preview"},
-                            {"TargetingPackName", "Microsoft.Windows.SDK.NET.Ref"},
-                            {"TargetingPackVersion", "10.0.18362.1-preview"},
-                            {"RuntimePackNamePatterns", "Microsoft.Windows.SDK.NET.Ref"},
-                            {"RuntimePackRuntimeIdentifiers", "any"},
-                            {MetadataKeys.RuntimePackAlwaysCopyLocal, "true"},
-                            {"IsWindowsOnly", "true"},
-                        }),
+                    _validWindowsSDKKnownFrameworkReference,
                 }
             };
 
@@ -173,6 +191,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                 task.Execute().Should().BeFalse("IsWindowsOnly=true");
                 return;
             }
+
             task.Execute().Should().BeTrue();
 
             task.PackagesToDownload.Length.Should().Be(1);
@@ -182,7 +201,8 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
 
             task.TargetingPacks.Length.Should().Be(1);
             task.TargetingPacks[0].ItemSpec.Should().Be("Microsoft.Windows.SDK.NET.Ref");
-            task.TargetingPacks[0].GetMetadata(MetadataKeys.NuGetPackageId).Should().Be("Microsoft.Windows.SDK.NET.Ref");
+            task.TargetingPacks[0].GetMetadata(MetadataKeys.NuGetPackageId).Should()
+                .Be("Microsoft.Windows.SDK.NET.Ref");
             task.TargetingPacks[0].GetMetadata(MetadataKeys.NuGetPackageVersion).Should().Be("10.0.18362.1-preview");
             task.TargetingPacks[0].GetMetadata(MetadataKeys.PackageConflictPreferredPackages).Should()
                 .Be("Microsoft.Windows.SDK.NET.Ref");
@@ -221,35 +241,14 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                 TargetLatestRuntimePatch = true,
                 TargetLatestRuntimePatchIsDefault = true,
                 FrameworkReferences =
-                    new[] {new MockTaskItem("Microsoft.NETCore.App", new Dictionary<string, string>()), new MockTaskItem("Microsoft.Windows.SDK.NET.Ref", new Dictionary<string, string>()) },
+                    new[]
+                    {
+                        new MockTaskItem("Microsoft.NETCore.App", new Dictionary<string, string>()),
+                        new MockTaskItem("Microsoft.Windows.SDK.NET.Ref", new Dictionary<string, string>())
+                    },
                 KnownFrameworkReferences = new[]
                 {
-                    new MockTaskItem("Microsoft.NETCore.App",
-                        new Dictionary<string, string>
-                        {
-                            {"TargetFramework", "net5.0"},
-                            {"RuntimeFrameworkName", "Microsoft.NETCore.App"},
-                            {"DefaultRuntimeFrameworkVersion", "5.0.0-preview.4.20251.6"},
-                            {"LatestRuntimeFrameworkVersion", "5.0.0-preview.4.20251.6"},
-                            {"TargetingPackName", "Microsoft.NETCore.App.Ref"},
-                            {"TargetingPackVersion", "5.0.0-preview.4.20251.6"},
-                            {"RuntimePackNamePatterns", "Microsoft.NETCore.App.Runtime.**RID**"},
-                            {"RuntimePackRuntimeIdentifiers", "win-x64"},
-                        }),
-                    new MockTaskItem("Microsoft.Windows.SDK.NET.Ref",
-                        new Dictionary<string, string>
-                        {
-                            {"TargetFramework", "net5.0-windows10.0.18362"},
-                            {"RuntimeFrameworkName", "Microsoft.Windows.SDK.NET.Ref"},
-                            {"DefaultRuntimeFrameworkVersion", "10.0.18362.1-preview"},
-                            {"LatestRuntimeFrameworkVersion", "10.0.18362.1-preview"},
-                            {"TargetingPackName", "Microsoft.Windows.SDK.NET.Ref"},
-                            {"TargetingPackVersion", "10.0.18362.1-preview"},
-                            {"RuntimePackNamePatterns", "Microsoft.Windows.SDK.NET.Ref"},
-                            {"RuntimePackRuntimeIdentifiers", "any"},
-                            {MetadataKeys.RuntimePackAlwaysCopyLocal, "true"},
-                            {"IsWindowsOnly", "true"},
-                        }),
+                    _netcoreAppKnownFrameworkReference, _validWindowsSDKKnownFrameworkReference,
                 }
             };
             if (Environment.OSVersion.Platform == PlatformID.Win32NT)
@@ -265,6 +264,58 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
             {
                 task.Execute().Should().BeFalse("IsWindowsOnly=true");
             }
+        }
+
+        [Fact]
+        public void Given_reference_to_NETCoreApp_It_should_not_resolve_runtime_pack()
+        {
+            const string minimalRuntimeGraphPathContent =
+                "{\"runtimes\":{\"any\":{\"#import\":[\"base\"]},\"base\":{\"#import\":[]},\"win\":{\"#import\":[\"any\"]},\"win-x64\":{\"#import\":[\"win\"]}}}";
+            var runtimeGraphPathPath = Path.GetTempFileName();
+            File.WriteAllText(runtimeGraphPathPath, minimalRuntimeGraphPathContent);
+
+            var task = new ProcessFrameworkReferences
+            {
+                BuildEngine = new MockNeverCacheBuildEngine4(),
+                EnableTargetingPackDownload = true,
+                TargetFrameworkIdentifier = ".NETCoreApp",
+                TargetFrameworkVersion = "5.0",
+                TargetPlatformIdentifier = "Windows",
+                TargetPlatformVersion = "10.0.18362",
+                NETCoreSdkRuntimeIdentifier = "win-x64",
+                RuntimeGraphPath =
+                    runtimeGraphPathPath,
+                TargetLatestRuntimePatch = true,
+                TargetLatestRuntimePatchIsDefault = true,
+                FrameworkReferences =
+                    new[]
+                    {
+                        new MockTaskItem("Microsoft.NETCore.App", new Dictionary<string, string>()),
+                        new MockTaskItem("Microsoft.Windows.SDK.NET.Ref", new Dictionary<string, string>())
+                    },
+                KnownFrameworkReferences = new[]
+                {
+                    _netcoreAppKnownFrameworkReference, _validWindowsSDKKnownFrameworkReference,
+                }
+            };
+
+            if (Environment.OSVersion.Platform != PlatformID.Win32NT)
+            {
+                task.Execute().Should().BeFalse("IsWindowsOnly=true");
+                return;
+            }
+
+            task.Execute().Should().BeTrue();
+
+            task.TargetingPacks.Length.Should().Be(2);
+            task.TargetingPacks.Should().Contain(p =>
+                p.GetMetadata(MetadataKeys.NuGetPackageId) == "Microsoft.Windows.SDK.NET.Ref");
+            task.TargetingPacks.Should()
+                .Contain(p => p.GetMetadata(MetadataKeys.NuGetPackageId) == "Microsoft.NETCore.App.Ref");
+
+            task.RuntimePacks.Length.Should().Be(1);
+            task.RuntimePacks[0].ItemSpec.Should().Be("Microsoft.Windows.SDK.NET.Ref",
+                "it should not resolve runtime pack for Microsoft.NETCore.App");
         }
     }
 }
