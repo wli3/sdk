@@ -365,36 +365,25 @@ namespace Microsoft.NET.Build.Tasks
             }
         }
 
-        private bool TargetFrameworkPropertiesMatches(KnownFrameworkReference knownFrameworkReference)
+        private bool TargetFrameworkPropertiesMatches(KnownFrameworkReference kfr)
         {
-            bool targetFrameworkMatches;
-            if (string.IsNullOrEmpty(knownFrameworkReference.TargetFramework.Platform) &&
-                string.IsNullOrEmpty(knownFrameworkReference.TargetFramework.PlatformVersion))
+            if (!kfr.TargetFramework.Framework.Equals(TargetFrameworkIdentifier, StringComparison.OrdinalIgnoreCase)
+                || NormalizeVersion(kfr.TargetFramework.Version) != _normalizedTargetFrameworkVersion)
             {
-                targetFrameworkMatches = knownFrameworkReference.TargetFramework.Framework.Equals(
-                                             TargetFrameworkIdentifier,
-                                             StringComparison.OrdinalIgnoreCase)
-                                         && NormalizeVersion(
-                                             knownFrameworkReference.TargetFramework.Version) ==
-                                         _normalizedTargetFrameworkVersion;
-            }
-            else
-            {
-                targetFrameworkMatches = knownFrameworkReference.TargetFramework.Framework.Equals(
-                                             TargetFrameworkIdentifier,
-                                             StringComparison.OrdinalIgnoreCase)
-                                         && knownFrameworkReference.TargetFramework.Platform.Equals(
-                                             TargetPlatformIdentifier,
-                                             StringComparison.OrdinalIgnoreCase)
-                                         && knownFrameworkReference.TargetFramework.PlatformVersion.Equals(
-                                             TargetPlatformVersion,
-                                             StringComparison.OrdinalIgnoreCase)
-                                         && NormalizeVersion(
-                                             knownFrameworkReference.TargetFramework.Version) ==
-                                         _normalizedTargetFrameworkVersion;
+                return false;
             }
 
-            return targetFrameworkMatches;
+            if (!string.IsNullOrEmpty(kfr.TargetFramework.Platform)
+                && !string.IsNullOrEmpty(kfr.TargetFramework.PlatformVersion))
+            {
+                if (!kfr.TargetFramework.PlatformVersion.Equals(TargetPlatformVersion, StringComparison.OrdinalIgnoreCase)
+                    || NormalizeVersion(kfr.TargetFramework.Version) != _normalizedTargetFrameworkVersion)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private KnownRuntimePack? SelectRuntimePack(ITaskItem frameworkReference, KnownFrameworkReference knownFrameworkReference, List<KnownRuntimePack> knownRuntimePacks)
