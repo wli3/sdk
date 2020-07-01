@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using FluentAssertions;
 using Xunit;
 
@@ -200,7 +201,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
         public void It_resolves_self_contained_FrameworkReferences_to_download()
         {
             const string minimalRuntimeGraphPathContent =
-                "{\"runtimes\":{\"any\":{\"#import\":[\"base\"]},\"base\":{\"#import\":[]}}}";
+                "{\"runtimes\":{\"any\":{\"#import\":[\"base\"]},\"base\":{\"#import\":[]},\"win\":{\"#import\":[\"any\"]},\"win-x64\":{\"#import\":[\"win\"]}}}";
             var runtimeGraphPathPath = Path.GetTempFileName();
             File.WriteAllText(runtimeGraphPathPath, minimalRuntimeGraphPathContent);
 
@@ -213,8 +214,12 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                 TargetPlatformIdentifier = "Windows",
                 TargetPlatformVersion = "10.0.18362",
                 NETCoreSdkRuntimeIdentifier = "win-x64",
+                RuntimeIdentifier = "win-x64",
                 RuntimeGraphPath =
                     runtimeGraphPathPath,
+                SelfContained = true,
+                TargetLatestRuntimePatch = true,
+                TargetLatestRuntimePatchIsDefault = true,
                 FrameworkReferences =
                     new[] {new MockTaskItem("Microsoft.NETCore.App", new Dictionary<string, string>()), new MockTaskItem("Microsoft.Windows.SDK.NET.Ref", new Dictionary<string, string>()) },
                 KnownFrameworkReferences = new[]
@@ -251,7 +256,10 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
             {
                 task.Execute().Should().BeTrue();
 
-                task.PackagesToDownload.Length.Should().Be(2);
+                task.PackagesToDownload.Length.Should().Be(3);
+                task.PackagesToDownload.Should().Contain(p => p.ItemSpec == "Microsoft.Windows.SDK.NET.Ref");
+                task.PackagesToDownload.Should().Contain(p => p.ItemSpec == "Microsoft.NETCore.App.Ref");
+                task.PackagesToDownload.Should().Contain(p => p.ItemSpec == "Microsoft.NETCore.App.Runtime.win-x64");
             }
             else
             {
