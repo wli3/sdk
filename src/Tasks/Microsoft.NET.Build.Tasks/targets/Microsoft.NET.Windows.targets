@@ -24,4 +24,13 @@ Copyright (c) .NET Foundation. All rights reserved.
   <PropertyGroup Condition="'$(TargetPlatformIdentifier)' == 'windows' and '$(TargetPlatformVersion)' == ''" >
     <TargetPlatformVersion>7.0</TargetPlatformVersion>
   </PropertyGroup>
+
+  <Target Name="_CheckForUnsupportedTargetPlatformVersion" BeforeTargets="ResolveTargetingPackAssets"
+         Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'
+                             and $([MSBuild]::VersionGreaterThanOrEquals($(_TargetFrameworkVersionWithoutV), '5.0'))
+                             and '$(TargetPlatformIdentifier)' == 'Windows'
+                             and '$(TargetPlatformVersion)' != ''">
+    
+    
+  </Target>
 </Project>
