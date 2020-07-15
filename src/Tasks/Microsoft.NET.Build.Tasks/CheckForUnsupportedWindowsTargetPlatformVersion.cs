@@ -19,6 +19,7 @@ namespace Microsoft.NET.Build.Tasks
         public ITaskItem[] KnownFrameworkReferences { get; set; } = Array.Empty<ITaskItem>();
 
         public string TargetPlatformVersion { get; set; }
+        public string TargetFramework { get; set; }
 
         public CheckForUnsupportedWindowsTargetPlatformVersion()
         {
