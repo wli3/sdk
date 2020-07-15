@@ -16,10 +16,18 @@ namespace Microsoft.NET.Build.Tasks
 {
     public class CheckForUnsupportedWindowsTargetPlatformVersion : TaskBase
     {
+        [Required]
         public ITaskItem[] KnownFrameworkReferences { get; set; } = Array.Empty<ITaskItem>();
 
+        [Required]
+        public string TargetFrameworkIdentifier { get; set; }
+
+        [Required]
+        public string TargetFrameworkVersion { get; set; }
+
+        public string TargetPlatformIdentifier { get; set; }
+
         public string TargetPlatformVersion { get; set; }
-        public string TargetFramework { get; set; }
 
         public CheckForUnsupportedWindowsTargetPlatformVersion()
         {
@@ -27,6 +35,10 @@ namespace Microsoft.NET.Build.Tasks
 
         protected override void ExecuteCore()
         {
+            if (TargetPlatformIdentifier != "Windows")
+            {
+                return;
+            }
         }
     }
 

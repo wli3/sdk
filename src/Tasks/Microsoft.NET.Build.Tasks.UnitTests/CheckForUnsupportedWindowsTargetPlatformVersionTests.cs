@@ -60,7 +60,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
             var task = new CheckForUnsupportedWindowsTargetPlatformVersion
             {
                 BuildEngine = new MockNeverCacheBuildEngine4(),
-                TargetPlatformVersion = "10.0.18362",
+                TargetPlatformVersion = "10.0.9999",
                 KnownFrameworkReferences = _knownFrameworkReferences
             };
 
