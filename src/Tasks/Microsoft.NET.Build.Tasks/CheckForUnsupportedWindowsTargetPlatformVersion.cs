@@ -39,6 +39,19 @@ namespace Microsoft.NET.Build.Tasks
             {
                 return;
             }
+            
+            var knownFrameworkReferencesForTargetFramework =
+                KnownFrameworkReferences
+                    .Select(item => new KnownFrameworkReference(item))
+                    .Where(kfr => kfr.KnownFrameworkReferenceAppliesToTargetFramework(
+                        TargetFrameworkIdentifier,
+                        TargetFrameworkVersion,
+                        TargetPlatformVersion));
+
+            if (!knownFrameworkReferencesForTargetFramework.Any())
+            {
+                Log.LogError("wrong");
+            }
         }
     }
 }

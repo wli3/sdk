@@ -64,7 +64,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                 KnownFrameworkReferences = _knownFrameworkReferences
             };
 
-            task.Execute().Should().BeTrue();
+            task.Execute().Should().BeFalse();
         }
     }
 }
