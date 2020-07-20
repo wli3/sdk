@@ -40,31 +40,40 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                     {"IsWindowsOnly", "true"},
                 }),
         };
-        
+
         [Fact]
         public void Given_matching_TargetPlatformVersion_it_should_pass()
         {
             var task = new CheckForUnsupportedWindowsTargetPlatformVersion
             {
                 BuildEngine = new MockNeverCacheBuildEngine4(),
+                TargetFrameworkIdentifier = ".NETCoreApp",
+                TargetFrameworkVersion = "5.0",
+                TargetPlatformIdentifier = "Windows",
                 TargetPlatformVersion = "10.0.18362",
-                KnownFrameworkReferences = _knownFrameworkReferences
+                KnownFrameworkReferences = _knownFrameworkReferences,
             };
 
             task.Execute().Should().BeTrue();
         }
-        
+
         [Fact]
         public void Given_no_matching_TargetPlatformVersion_it_should_error()
         {
+            MockNeverCacheBuildEngine4 mockBuildEngine = new MockNeverCacheBuildEngine4();
             var task = new CheckForUnsupportedWindowsTargetPlatformVersion
             {
-                BuildEngine = new MockNeverCacheBuildEngine4(),
+                BuildEngine = mockBuildEngine,
+                TargetFrameworkIdentifier = ".NETCoreApp",
+                TargetFrameworkVersion = "5.0",
+                TargetPlatformIdentifier = "Windows",
                 TargetPlatformVersion = "10.0.9999",
                 KnownFrameworkReferences = _knownFrameworkReferences
             };
 
             task.Execute().Should().BeFalse();
+            var actualErrorMessage = mockBuildEngine.Errors.First().Message;
+            string.Format(Strings.InvalidTargetPlatformVersion, "10.0.9999", "Windows", "10.0.17760 10.0.18362").Should().Contain(actualErrorMessage);
         }
     }
 }

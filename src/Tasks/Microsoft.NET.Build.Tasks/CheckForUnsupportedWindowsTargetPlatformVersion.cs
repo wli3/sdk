@@ -50,7 +50,9 @@ namespace Microsoft.NET.Build.Tasks
 
             if (!knownFrameworkReferencesForTargetFramework.Any())
             {
-                Log.LogError("wrong");
+                var availableVersions = KnownFrameworkReferences
+                    .Select(item => new KnownFrameworkReference(item).TargetFramework.PlatformVersion);
+                Log.LogError(string.Format(Strings.InvalidTargetPlatformVersion, TargetPlatformVersion, TargetPlatformIdentifier, string.Join(" ", availableVersions)));
             }
         }
     }

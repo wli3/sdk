@@ -645,4 +645,8 @@ The following are names of parameters or literal values and should not be transl
     <value>NETSDK1135: MinimumOSPlatform {0} cannot be higher than TargetPlatformVersion {1}.</value>
     <comment>{StrBegin="NETSDK1135: "}</comment>
   </data>
+  <data name="InvalidTargetPlatformVersion" xml:space="preserve">
+    <value>NETSDK1136: TargetPlatformVersion {0} for TargetPlatformIdentifier {1} is invalid. Available TargetPlatformVersion are: {2}.</value>
+    <comment>{StrBegin="NETSDK1136: "}</comment>
+  </data>
 </root>
