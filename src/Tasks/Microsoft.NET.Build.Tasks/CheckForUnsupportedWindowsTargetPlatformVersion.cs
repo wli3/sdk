@@ -32,10 +32,6 @@ namespace Microsoft.NET.Build.Tasks
         [Required]
         public string WinRTApisPackageName { get; set; }
 
-        public CheckForUnsupportedWindowsTargetPlatformVersion()
-        {
-        }
-
         protected override void ExecuteCore()
         {
             if (!TargetPlatformIdentifier.Equals("Windows", StringComparison.OrdinalIgnoreCase))
@@ -43,13 +39,13 @@ namespace Microsoft.NET.Build.Tasks
                 return;
             }
 
-            IEnumerable<KnownFrameworkReference> winRTApisKnownFrameworkReferences =
-                       KnownFrameworkReferences
-                                .Select(item => new KnownFrameworkReference(item))
-                                .Where(i => i.Name.Equals(WinRTApisPackageName, StringComparison.OrdinalIgnoreCase));
+            IEnumerable<KnownFrameworkReference> winRtApisKnownFrameworkReferences =
+                KnownFrameworkReferences
+                    .Select(item => new KnownFrameworkReference(item))
+                    .Where(i => i.Name.Equals(WinRTApisPackageName, StringComparison.OrdinalIgnoreCase));
 
             var knownFrameworkReferencesForTargetFramework =
-                winRTApisKnownFrameworkReferences
+                winRtApisKnownFrameworkReferences
                     .Where(kfr => kfr.KnownFrameworkReferenceAppliesToTargetFramework(
                         TargetFrameworkIdentifier,
                         TargetFrameworkVersion,
@@ -57,9 +53,11 @@ namespace Microsoft.NET.Build.Tasks
 
             if (!knownFrameworkReferencesForTargetFramework.Any())
             {
-                var availableVersions = winRTApisKnownFrameworkReferences
+                var availableVersions = winRtApisKnownFrameworkReferences
                     .Select(item => item.TargetFramework.PlatformVersion);
-                Log.LogError(string.Format(Strings.InvalidTargetPlatformVersion, TargetPlatformVersion, TargetPlatformIdentifier, string.Join(" ", availableVersions)));
+
+                Log.LogError(string.Format(Strings.InvalidTargetPlatformVersion, TargetPlatformVersion,
+                    TargetPlatformIdentifier, string.Join(" ", availableVersions)));
             }
         }
     }
