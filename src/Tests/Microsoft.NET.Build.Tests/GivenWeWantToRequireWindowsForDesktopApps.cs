@@ -312,7 +312,7 @@ namespace Microsoft.NET.Build.Tests
 
             buildCommand.Execute()
                 .Should()
-                .Fail().And.HaveStdErrContaining("NETSDK1136");
+                .Fail().And.HaveStdOutContaining("NETSDK1136");
         }
 
         [WindowsOnlyFact]
