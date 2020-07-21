@@ -312,7 +312,7 @@ namespace Microsoft.NET.Build.Tests
 
             buildCommand.Execute()
                 .Should()
-                .Fail().And.HaveStdErrContaining("123");
+                .Fail().And.HaveStdErrContaining("NETSDK1136");
         }
 
         private TestAsset CreateWindowsDesktopSdkTestAsset(string projectName, string uiFrameworkProperty)

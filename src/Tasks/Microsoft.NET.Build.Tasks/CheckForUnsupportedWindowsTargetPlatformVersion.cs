@@ -35,7 +35,7 @@ namespace Microsoft.NET.Build.Tasks
 
         protected override void ExecuteCore()
         {
-            if (TargetPlatformIdentifier != "Windows")
+            if (TargetPlatformIdentifier.Equals("Windows", StringComparison.OrdinalIgnoreCase))
             {
                 return;
             }

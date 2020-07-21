@@ -25,12 +25,18 @@ Copyright (c) .NET Foundation. All rights reserved.
     <TargetPlatformVersion>7.0</TargetPlatformVersion>
   </PropertyGroup>
 
-  <Target Name="_CheckForUnsupportedTargetPlatformVersion" BeforeTargets="ResolveTargetingPackAssets"
+  <UsingTask TaskName="CheckForUnsupportedWindowsTargetPlatformVersion" AssemblyFile="$(MicrosoftNETBuildTasksAssembly)" />
+  <Target Name="_CheckForUnsupportedTargetPlatformVersion" BeforeTargets="ResolveFrameworkReferences"
          Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'
                              and $([MSBuild]::VersionGreaterThanOrEquals($(_TargetFrameworkVersionWithoutV), '5.0'))
                              and '$(TargetPlatformIdentifier)' == 'Windows'
                              and '$(TargetPlatformVersion)' != ''">
-    
-    
+
+    <CheckForUnsupportedWindowsTargetPlatformVersion
+                            KnownFrameworkReferences="@(KnownFrameworkReference)"
+                            TargetFrameworkIdentifier="$(TargetFrameworkIdentifier)"
+                            TargetFrameworkVersion="$(_TargetFrameworkVersionWithoutV)"
+                            TargetPlatformIdentifier="$(TargetPlatformIdentifier)"
+                            TargetPlatformVersion="$(TargetPlatformVersion)"/>
   </Target>
 </Project>
