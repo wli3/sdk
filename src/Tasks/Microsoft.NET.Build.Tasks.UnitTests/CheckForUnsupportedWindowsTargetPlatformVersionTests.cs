@@ -9,8 +9,7 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
 {
     public class CheckForUnsupportedWindowsTargetPlatformVersionTests
     {
-        private readonly MockTaskItem[] _knownFrameworkReferences = new[]
-        {
+        private readonly MockTaskItem[] _knownFrameworkReferences = {
             new MockTaskItem("Microsoft.Windows.SDK.NET.Ref",
                 new Dictionary<string, string>
                 {
@@ -39,41 +38,53 @@ namespace Microsoft.NET.Build.Tasks.UnitTests
                     {MetadataKeys.RuntimePackAlwaysCopyLocal, "true"},
                     {"IsWindowsOnly", "true"},
                 }),
+            new MockTaskItem("Microsoft.NETCore.App",
+                new Dictionary<string, string>
+                {
+                    {"TargetFramework", "net5.0"},
+                    {"RuntimeFrameworkName", "Microsoft.NETCore.App"},
+                    {"DefaultRuntimeFrameworkVersion", "5.0.0-preview.4.20251.6"},
+                    {"LatestRuntimeFrameworkVersion", "5.0.0-preview.4.20251.6"},
+                    {"TargetingPackName", "Microsoft.NETCore.App.Ref"},
+                    {"TargetingPackVersion", "5.0.0-preview.4.20251.6"},
+                    {"RuntimePackNamePatterns", "Microsoft.NETCore.App.Runtime.**RID**"},
+                    {"RuntimePackRuntimeIdentifiers", "win-x64"},
+                }),
         };
 
-        [Fact]
-        public void Given_matching_TargetPlatformVersion_it_should_pass()
+        private readonly MockNeverCacheBuildEngine4 _mockBuildEngine;
+        private readonly CheckForUnsupportedWindowsTargetPlatformVersion _taskWithDefaultParameter;
+
+        public CheckForUnsupportedWindowsTargetPlatformVersionTests()
         {
-            var task = new CheckForUnsupportedWindowsTargetPlatformVersion
+            _mockBuildEngine = new MockNeverCacheBuildEngine4();
+            _taskWithDefaultParameter = new CheckForUnsupportedWindowsTargetPlatformVersion
             {
-                BuildEngine = new MockNeverCacheBuildEngine4(),
+                BuildEngine = _mockBuildEngine,
                 TargetFrameworkIdentifier = ".NETCoreApp",
                 TargetFrameworkVersion = "5.0",
                 TargetPlatformIdentifier = "Windows",
                 TargetPlatformVersion = "10.0.18362",
                 KnownFrameworkReferences = _knownFrameworkReferences,
+                WinRTApisPackageName = "Microsoft.Windows.SDK.NET.Ref"
             };
+        }
 
-            task.Execute().Should().BeTrue();
+        [Fact]
+        public void Given_matching_TargetPlatformVersion_it_should_pass()
+        {
+            _taskWithDefaultParameter.Execute().Should().BeTrue();
         }
 
         [Fact]
         public void Given_no_matching_TargetPlatformVersion_it_should_error()
         {
-            MockNeverCacheBuildEngine4 mockBuildEngine = new MockNeverCacheBuildEngine4();
-            var task = new CheckForUnsupportedWindowsTargetPlatformVersion
-            {
-                BuildEngine = mockBuildEngine,
-                TargetFrameworkIdentifier = ".NETCoreApp",
-                TargetFrameworkVersion = "5.0",
-                TargetPlatformIdentifier = "Windows",
-                TargetPlatformVersion = "10.0.9999",
-                KnownFrameworkReferences = _knownFrameworkReferences
-            };
+            _taskWithDefaultParameter.TargetPlatformVersion = "10.0.9999";
 
-            task.Execute().Should().BeFalse();
-            var actualErrorMessage = mockBuildEngine.Errors.First().Message;
-            string.Format(Strings.InvalidTargetPlatformVersion, "10.0.9999", "Windows", "10.0.17760 10.0.18362").Should().Contain(actualErrorMessage);
+            _taskWithDefaultParameter.Execute().Should().BeFalse();
+            var actualErrorMessage = _mockBuildEngine.Errors.First().Message;
+            string.Format(Strings.InvalidTargetPlatformVersion, "10.0.9999", "Windows", "10.0.17760 10.0.18362")
+                .Should().Contain(actualErrorMessage);
         }
     }
 }

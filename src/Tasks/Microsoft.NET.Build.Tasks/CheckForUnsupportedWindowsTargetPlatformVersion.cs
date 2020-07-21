@@ -29,20 +29,27 @@ namespace Microsoft.NET.Build.Tasks
 
         public string TargetPlatformVersion { get; set; }
 
+        [Required]
+        public string WinRTApisPackageName { get; set; }
+
         public CheckForUnsupportedWindowsTargetPlatformVersion()
         {
         }
 
         protected override void ExecuteCore()
         {
-            if (TargetPlatformIdentifier.Equals("Windows", StringComparison.OrdinalIgnoreCase))
+            if (!TargetPlatformIdentifier.Equals("Windows", StringComparison.OrdinalIgnoreCase))
             {
                 return;
             }
-            
+
+            IEnumerable<KnownFrameworkReference> winRTApisKnownFrameworkReferences =
+                       KnownFrameworkReferences
+                                .Select(item => new KnownFrameworkReference(item))
+                                .Where(i => i.Name.Equals(WinRTApisPackageName, StringComparison.OrdinalIgnoreCase));
+
             var knownFrameworkReferencesForTargetFramework =
-                KnownFrameworkReferences
-                    .Select(item => new KnownFrameworkReference(item))
+                winRTApisKnownFrameworkReferences
                     .Where(kfr => kfr.KnownFrameworkReferenceAppliesToTargetFramework(
                         TargetFrameworkIdentifier,
                         TargetFrameworkVersion,
@@ -50,8 +57,8 @@ namespace Microsoft.NET.Build.Tasks
 
             if (!knownFrameworkReferencesForTargetFramework.Any())
             {
-                var availableVersions = KnownFrameworkReferences
-                    .Select(item => new KnownFrameworkReference(item).TargetFramework.PlatformVersion);
+                var availableVersions = winRTApisKnownFrameworkReferences
+                    .Select(item => item.TargetFramework.PlatformVersion);
                 Log.LogError(string.Format(Strings.InvalidTargetPlatformVersion, TargetPlatformVersion, TargetPlatformIdentifier, string.Join(" ", availableVersions)));
             }
         }
