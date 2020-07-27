@@ -35,13 +35,8 @@ namespace Microsoft.NET.Build.Tests
         public void WhenPropertiesAreSetItCanGenerateMinimumOSPlatformAttribute()
         {
             TestProject testProject = SetUpProject();
-
-            var targetPlatformIdentifier = "iOS";
-            testProject.AdditionalProperties["TargetPlatformIdentifier"] = targetPlatformIdentifier;
-            testProject.AdditionalProperties["TargetPlatformSupported"] = "true";
-            testProject.AdditionalProperties["TargetPlatformVersionSupported"] = "true";
+            testProject.TargetFrameworks = "net5.0-ios14.0";
             testProject.AdditionalProperties["MinimumOSPlatform"] = "13.2";
-            testProject.AdditionalProperties["TargetPlatformVersion"] = "14.0";
 
             var testAsset = _testAssetsManager.CreateTestProject(testProject);
 
