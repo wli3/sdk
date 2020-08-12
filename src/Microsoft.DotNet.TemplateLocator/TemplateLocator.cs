@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Microsoft.DotNet.MSBuildSdkResolver;
 using NuGet.Common;
 using NuGet.Protocol;
 
@@ -44,14 +45,22 @@ namespace Microsoft.DotNet.TemplateLocator
             }
         }
 
-        public string DotnetSdkVersionUsedInVs()
+        public bool TryGetDotnetSdkVersionUsedInVs(Version msbuildVersion, out string sdkVersion)
         {
-            return "5.1.100";
-        }
+            var resolver = new NETCoreSdkResolver();
+            string dotnetExeDir = resolver.GetDotnetExeDirectory();
+            var resolverResult = resolver.ResolveNETCoreSdkDirectory(null, msbuildVersion, true, dotnetExeDir);
 
-        internal void SetDotnetSdkTemplatesLocation(DirectoryInfo directoryInfo)
-        {
-            _dotnetSdkTemplatesLocation = directoryInfo;
+            if (resolverResult.ResolvedSdkDirectory == null)
+            {
+                sdkVersion = null;
+                return false;
+            }
+            else
+            {
+                sdkVersion = new DirectoryInfo(resolverResult.ResolvedSdkDirectory).Name; 
+                return true;
+            }
         }
 
         private class OptionalSdkTemplatePackageInfo : IOptionalSdkTemplatePackageInfo
