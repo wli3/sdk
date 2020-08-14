@@ -24,7 +24,8 @@ namespace Microsoft.DotNet.TemplateLocator
             }
         }
 
-        public IReadOnlyCollection<IOptionalSdkTemplatePackageInfo> GetDotnetSdkTemplatePackages(string sdkVersion)
+        public IReadOnlyCollection<IOptionalSdkTemplatePackageInfo> GetDotnetSdkTemplatePackages(string sdkVersion,
+            string dotnetRootPath)
         {
             if (_dotnetSdkTemplatesLocation == null)
             {
@@ -32,7 +33,7 @@ namespace Microsoft.DotNet.TemplateLocator
             }
 
             IEnumerable<LocalPackageInfo> packages = LocalFolderUtility
-                            .GetPackagesV2(_dotnetSdkTemplatesLocation.FullName, new NullLogger());
+                .GetPackagesV2(_dotnetSdkTemplatesLocation.FullName, new NullLogger());
 
             if (packages == null)
             {
@@ -45,11 +46,20 @@ namespace Microsoft.DotNet.TemplateLocator
             }
         }
 
-        public bool TryGetDotnetSdkVersionUsedInVs(Version msbuildVersion, out string sdkVersion)
+        public bool TryGetDotnetSdkVersionUsedInVs(string vsVersion, out string sdkVersion)
         {
             var resolver = new NETCoreSdkResolver();
             string dotnetExeDir = resolver.GetDotnetExeDirectory();
-            var resolverResult = resolver.ResolveNETCoreSdkDirectory(null, msbuildVersion, true, dotnetExeDir);
+
+            if (!Version.TryParse(vsVersion, out var parsedVsVersion))
+            {
+                throw new ArgumentException(vsVersion + " is not a valid version");
+            }
+
+            var msbuildMajorMinorVersion = new Version(parsedVsVersion.Major, parsedVsVersion.Minor, 0);
+
+            var resolverResult =
+                resolver.ResolveNETCoreSdkDirectory(null, msbuildMajorMinorVersion, true, dotnetExeDir);
 
             if (resolverResult.ResolvedSdkDirectory == null)
             {
@@ -58,7 +68,7 @@ namespace Microsoft.DotNet.TemplateLocator
             }
             else
             {
-                sdkVersion = new DirectoryInfo(resolverResult.ResolvedSdkDirectory).Name; 
+                sdkVersion = new DirectoryInfo(resolverResult.ResolvedSdkDirectory).Name;
                 return true;
             }
         }

@@ -23,13 +23,32 @@ namespace Microsoft.DotNet.TemplateLocator.Tests
         public void ItShouldReturnListOfTemplates()
         {
             var resolver = new TemplateLocator();
-            var stage2Dotnet = new DirectoryInfo(TestContext.Current.ToolsetUnderTest.DotNetHostPath);
-            var stage2Templates = stage2Dotnet.Parent.GetDirectories("templates")[0].EnumerateDirectories().First();
-            resolver.SetDotnetSdkTemplatesLocation(stage2Templates);
-
-            var result = resolver.GetDotnetSdkTemplatePackages("any");
+            var fakeDotnetRootDirectory = Path.Combine(TestContext.Current.TestExecutionDirectory, Path.GetRandomFileName());
+            var manifestDirectory = Path.Combine(fakeDotnetRootDirectory, "5.0.100-manifests", "5.0.111");
+            Directory.CreateDirectory(manifestDirectory);
+            File.WriteAllText(fakeManifest, Path.Combine(manifestDirectory, "WorkloadManifest.xml"));
+            var result = resolver.GetDotnetSdkTemplatePackages("5.1.102", fakeDotnetRootDirectory);
 
             result.Should().NotBeEmpty();
         }
+
+        private static string fakeManifest = @"
+<WorkloadManifest>
+  <Workloads>
+    <Workload Name=""Xamarin.Android workload"">
+      <RequiredPack Name=""Xamarin.Android.Workload""/>
+      <RequiredPack Name=""Xamarin.Android.Templates""/>
+    </Workload>
+  </Workloads>
+  <WorkloadPacks>
+    <Pack Name=""Xamarin.Android.Workload""
+          Version=""1.0.1""
+          Kind=""sdk"" />
+    <Pack Name=""Xamarin.Android.Templates""
+          Version=""2.0.1""
+          Kind=""Template"" />
+  </WorkloadPacks>
+</WorkloadManifest>
+";
     }
 }
