@@ -29,5 +29,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Resolvers\Microsoft.DotNet.SdkResolver\Microsoft.DotNet.SdkResolver.csproj" />
+    <ProjectReference Include="..\Resolvers\Microsoft.DotNet.WorkloadManifestReader\Microsoft.DotNet.WorkloadManifestReader.csproj" />
   </ItemGroup>
 </Project>

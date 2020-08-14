@@ -8,6 +8,8 @@ using System.Linq;
 using Microsoft.DotNet.MSBuildSdkResolver;
 using NuGet.Common;
 using NuGet.Protocol;
+using NuGet.Versioning;
+using Microsoft.NET.Sdk.WorkloadResolver;
 
 namespace Microsoft.DotNet.TemplateLocator
 {
@@ -27,23 +29,32 @@ namespace Microsoft.DotNet.TemplateLocator
         public IReadOnlyCollection<IOptionalSdkTemplatePackageInfo> GetDotnetSdkTemplatePackages(string sdkVersion,
             string dotnetRootPath)
         {
-            if (_dotnetSdkTemplatesLocation == null)
+            var directory = new DirectoryInfo(dotnetRootPath);
+
+            var sdkVersionParsed = NuGetVersion.Parse(sdkVersion);
+            var bondDirectory = directory.GetDirectories().Where(d =>
             {
-                return Array.Empty<IOptionalSdkTemplatePackageInfo>();
+                var directoryVersion = NuGetVersion.Parse(d.Name.Split('-')[0]);
+                return directoryVersion.Major == sdkVersionParsed.Major &&
+                       directoryVersion.Minor == sdkVersionParsed.Minor &&
+                       (directoryVersion.Patch / 100) == (sdkVersionParsed.Patch / 100);
+            }).OrderByDescending(d => NuGetVersion.Parse(d.Name.Split('-')[0])).First();
+
+            var manifestFolder = bondDirectory.GetDirectories().Single().FullName;
+            var manifestContent = WorkloadManifest.LoadFromFolder(manifestFolder);
+            var result = new List<IOptionalSdkTemplatePackageInfo>();
+            foreach (var pack in manifestContent.SdkPackDetail)
+            {
+                if (pack.Value.kind.Equals("Template", StringComparison.OrdinalIgnoreCase))
+                {
+                    var optionalSdkTemplatePackageInfo = new OptionalSdkTemplatePackageInfo(pack.Key, pack.Value.version,
+                        Path.Combine(dotnetRootPath, "template-packs", pack.Key.ToLower() + "." + pack.Value.version.ToLower() + ".nupkg"));
+                    result.Add(optionalSdkTemplatePackageInfo);
+                }
+                
             }
 
-            IEnumerable<LocalPackageInfo> packages = LocalFolderUtility
-                .GetPackagesV2(_dotnetSdkTemplatesLocation.FullName, new NullLogger());
-
-            if (packages == null)
-            {
-                return Array.Empty<IOptionalSdkTemplatePackageInfo>();
-            }
-            else
-            {
-                return packages
-                    .Select(l => new OptionalSdkTemplatePackageInfo(l)).ToArray();
-            }
+            return result;
         }
 
         public bool TryGetDotnetSdkVersionUsedInVs(string vsVersion, out string sdkVersion)
@@ -75,11 +86,11 @@ namespace Microsoft.DotNet.TemplateLocator
 
         private class OptionalSdkTemplatePackageInfo : IOptionalSdkTemplatePackageInfo
         {
-            public OptionalSdkTemplatePackageInfo(LocalPackageInfo localPackageInfo)
+            public OptionalSdkTemplatePackageInfo(string templatePackageId, string templateVersion, string path)
             {
-                TemplatePackageId = localPackageInfo.Identity.Id;
-                TemplateVersion = localPackageInfo.Identity.Version.ToNormalizedString();
-                Path = localPackageInfo.Path;
+                TemplatePackageId = templatePackageId ?? throw new ArgumentNullException(nameof(templatePackageId));
+                TemplateVersion = templateVersion ?? throw new ArgumentNullException(nameof(templateVersion));
+                Path = path ?? throw new ArgumentNullException(nameof(path));
             }
 
             public string TemplatePackageId { get; }

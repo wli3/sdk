@@ -14,7 +14,6 @@ namespace Microsoft.DotNet.TemplateLocator.Tests
 {
     public class GivenAnTemplateLocator : SdkTest
     {
-
         public GivenAnTemplateLocator(ITestOutputHelper logger) : base(logger)
         {
         }
@@ -23,11 +22,12 @@ namespace Microsoft.DotNet.TemplateLocator.Tests
         public void ItShouldReturnListOfTemplates()
         {
             var resolver = new TemplateLocator();
-            var fakeDotnetRootDirectory = Path.Combine(TestContext.Current.TestExecutionDirectory, Path.GetRandomFileName());
+            var fakeDotnetRootDirectory =
+                Path.Combine(TestContext.Current.TestExecutionDirectory, Path.GetRandomFileName());
             var manifestDirectory = Path.Combine(fakeDotnetRootDirectory, "5.0.100-manifests", "5.0.111");
             Directory.CreateDirectory(manifestDirectory);
-            File.WriteAllText(fakeManifest, Path.Combine(manifestDirectory, "WorkloadManifest.xml"));
-            var result = resolver.GetDotnetSdkTemplatePackages("5.1.102", fakeDotnetRootDirectory);
+            File.WriteAllText(Path.Combine(manifestDirectory, "WorkloadManifest.xml"), fakeManifest);
+            var result = resolver.GetDotnetSdkTemplatePackages("5.0.102", fakeDotnetRootDirectory);
 
             result.Should().NotBeEmpty();
         }
