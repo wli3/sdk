@@ -7,7 +7,6 @@ using System.IO;
 using System.Linq;
 using Microsoft.DotNet.MSBuildSdkResolver;
 using Microsoft.NET.Sdk.WorkloadResolver;
-using NuGet.Versioning;
 
 namespace Microsoft.DotNet.TemplateLocator
 {
@@ -17,32 +16,35 @@ namespace Microsoft.DotNet.TemplateLocator
             string sdkVersion,
             string dotnetRootPath)
         {
-            var sdkVersionParsed = NuGetVersion.Parse(sdkVersion);
+            var sdkVersionParsed = Version.Parse(sdkVersion.Split('-')[0]);
 
             bool FindSameVersionBand(DirectoryInfo manifestDirectory)
             {
-                var directoryVersion = NuGetVersion.Parse(manifestDirectory.Name.Split('-')[0]);
+                var directoryVersion = Version.Parse(manifestDirectory.Name.Split('-')[0]);
                 return directoryVersion.Major == sdkVersionParsed.Major &&
                        directoryVersion.Minor == sdkVersionParsed.Minor &&
-                       (directoryVersion.Patch / 100) == (sdkVersionParsed.Patch / 100);
+                       (directoryVersion.Revision / 100) == (sdkVersionParsed.Revision / 100);
             }
 
             var bondManifestDirectory = new DirectoryInfo(dotnetRootPath).GetDirectories().Where(FindSameVersionBand)
-                .OrderByDescending(d => NuGetVersion.Parse(d.Name.Split('-')[0])).FirstOrDefault();
+                .OrderByDescending(d => Version.Parse(d.Name.Split('-')[0])).FirstOrDefault();
 
             if (bondManifestDirectory == null)
             {
                 return Array.Empty<IOptionalSdkTemplatePackageInfo>();
             }
 
-            var manifestContent = WorkloadManifest.LoadFromFolder(bondManifestDirectory.GetDirectories().Single().FullName);
+            var manifestContent =
+                WorkloadManifest.LoadFromFolder(bondManifestDirectory.GetDirectories().Single().FullName);
             var dotnetSdkTemplatePackages = new List<IOptionalSdkTemplatePackageInfo>();
             foreach (var pack in manifestContent.SdkPackDetail)
             {
                 if (pack.Value.kind.Equals("Template", StringComparison.OrdinalIgnoreCase))
                 {
-                    var optionalSdkTemplatePackageInfo = new OptionalSdkTemplatePackageInfo(pack.Key, pack.Value.version,
-                        Path.Combine(dotnetRootPath, "template-packs", pack.Key.ToLower() + "." + pack.Value.version.ToLower() + ".nupkg"));
+                    var optionalSdkTemplatePackageInfo = new OptionalSdkTemplatePackageInfo(pack.Key,
+                        pack.Value.version,
+                        Path.Combine(dotnetRootPath, "template-packs",
+                            pack.Key.ToLower() + "." + pack.Value.version.ToLower() + ".nupkg"));
                     dotnetSdkTemplatePackages.Add(optionalSdkTemplatePackageInfo);
                 }
             }
