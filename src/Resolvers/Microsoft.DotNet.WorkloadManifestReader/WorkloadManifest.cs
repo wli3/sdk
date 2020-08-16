@@ -21,21 +21,30 @@ namespace Microsoft.NET.Sdk.WorkloadResolver
             {
                 var manifestXml = XDocument.Load(manifestPath);
 
-                foreach (var workload in manifestXml.Root.Element("Workloads").Elements("Workload"))
+                if (manifestXml.Root?.Element("Workloads")?.Elements("Workload") != null)
                 {
-                    string workloadName = workload.Attribute("Name").Value;
-                    var workloadPacks = workload.Elements("RequiredPack").Select(rp => rp.Attribute("Name").Value).ToList();
+                    foreach (var workload in manifestXml.Root.Element("Workloads").Elements("Workload"))
+                    {
+                        string workloadName = workload?.Attribute("Name").Value;
+                        var workloadPacks = workload.Elements("RequiredPack").Select(rp => rp.Attribute("Name").Value)
+                            .ToList();
 
-                    manifest.Workloads[workloadName] = workloadPacks;
+                        manifest.Workloads[workloadName] = workloadPacks;
+                    }
                 }
-                foreach (var pack in manifestXml.Root.Element("WorkloadPacks").Elements("Pack"))
+
+                if (manifestXml.Root?.Element("WorkloadPacks")?.Elements("Pack") != null)
                 {
-                    string packName = pack.Attribute("Name").Value;
-                    string packVersion = pack.Attribute("Version").Value;
-                    string kind = pack.Attribute("Kind").Value;
-                    manifest.SdkPackDetail[packName] = (packVersion, kind);
+                    foreach (var pack in manifestXml.Root.Element("WorkloadPacks").Elements("Pack"))
+                    {
+                        string packName = pack.Attribute("Name").Value;
+                        string packVersion = pack.Attribute("Version").Value;
+                        string kind = pack.Attribute("Kind").Value;
+                        manifest.SdkPackDetail[packName] = (packVersion, kind);
+                    }
                 }
             }
+
             return manifest;
         }
 

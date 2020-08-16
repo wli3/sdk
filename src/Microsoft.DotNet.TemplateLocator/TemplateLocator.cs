@@ -6,55 +6,48 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.DotNet.MSBuildSdkResolver;
-using NuGet.Common;
-using NuGet.Protocol;
-using NuGet.Versioning;
 using Microsoft.NET.Sdk.WorkloadResolver;
+using NuGet.Versioning;
 
 namespace Microsoft.DotNet.TemplateLocator
 {
     public sealed class TemplateLocator
     {
-        private DirectoryInfo _dotnetSdkTemplatesLocation;
-
-        public TemplateLocator()
-        {
-            string mockTemplateLocation = Environment.GetEnvironmentVariable("MOCKDOTNETSDKTEMPLATESLOCATION");
-            if (!string.IsNullOrWhiteSpace(mockTemplateLocation))
-            {
-                _dotnetSdkTemplatesLocation = new DirectoryInfo(mockTemplateLocation);
-            }
-        }
-
-        public IReadOnlyCollection<IOptionalSdkTemplatePackageInfo> GetDotnetSdkTemplatePackages(string sdkVersion,
+        public IReadOnlyCollection<IOptionalSdkTemplatePackageInfo> GetDotnetSdkTemplatePackages(
+            string sdkVersion,
             string dotnetRootPath)
         {
-            var directory = new DirectoryInfo(dotnetRootPath);
-
             var sdkVersionParsed = NuGetVersion.Parse(sdkVersion);
-            var bondDirectory = directory.GetDirectories().Where(d =>
+
+            bool FindSameVersionBand(DirectoryInfo manifestDirectory)
             {
-                var directoryVersion = NuGetVersion.Parse(d.Name.Split('-')[0]);
+                var directoryVersion = NuGetVersion.Parse(manifestDirectory.Name.Split('-')[0]);
                 return directoryVersion.Major == sdkVersionParsed.Major &&
                        directoryVersion.Minor == sdkVersionParsed.Minor &&
                        (directoryVersion.Patch / 100) == (sdkVersionParsed.Patch / 100);
-            }).OrderByDescending(d => NuGetVersion.Parse(d.Name.Split('-')[0])).First();
+            }
 
-            var manifestFolder = bondDirectory.GetDirectories().Single().FullName;
-            var manifestContent = WorkloadManifest.LoadFromFolder(manifestFolder);
-            var result = new List<IOptionalSdkTemplatePackageInfo>();
+            var bondManifestDirectory = new DirectoryInfo(dotnetRootPath).GetDirectories().Where(FindSameVersionBand)
+                .OrderByDescending(d => NuGetVersion.Parse(d.Name.Split('-')[0])).FirstOrDefault();
+
+            if (bondManifestDirectory == null)
+            {
+                return Array.Empty<IOptionalSdkTemplatePackageInfo>();
+            }
+
+            var manifestContent = WorkloadManifest.LoadFromFolder(bondManifestDirectory.GetDirectories().Single().FullName);
+            var dotnetSdkTemplatePackages = new List<IOptionalSdkTemplatePackageInfo>();
             foreach (var pack in manifestContent.SdkPackDetail)
             {
                 if (pack.Value.kind.Equals("Template", StringComparison.OrdinalIgnoreCase))
                 {
                     var optionalSdkTemplatePackageInfo = new OptionalSdkTemplatePackageInfo(pack.Key, pack.Value.version,
                         Path.Combine(dotnetRootPath, "template-packs", pack.Key.ToLower() + "." + pack.Value.version.ToLower() + ".nupkg"));
-                    result.Add(optionalSdkTemplatePackageInfo);
+                    dotnetSdkTemplatePackages.Add(optionalSdkTemplatePackageInfo);
                 }
-                
             }
 
-            return result;
+            return dotnetSdkTemplatePackages;
         }
 
         public bool TryGetDotnetSdkVersionUsedInVs(string vsVersion, out string sdkVersion)
@@ -67,6 +60,8 @@ namespace Microsoft.DotNet.TemplateLocator
                 throw new ArgumentException(vsVersion + " is not a valid version");
             }
 
+            // VS major minor version will match msbuild major minor
+            // and for resolve SDK, major minor version is enough
             var msbuildMajorMinorVersion = new Version(parsedVsVersion.Major, parsedVsVersion.Minor, 0);
 
             var resolverResult =
@@ -94,9 +89,7 @@ namespace Microsoft.DotNet.TemplateLocator
             }
 
             public string TemplatePackageId { get; }
-
             public string TemplateVersion { get; }
-
             public string Path { get; }
         }
     }
