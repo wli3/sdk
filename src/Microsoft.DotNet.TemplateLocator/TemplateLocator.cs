@@ -12,6 +12,20 @@ namespace Microsoft.DotNet.TemplateLocator
 {
     public sealed class TemplateLocator
     {
+        private readonly Lazy<NETCoreSdkResolver> _netCoreSdkResolver;
+
+        public TemplateLocator() 
+            : this(Environment.GetEnvironmentVariable, VSSettings.Ambient)
+        {
+        }
+
+        // Test constructor
+        public TemplateLocator(Func<string, string> getEnvironmentVariable, VSSettings vsSettings)
+        {
+            _netCoreSdkResolver =
+                new Lazy<NETCoreSdkResolver>(() => new NETCoreSdkResolver(getEnvironmentVariable, vsSettings));
+        }
+
         public IReadOnlyCollection<IOptionalSdkTemplatePackageInfo> GetDotnetSdkTemplatePackages(
             string sdkVersion,
             string dotnetRootPath)
@@ -54,8 +68,7 @@ namespace Microsoft.DotNet.TemplateLocator
 
         public bool TryGetDotnetSdkVersionUsedInVs(string vsVersion, out string sdkVersion)
         {
-            var resolver = new NETCoreSdkResolver();
-            string dotnetExeDir = resolver.GetDotnetExeDirectory();
+            string dotnetExeDir = _netCoreSdkResolver.Value.GetDotnetExeDirectory();
 
             if (!Version.TryParse(vsVersion, out var parsedVsVersion))
             {
@@ -67,7 +80,7 @@ namespace Microsoft.DotNet.TemplateLocator
             var msbuildMajorMinorVersion = new Version(parsedVsVersion.Major, parsedVsVersion.Minor, 0);
 
             var resolverResult =
-                resolver.ResolveNETCoreSdkDirectory(null, msbuildMajorMinorVersion, true, dotnetExeDir);
+                _netCoreSdkResolver.Value.ResolveNETCoreSdkDirectory(null, msbuildMajorMinorVersion, true, dotnetExeDir);
 
             if (resolverResult.ResolvedSdkDirectory == null)
             {

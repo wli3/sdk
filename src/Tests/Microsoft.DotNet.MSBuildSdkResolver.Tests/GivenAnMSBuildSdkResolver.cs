@@ -485,6 +485,21 @@ namespace Microsoft.DotNet.Cli.Utils.Tests
             result.Warnings.Should().BeNullOrEmpty();
             result.Errors.Should().BeNullOrEmpty();
         }
+        
+        [Fact]
+        public void GivenTemplateLocatorItCanResolveSdkVersion()
+        {
+            var environment = new TestEnvironment(_testAssetsManager);
+            const string sdkVersion = "99.99.97";
+            environment.CreateSdkDirectory(ProgramFiles.X64, "Some.Test.Sdk", sdkVersion);
+            environment.CreateMuxerAndAddToPath(ProgramFiles.X64);
+            
+            var resolver = new TemplateLocator.TemplateLocator(environment.GetEnvironmentVariable, 
+                new VSSettings(environment.VSSettingsFile?.FullName, environment.DisallowPrereleaseByDefault));
+            resolver.TryGetDotnetSdkVersionUsedInVs("15.8", out var version).Should().BeTrue();
+
+            version.Should().Be(sdkVersion);
+        }
 
         private enum ProgramFiles
         {
