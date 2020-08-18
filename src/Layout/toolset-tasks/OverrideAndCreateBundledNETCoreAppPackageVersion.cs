@@ -5,7 +5,9 @@
 using System;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
@@ -33,12 +35,23 @@ namespace Microsoft.DotNet.Build.Tasks
 
         public override bool Execute()
         {
-            return ExecuteInternal(Stage0MicrosoftNETCoreAppRefPackageVersionPath, MicrosoftNETCoreAppRefPackageVersion, OutputPath);
+            File.WriteAllText(OutputPath, ExecuteInternal(File.ReadAllText(Stage0MicrosoftNETCoreAppRefPackageVersionPath), MicrosoftNETCoreAppRefPackageVersion));
+            return true;
         }
 
-        public static bool ExecuteInternal(string stage0MicrosoftNETCoreAppRefPackageVersionPath, string microsoftNETCoreAppRefPackageVersion, string outputPath)
+        public static string ExecuteInternal(string stage0MicrosoftNETCoreAppRefPackageVersionContent, string microsoftNETCoreAppRefPackageVersion)
         {
-            return true;
+            var projectXml = XDocument.Parse(stage0MicrosoftNETCoreAppRefPackageVersionContent);
+
+            var ns = projectXml.Root.Name.Namespace;
+
+            var propertyGroup = projectXml.Root.Elements(ns + "PropertyGroup").First();
+
+            var originalBundledNETCoreAppPackageVersion = propertyGroup.Element(ns + "BundledNETCoreAppPackageVersion").Value;
+
+            //propertyGroup.Element(ns + "BundledNETCoreAppPackageVersion").Value = microsoftNETCoreAppRefPackageVersion;
+
+            return projectXml.ToString();
         }
     }
 }

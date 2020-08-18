@@ -16,9 +16,9 @@ namespace Microsoft.DotNet.Cli.Build.Tests
         [Fact]
         public void AppleSauce()
         {
-           // OverrideAndCreateBundledNETCoreAppPackageVersion.ExecuteInternal("", "", "").Should().BeTrue();
-
-            File.ReadAllText("Microsoft.NETCoreSdk.BundledVersions.props.expected").Should().Be("1");
+            string result = OverrideAndCreateBundledNETCoreAppPackageVersion
+                            .ExecuteInternal(File.ReadAllText("Microsoft.NETCoreSdk.BundledVersions.props.input"), "5.0.0-rc.1.20410.10");
+            result.Should().Be(File.ReadAllText("Microsoft.NETCoreSdk.BundledVersions.props.expected"));
         }
     }
 }
