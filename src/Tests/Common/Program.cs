@@ -38,7 +38,7 @@ partial class Program
         }
         else
         {
-            returnCode = Xunit.ConsoleClient.Program.Main(newArgs.ToArray());
+            returnCode = Program.Main(newArgs.ToArray());
         }
 
         if (testCommandLine.ShouldShowHelp)
