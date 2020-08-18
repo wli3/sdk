@@ -38,6 +38,7 @@ namespace Microsoft.DotNet.Build.Tasks
 
         public static bool ExecuteInternal(string stage0MicrosoftNETCoreAppRefPackageVersionPath, string microsoftNETCoreAppRefPackageVersion, string outputPath)
         {
+            File.WriteAllText(outputPath, Path.GetFullPath(stage0MicrosoftNETCoreAppRefPackageVersionPath) + "  " + microsoftNETCoreAppRefPackageVersion);
             return true;
         }
     }
