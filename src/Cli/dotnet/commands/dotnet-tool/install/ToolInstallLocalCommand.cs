@@ -59,6 +59,7 @@ namespace Microsoft.DotNet.Tools.Tool.Install
 
         public int Install(FilePath manifestFile)
         {
+            PerformanceLogEventSource.Log.EnvironmentInfo("something");
             IToolPackage toolDownloadedPackage =
                 _toolLocalPackageInstaller.Install(manifestFile);
 

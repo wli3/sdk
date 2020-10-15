@@ -25,6 +25,7 @@ using LocalizableStrings = Microsoft.DotNet.Tools.Tool.Install.LocalizableString
 using Microsoft.DotNet.ToolManifest;
 using NuGet.Frameworks;
 using Microsoft.NET.TestFramework.Utilities;
+using System.Diagnostics.Tracing;
 
 namespace Microsoft.DotNet.Tests.Commands.Tool
 {
@@ -201,6 +202,29 @@ namespace Microsoft.DotNet.Tests.Commands.Tool
                         _packageIdA,
                         _packageVersionA.ToNormalizedString(),
                         _manifestFilePath).Green());
+        }
+
+        public class TestEventListener : EventListener
+        {
+            public List<EventWrittenEventArgs> EventSourceLogs { get; set; } = new List<EventWrittenEventArgs>();
+
+            protected override void OnEventWritten(EventWrittenEventArgs eventData)
+            {
+                EventSourceLogs.Add(eventData);
+                base.OnEventWritten(eventData);
+            }
+        }
+
+        [Fact]
+        public void WhenRunWithPackageIdItLogtiming()
+        {
+            using (var testEventListener = new TestEventListener())
+            {
+                var toolInstallLocalCommand = GetDefaultTestToolInstallLocalCommand();
+
+                toolInstallLocalCommand.Execute().Should().Be(0);
+                testEventListener.EventSourceLogs.Should().NotBeEmpty();
+            }
         }
 
         [Fact]
