@@ -213,6 +213,14 @@ namespace Microsoft.DotNet.Tests.Commands.Tool
                 EventSourceLogs.Add(eventData);
                 base.OnEventWritten(eventData);
             }
+
+            protected override void OnEventSourceCreated(EventSource eventSource)
+            {
+                if (eventSource.Name.Equals("Microsoft-Dotnet-CLI-Performance"))
+                {
+                    EnableEvents(eventSource, EventLevel.Verbose, EventKeywords.All);
+                }
+            }
         }
 
         [Fact]
@@ -223,7 +231,7 @@ namespace Microsoft.DotNet.Tests.Commands.Tool
                 var toolInstallLocalCommand = GetDefaultTestToolInstallLocalCommand();
 
                 toolInstallLocalCommand.Execute().Should().Be(0);
-                testEventListener.EventSourceLogs.Should().NotBeEmpty();
+                testEventListener.EventSourceLogs.Should().HaveCount(1);
             }
         }
 
