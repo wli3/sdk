@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Microsoft.DotNet.ToolPackage.Tests
+namespace Microsoft.DotNet.Cli.PackageDownload
 {
     public class DownloadProcessMonitor : IObservable<DownloadProcess>
     {

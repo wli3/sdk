@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using NuGet.Common;
 using NuGet.Protocol;
 
-namespace Microsoft.DotNet.ToolPackage.Tests
+namespace Microsoft.DotNet.Cli.PackageDownload
 {
     public class DownloadTimeoutStreamWithLog : DownloadTimeoutStream
     {

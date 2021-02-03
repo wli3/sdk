@@ -10,9 +10,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using NuGet.Common;
 using NuGet.Protocol;
-using NuGet.Protocol.Events;
 
-namespace Microsoft.DotNet.ToolPackage.Tests
+namespace Microsoft.DotNet.Cli.PackageDownload
 {
     /// <summary>
     /// The <see cref="HttpRetryHandler"/> is for retrying and HTTP request if it times out, has any exception,
