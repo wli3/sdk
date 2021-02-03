@@ -3,10 +3,8 @@
 
 using System;
 using NuGet.Common;
-using NuGet.Protocol;
-using Xunit.Abstractions;
 
-namespace Microsoft.DotNet.ToolPackage.Tests
+namespace Microsoft.DotNet.Cli.PackageDownload
 {
     internal sealed class ConsolePrintDownloadProcessReporter : IObserver<DownloadProcess>
     {

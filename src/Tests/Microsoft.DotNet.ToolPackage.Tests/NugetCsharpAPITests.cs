@@ -5,6 +5,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
+using Microsoft.DotNet.Cli.PackageDownload;
 using Microsoft.NET.TestFramework;
 using NuGet.Common;
 using NuGet.Protocol;

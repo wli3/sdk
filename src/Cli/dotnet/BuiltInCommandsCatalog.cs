@@ -21,6 +21,7 @@ using Microsoft.DotNet.Tools.Store;
 using Microsoft.DotNet.Tools.Test;
 using Microsoft.DotNet.Tools.VSTest;
 using System.Collections.Generic;
+using Microsoft.DotNet.Tools.Install;
 using Microsoft.DotNet.Tools.Tool;
 
 namespace Microsoft.DotNet.Cli
@@ -149,6 +150,10 @@ namespace Microsoft.DotNet.Cli
             {
                 Command = ToolCommand.Run,
                 DocLink = "https://aka.ms/dotnet-tool"
+            },
+            ["install"] = new BuiltInCommandMetadata
+            {
+                Command = InstallCommand.Run,
             },
             ["build-server"] = new BuiltInCommandMetadata
             {

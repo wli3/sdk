@@ -43,6 +43,7 @@ namespace Microsoft.DotNet.Cli
             StoreCommandParser.GetCommand(),
             TestCommandParser.GetCommand(),
             ToolCommandParser.GetCommand(),
+            InstallCommandParser.GetCommand(),
             VSTestCommandParser.GetCommand(),
             HelpCommandParser.GetCommand()
         };
