@@ -12,31 +12,11 @@ namespace Microsoft.DotNet.Cli
         {
             Description = LocalizableStrings.SearchTermDescription
         };
-
-        public static readonly Option DetailOption = new Option<bool>("--detail", LocalizableStrings.DetailDescription);
-
-        public static readonly Option SkipOption = new Option<string>("--skip", LocalizableStrings.SkipDescription)
-        {
-            ArgumentHelpName = LocalizableStrings.SkipArgumentName
-        };
-
-        public static readonly Option TakeOption = new Option<string>($"--take", LocalizableStrings.TakeDescription)
-        {
-            ArgumentHelpName = LocalizableStrings.TakeArgumentName
-        };
-
-        public static readonly Option PrereleaseOption = new Option<bool>($"--prerelease", LocalizableStrings.PrereleaseDescription);
-
         public static Command GetCommand()
         {
             var command = new Command("search", LocalizableStrings.CommandDescription);
 
             command.AddArgument(SearchTermArgument);
-
-            command.AddOption(DetailOption);
-            command.AddOption(SkipOption);
-            command.AddOption(TakeOption);
-            command.AddOption(PrereleaseOption);
 
             return command;
         }

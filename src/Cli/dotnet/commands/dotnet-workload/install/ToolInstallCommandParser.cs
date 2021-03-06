@@ -3,7 +3,6 @@
 
 using System.Collections.Generic;
 using System.CommandLine;
-using Microsoft.DotNet.Workloads.Workload.Common;
 using LocalizableStrings = Microsoft.DotNet.Workloads.Workload.Install.LocalizableStrings;
 
 namespace Microsoft.DotNet.Cli
@@ -42,12 +41,8 @@ namespace Microsoft.DotNet.Cli
             var command = new Command("install", LocalizableStrings.CommandDescription);
 
             command.AddArgument(PackageIdArgument);
-            command.AddOption(WorkloadAppliedOption.GlobalOption(LocalizableStrings.GlobalOptionDescription));
-            command.AddOption(WorkloadAppliedOption.LocalOption(LocalizableStrings.LocalOptionDescription));
-            command.AddOption(WorkloadAppliedOption.WorkloadPathOption(LocalizableStrings.WorkloadPathOptionDescription, LocalizableStrings.WorkloadPathOptionName));
             command.AddOption(VersionOption);
             command.AddOption(ConfigOption);
-            command.AddOption(WorkloadAppliedOption.WorkloadManifestOption(LocalizableStrings.ManifestPathOptionDescription, LocalizableStrings.ManifestPathOptionName));
             command.AddOption(AddSourceOption);
             command.AddOption(FrameworkOption);
             command.AddOption(WorkloadCommandRestorePassThroughOptions.DisableParallelOption);

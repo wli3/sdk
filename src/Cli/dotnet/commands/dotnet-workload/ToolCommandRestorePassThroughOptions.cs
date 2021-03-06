@@ -4,7 +4,7 @@
 using System.CommandLine;
 using Microsoft.DotNet.Cli.Utils;
 using Microsoft.DotNet.Workloads;
-using LocalizableStrings = Microsoft.DotNet.Workloads.Restore.LocalizableStrings;
+using LocalizableStrings = Microsoft.DotNet.Workloads.Workload.Restore.LocalizableStrings;
 
 
 namespace Microsoft.DotNet.Cli
