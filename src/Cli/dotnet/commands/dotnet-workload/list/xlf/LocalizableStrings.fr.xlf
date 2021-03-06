@@ -3,23 +3,28 @@
   <file datatype="xml" source-language="en" target-language="fr" original="../LocalizableStrings.resx">
     <body>
       <trans-unit id="CommandDescription">
-        <source>List tools installed globally or locally.</source>
-        <target state="translated">Liste les outils installés globalement ou localement.</target>
+        <source>List workloads installed globally or locally.</source>
+        <target state="needs-review-translation">Liste les outils installés globalement ou localement.</target>
         <note />
       </trans-unit>
       <trans-unit id="GlobalOptionDescription">
-        <source>List tools installed for the current user.</source>
-        <target state="translated">Liste les outils installés pour l'utilisateur actuel.</target>
+        <source>List workloads installed for the current user.</source>
+        <target state="needs-review-translation">Liste les outils installés pour l'utilisateur actuel.</target>
         <note />
       </trans-unit>
-      <trans-unit id="ListToolCommandInvalidGlobalAndLocalAndToolPath">
-        <source>The local option(--local), the global option (--global), the tool path option (--tool-path), can only have one at a time. Specify only one of the options: {0}.</source>
-        <target state="translated">L'option locale (--local), l'option globale (--global) et l'option de chemin d'outil (--tool-path) ne peuvent pas être utilisées simultanément. Spécifiez une seule des options : {0}.</target>
+      <trans-unit id="InvalidWorkloadPathOption">
+        <source>Workload path '{0}' does not exist.</source>
+        <target state="new">Workload path '{0}' does not exist.</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="ListWorkloadCommandInvalidGlobalAndLocalAndWorkloadPath">
+        <source>The local option(--local), the global option (--global), the workload path option (--workload-path), can only have one at a time. Specify only one of the options: {0}.</source>
+        <target state="new">The local option(--local), the global option (--global), the workload path option (--workload-path), can only have one at a time. Specify only one of the options: {0}.</target>
         <note />
       </trans-unit>
       <trans-unit id="LocalOptionDescription">
-        <source>List the tools installed in the local tool manifest.</source>
-        <target state="translated">Liste les outils installés dans le manifeste d'outils locaux.</target>
+        <source>List the workloads installed in the local workload manifest.</source>
+        <target state="needs-review-translation">Liste les outils installés dans le manifeste d'outils locaux.</target>
         <note />
       </trans-unit>
       <trans-unit id="ManifestFileColumn">
@@ -43,25 +48,20 @@
         <note />
       </trans-unit>
       <trans-unit id="InvalidPackageWarning">
-        <source>Warning: tool package '{0}' is invalid, contact tool author:
+        <source>Warning: workload package '{0}' is invalid, contact workload author:
 {1}</source>
-        <target state="translated">Avertissement : Le package d'outils '{0}' n'est pas valide. Contactez l'auteur de l'outil :
+        <target state="needs-review-translation">Avertissement : Le package d'outils '{0}' n'est pas valide. Contactez l'auteur de l'outil :
 {1}</target>
         <note />
       </trans-unit>
-      <trans-unit id="InvalidToolPathOption">
-        <source>Tool path '{0}' does not exist.</source>
-        <target state="translated">Le chemin d'outil '{0}' n'existe pas.</target>
+      <trans-unit id="WorkloadPathOptionDescription">
+        <source>The directory containing the workloads to list.</source>
+        <target state="new">The directory containing the workloads to list.</target>
         <note />
       </trans-unit>
-      <trans-unit id="ToolPathOptionName">
+      <trans-unit id="WorkloadPathOptionName">
         <source>PATH</source>
-        <target state="translated">PATH</target>
-        <note />
-      </trans-unit>
-      <trans-unit id="ToolPathOptionDescription">
-        <source>The directory containing the tools to list.</source>
-        <target state="translated">Répertoire contenant les outils à lister.</target>
+        <target state="new">PATH</target>
         <note />
       </trans-unit>
     </body>

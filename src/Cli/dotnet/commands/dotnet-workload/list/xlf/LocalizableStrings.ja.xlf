@@ -3,23 +3,28 @@
   <file datatype="xml" source-language="en" target-language="ja" original="../LocalizableStrings.resx">
     <body>
       <trans-unit id="CommandDescription">
-        <source>List tools installed globally or locally.</source>
-        <target state="translated">グローバルまたはローカルにインストールされているツールを一覧表示します。</target>
+        <source>List workloads installed globally or locally.</source>
+        <target state="needs-review-translation">グローバルまたはローカルにインストールされているツールを一覧表示します。</target>
         <note />
       </trans-unit>
       <trans-unit id="GlobalOptionDescription">
-        <source>List tools installed for the current user.</source>
-        <target state="translated">現在のユーザーに対してインストールされているツールを一覧表示します。</target>
+        <source>List workloads installed for the current user.</source>
+        <target state="needs-review-translation">現在のユーザーに対してインストールされているツールを一覧表示します。</target>
         <note />
       </trans-unit>
-      <trans-unit id="ListToolCommandInvalidGlobalAndLocalAndToolPath">
-        <source>The local option(--local), the global option (--global), the tool path option (--tool-path), can only have one at a time. Specify only one of the options: {0}.</source>
-        <target state="translated">ローカル オプション (--local)、グローバル オプション (--global)、ツール パス オプション (--tool-path) は、一度に 1 つだけ指定できます。オプションを 1 つだけ指定します: {0}。</target>
+      <trans-unit id="InvalidWorkloadPathOption">
+        <source>Workload path '{0}' does not exist.</source>
+        <target state="new">Workload path '{0}' does not exist.</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="ListWorkloadCommandInvalidGlobalAndLocalAndWorkloadPath">
+        <source>The local option(--local), the global option (--global), the workload path option (--workload-path), can only have one at a time. Specify only one of the options: {0}.</source>
+        <target state="new">The local option(--local), the global option (--global), the workload path option (--workload-path), can only have one at a time. Specify only one of the options: {0}.</target>
         <note />
       </trans-unit>
       <trans-unit id="LocalOptionDescription">
-        <source>List the tools installed in the local tool manifest.</source>
-        <target state="translated">ローカル ツール マニフェストにインストールされているツールを一覧表示します。</target>
+        <source>List the workloads installed in the local workload manifest.</source>
+        <target state="needs-review-translation">ローカル ツール マニフェストにインストールされているツールを一覧表示します。</target>
         <note />
       </trans-unit>
       <trans-unit id="ManifestFileColumn">
@@ -43,25 +48,20 @@
         <note />
       </trans-unit>
       <trans-unit id="InvalidPackageWarning">
-        <source>Warning: tool package '{0}' is invalid, contact tool author:
+        <source>Warning: workload package '{0}' is invalid, contact workload author:
 {1}</source>
-        <target state="translated">警告: ツール パッケージ '{0}' が無効です。ツールの作成者にお問い合わせください:
+        <target state="needs-review-translation">警告: ツール パッケージ '{0}' が無効です。ツールの作成者にお問い合わせください:
 {1}</target>
         <note />
       </trans-unit>
-      <trans-unit id="InvalidToolPathOption">
-        <source>Tool path '{0}' does not exist.</source>
-        <target state="translated">ツール パス '{0}' は存在しません。</target>
+      <trans-unit id="WorkloadPathOptionDescription">
+        <source>The directory containing the workloads to list.</source>
+        <target state="new">The directory containing the workloads to list.</target>
         <note />
       </trans-unit>
-      <trans-unit id="ToolPathOptionName">
+      <trans-unit id="WorkloadPathOptionName">
         <source>PATH</source>
-        <target state="translated">PATH</target>
-        <note />
-      </trans-unit>
-      <trans-unit id="ToolPathOptionDescription">
-        <source>The directory containing the tools to list.</source>
-        <target state="translated">一覧表示するツールが入っているディレクトリ。</target>
+        <target state="new">PATH</target>
         <note />
       </trans-unit>
     </body>
