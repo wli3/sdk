@@ -3,8 +3,8 @@
 
 using System.CommandLine;
 using Microsoft.DotNet.Cli.Utils;
-using Microsoft.DotNet.Workloads;
-using LocalizableStrings = Microsoft.DotNet.Workloads.Workload.Restore.LocalizableStrings;
+using Microsoft.DotNet.Tools;
+using LocalizableStrings = Microsoft.DotNet.Tools.Restore.LocalizableStrings;
 
 
 namespace Microsoft.DotNet.Cli
