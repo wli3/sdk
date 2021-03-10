@@ -180,19 +180,10 @@
   <data name="DownloadOnlyOptionDescription" xml:space="preserve">
     <value>Download workload package into cache.</value>
   </data>
-  <data name="DownloadOnlyOptionName" xml:space="preserve">
-    <value>DOWNLOAD_ONLY</value>
-  </data>
   <data name="FromCacheOptionDescription" xml:space="preserve">
     <value>Complete the operation from cache (offline).</value>
   </data>
-  <data name="FromCacheOptionName" xml:space="preserve">
-    <value>FROM_CACHE</value>
-  </data>
   <data name="MachineReadableProgressOptionDescription" xml:space="preserve">
     <value>Print out machine readable progress for integration with other application to show progress.</value>
-  </data>
-  <data name="MachineReadableProgressOptionName" xml:space="preserve">
-    <value>MACHINE_READABLE_PROGRESS</value>
   </data>
 </root>

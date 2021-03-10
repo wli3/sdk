@@ -35,19 +35,16 @@ namespace Microsoft.DotNet.Cli
             ArgumentHelpName = LocalizableStrings.FrameworkOptionName
         };
         
-        public static readonly Option DownloadOnlyOption = new Option<string>("--download-only", LocalizableStrings.DownloadOnlyOptionDescription)
+        public static readonly Option DownloadOnlyOption = new Option<bool>("--download-only", LocalizableStrings.DownloadOnlyOptionDescription)
         {
-            ArgumentHelpName = LocalizableStrings.DownloadOnlyOptionName
         };
         
-        public static readonly Option FromCacheOption = new Option<string>("--from-cache", LocalizableStrings.FromCacheOptionDescription)
+        public static readonly Option FromCacheOption = new Option<bool>("--from-cache", LocalizableStrings.FromCacheOptionDescription)
         {
-            ArgumentHelpName = LocalizableStrings.FromCacheOptionName
         };
         
-        public static readonly Option MachineReadableProgressOption = new Option<string>("--machine-readable-progress", LocalizableStrings.MachineReadableProgressOptionDescription)
+        public static readonly Option MachineReadableProgressOption = new Option<bool>("--machine-readable-progress", LocalizableStrings.MachineReadableProgressOptionDescription)
         {
-            ArgumentHelpName = LocalizableStrings.MachineReadableProgressOptionName
         };
 
         public static readonly Option VerbosityOption = CommonOptions.VerbosityOption();
