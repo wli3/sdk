@@ -34,6 +34,21 @@ namespace Microsoft.DotNet.Cli
         {
             ArgumentHelpName = LocalizableStrings.FrameworkOptionName
         };
+        
+        public static readonly Option DownloadOnlyOption = new Option<string>("--download-only", LocalizableStrings.DownloadOnlyOptionDescription)
+        {
+            ArgumentHelpName = LocalizableStrings.DownloadOnlyOptionName
+        };
+        
+        public static readonly Option FromCacheOption = new Option<string>("--from-cache", LocalizableStrings.FromCacheOptionDescription)
+        {
+            ArgumentHelpName = LocalizableStrings.FromCacheOptionName
+        };
+        
+        public static readonly Option MachineReadableProgressOption = new Option<string>("--machine-readable-progress", LocalizableStrings.MachineReadableProgressOptionDescription)
+        {
+            ArgumentHelpName = LocalizableStrings.MachineReadableProgressOptionName
+        };
 
         public static readonly Option VerbosityOption = CommonOptions.VerbosityOption();
 
@@ -46,6 +61,9 @@ namespace Microsoft.DotNet.Cli
             command.AddOption(ConfigOption);
             command.AddOption(AddSourceOption);
             command.AddOption(FrameworkOption);
+            command.AddOption(DownloadOnlyOption);
+            command.AddOption(FromCacheOption);
+            command.AddOption(MachineReadableProgressOption);
             command.AddOption(WorkloadCommandRestorePassThroughOptions.DisableParallelOption);
             command.AddOption(WorkloadCommandRestorePassThroughOptions.IgnoreFailedSourcesOption);
             command.AddOption(WorkloadCommandRestorePassThroughOptions.NoCacheOption);

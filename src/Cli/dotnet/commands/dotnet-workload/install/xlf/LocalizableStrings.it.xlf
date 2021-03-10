@@ -2,6 +2,26 @@
 <xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.2" xsi:schemaLocation="urn:oasis:names:tc:xliff:document:1.2 xliff-core-1.2-transitional.xsd">
   <file datatype="xml" source-language="en" target-language="it" original="../LocalizableStrings.resx">
     <body>
+      <trans-unit id="DownloadOnlyOptionDescription">
+        <source>Download workload package into cache.</source>
+        <target state="new">Download workload package into cache.</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="DownloadOnlyOptionName">
+        <source>DOWNLOAD_ONLY</source>
+        <target state="new">DOWNLOAD_ONLY</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="FromCacheOptionDescription">
+        <source>Complete the operation from cache (offline).</source>
+        <target state="new">Complete the operation from cache (offline).</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="FromCacheOptionName">
+        <source>FROM_CACHE</source>
+        <target state="new">FROM_CACHE</target>
+        <note />
+      </trans-unit>
       <trans-unit id="InstallationSucceeded">
         <source>Workload '{0}' (version '{1}') was successfully installed.</source>
         <target state="new">Workload '{0}' (version '{1}') was successfully installed.</target>
@@ -10,16 +30,6 @@
       <trans-unit id="InvalidWorkloadConfiguration">
         <source>The settings file in the workload's NuGet package is invalid: {0}</source>
         <target state="new">The settings file in the workload's NuGet package is invalid: {0}</target>
-        <note />
-      </trans-unit>
-      <trans-unit id="ManifestPathOptionDescription">
-        <source>Path to the manifest file.</source>
-        <target state="translated">Percorso del file manifesto.</target>
-        <note />
-      </trans-unit>
-      <trans-unit id="ManifestPathOptionName">
-        <source>PATH</source>
-        <target state="translated">PATH</target>
         <note />
       </trans-unit>
       <trans-unit id="CommandDescription">
@@ -35,6 +45,16 @@
       <trans-unit id="FrameworkOptionDescription">
         <source>The target framework to install the workload for.</source>
         <target state="needs-review-translation">Framework di destinazione per cui installare lo strumento.</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="MachineReadableProgressOptionDescription">
+        <source>Print out machine readable progress for integration with other application to show progress.</source>
+        <target state="new">Print out machine readable progress for integration with other application to show progress.</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="MachineReadableProgressOptionName">
+        <source>MACHINE_READABLE_PROGRESS</source>
+        <target state="new">MACHINE_READABLE_PROGRESS</target>
         <note />
       </trans-unit>
       <trans-unit id="VersionOptionDescription">

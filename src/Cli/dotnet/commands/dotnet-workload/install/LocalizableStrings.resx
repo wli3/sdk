@@ -177,10 +177,22 @@
   <data name="WorkloadPathOptionDescription" xml:space="preserve">
     <value>The directory where the workload will be installed. The directory will be created if it does not exist.</value>
   </data>
-  <data name="ManifestPathOptionDescription" xml:space="preserve">
-    <value>Path to the manifest file.</value>
+  <data name="DownloadOnlyOptionDescription" xml:space="preserve">
+    <value>Download workload package into cache.</value>
   </data>
-  <data name="ManifestPathOptionName" xml:space="preserve">
-    <value>PATH</value>
+  <data name="DownloadOnlyOptionName" xml:space="preserve">
+    <value>DOWNLOAD_ONLY</value>
+  </data>
+  <data name="FromCacheOptionDescription" xml:space="preserve">
+    <value>Complete the operation from cache (offline).</value>
+  </data>
+  <data name="FromCacheOptionName" xml:space="preserve">
+    <value>FROM_CACHE</value>
+  </data>
+  <data name="MachineReadableProgressOptionDescription" xml:space="preserve">
+    <value>Print out machine readable progress for integration with other application to show progress.</value>
+  </data>
+  <data name="MachineReadableProgressOptionName" xml:space="preserve">
+    <value>MACHINE_READABLE_PROGRESS</value>
   </data>
 </root>
