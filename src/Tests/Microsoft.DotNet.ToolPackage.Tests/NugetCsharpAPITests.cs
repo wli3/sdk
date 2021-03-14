@@ -2,11 +2,13 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.NET.TestFramework;
 using NuGet.Common;
+using NuGet.Packaging.Core;
 using NuGet.Protocol;
 using NuGet.Protocol.Core.Types;
 using NuGet.Versioning;
@@ -43,6 +45,16 @@ namespace Microsoft.DotNet.ToolPackage.Tests
             string packageId = "Newtonsoft.Json";
             NuGetVersion packageVersion = new("12.0.1");
 
+            var serviceIndexResource = await source.GetResourceAsync<ServiceIndexResourceV3>();
+            var packageBaseAddress = serviceIndexResource?.GetServiceEntryUris(ServiceTypes.PackageBaseAddress);
+
+            // Print URL to download
+            var packageDownloader =
+                await findPackageByIdResource.GetPackageDownloaderAsync(new PackageIdentity(packageId, packageVersion),
+                    cache, logger, CancellationToken.None);
+            Log.WriteLine(
+                $"Constructed: {nupkgUrl(packageBaseAddress.First().ToString(), packageId.ToString(), packageVersion)}");
+
             MemoryStream stream = new();
             bool successful = await findPackageByIdResource.CopyNupkgToStreamAsync(packageId,
                 packageVersion,
@@ -52,6 +64,13 @@ namespace Microsoft.DotNet.ToolPackage.Tests
                 cancellationToken);
             successful.Should().BeTrue();
             logger.Messages.Should().Contain("Finished 100%");
+        }
+
+        public string nupkgUrl(string baseUri, string id, NuGetVersion version)
+        {
+            return baseUri + id.ToLowerInvariant() + "/" + version.ToNormalizedString() + "/" + id.ToLowerInvariant() +
+                   "." +
+                   version.ToNormalizedString() + ".nupkg";
         }
     }
 }

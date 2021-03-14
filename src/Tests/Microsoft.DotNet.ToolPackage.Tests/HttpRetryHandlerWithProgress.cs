@@ -120,7 +120,7 @@ namespace Microsoft.DotNet.ToolPackage.Tests
 
                         log.LogInformation("  " + string.Format(
                             CultureInfo.InvariantCulture,
-                            "Strings.Http_RequestLog",
+                            "Strings.Http_RequestLog {0} {1}",
                             requestMessage.Method,
                             requestUri));
 
