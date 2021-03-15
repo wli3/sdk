@@ -30,7 +30,7 @@ namespace Microsoft.DotNet.Cli
             ArgumentHelpName = LocalizableStrings.AddSourceOptionName
         }.AllowSingleArgPerToken();
         
-        public static readonly Option DownloadOnlyOption = new Option<bool>("--print-download-link-only", LocalizableStrings.PrintDownloadLinkOnlyDescription)
+        public static readonly Option PrintDownloadLinkOnlyOption = new Option<bool>("--print-download-link-only", LocalizableStrings.PrintDownloadLinkOnlyDescription)
         {
             IsHidden = true
         };
@@ -49,7 +49,7 @@ namespace Microsoft.DotNet.Cli
             command.AddOption(VersionOption);
             command.AddOption(ConfigOption);
             command.AddOption(AddSourceOption);
-            command.AddOption(DownloadOnlyOption);
+            command.AddOption(PrintDownloadLinkOnlyOption);
             command.AddOption(FromCacheOption);
             command.AddOption(WorkloadCommandRestorePassThroughOptions.DisableParallelOption);
             command.AddOption(WorkloadCommandRestorePassThroughOptions.IgnoreFailedSourcesOption);
