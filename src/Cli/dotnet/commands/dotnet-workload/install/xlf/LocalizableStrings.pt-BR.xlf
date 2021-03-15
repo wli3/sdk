@@ -2,11 +2,6 @@
 <xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.2" xsi:schemaLocation="urn:oasis:names:tc:xliff:document:1.2 xliff-core-1.2-transitional.xsd">
   <file datatype="xml" source-language="en" target-language="pt-BR" original="../LocalizableStrings.resx">
     <body>
-      <trans-unit id="DownloadOnlyOptionDescription">
-        <source>Download workload package into cache.</source>
-        <target state="new">Download workload package into cache.</target>
-        <note />
-      </trans-unit>
       <trans-unit id="FromCacheOptionDescription">
         <source>Complete the operation from cache (offline).</source>
         <target state="new">Complete the operation from cache (offline).</target>
@@ -37,13 +32,13 @@
         <target state="needs-review-translation">A estrutura de destino para a qual instalar a ferramenta.</target>
         <note />
       </trans-unit>
-      <trans-unit id="MachineReadableProgressOptionDescription">
-        <source>Print out machine readable progress for integration with other application to show progress.</source>
-        <target state="new">Print out machine readable progress for integration with other application to show progress.</target>
+      <trans-unit id="PrintDownloadLinkOnlyDescription">
+        <source>Only print the list of links to download without downloading it.</source>
+        <target state="new">Only print the list of links to download without downloading it.</target>
         <note />
       </trans-unit>
       <trans-unit id="VersionOptionDescription">
-        <source>The version of the workload package to install.</source>
+        <source>The version of the SDK.</source>
         <target state="needs-review-translation">A versão do pacote da ferramenta a ser instalada.</target>
         <note />
       </trans-unit>
@@ -80,11 +75,6 @@
       <trans-unit id="ConfigFileOptionName">
         <source>FILE</source>
         <target state="translated">FILE</target>
-        <note />
-      </trans-unit>
-      <trans-unit id="FrameworkOptionName">
-        <source>FRAMEWORK</source>
-        <target state="translated">FRAMEWORK</target>
         <note />
       </trans-unit>
       <trans-unit id="WorkloadAlreadyInstalled">

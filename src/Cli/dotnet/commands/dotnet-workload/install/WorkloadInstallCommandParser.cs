@@ -15,7 +15,7 @@ namespace Microsoft.DotNet.Cli
             Description = LocalizableStrings.WorkloadIdArgumentDescription
         };
 
-        public static readonly Option VersionOption = new Option<string>("--version", LocalizableStrings.VersionOptionDescription)
+        public static readonly Option VersionOption = new Option<string>("--sdk-version", LocalizableStrings.VersionOptionDescription)
         {
             ArgumentHelpName = LocalizableStrings.VersionOptionName
         };
@@ -29,21 +29,13 @@ namespace Microsoft.DotNet.Cli
         {
             ArgumentHelpName = LocalizableStrings.AddSourceOptionName
         }.AllowSingleArgPerToken();
-
-        public static readonly Option FrameworkOption = new Option<string>("--framework", LocalizableStrings.FrameworkOptionDescription)
-        {
-            ArgumentHelpName = LocalizableStrings.FrameworkOptionName
-        };
         
-        public static readonly Option DownloadOnlyOption = new Option<bool>("--download-only", LocalizableStrings.DownloadOnlyOptionDescription)
+        public static readonly Option DownloadOnlyOption = new Option<bool>("--print-download-link-only", LocalizableStrings.PrintDownloadLinkOnlyDescription)
         {
+            IsHidden = true
         };
         
         public static readonly Option FromCacheOption = new Option<bool>("--from-cache", LocalizableStrings.FromCacheOptionDescription)
-        {
-        };
-        
-        public static readonly Option MachineReadableProgressOption = new Option<bool>("--machine-readable-progress", LocalizableStrings.MachineReadableProgressOptionDescription)
         {
         };
 
@@ -57,10 +49,8 @@ namespace Microsoft.DotNet.Cli
             command.AddOption(VersionOption);
             command.AddOption(ConfigOption);
             command.AddOption(AddSourceOption);
-            command.AddOption(FrameworkOption);
             command.AddOption(DownloadOnlyOption);
             command.AddOption(FromCacheOption);
-            command.AddOption(MachineReadableProgressOption);
             command.AddOption(WorkloadCommandRestorePassThroughOptions.DisableParallelOption);
             command.AddOption(WorkloadCommandRestorePassThroughOptions.IgnoreFailedSourcesOption);
             command.AddOption(WorkloadCommandRestorePassThroughOptions.NoCacheOption);
